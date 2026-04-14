@@ -10,31 +10,34 @@ local followConnection = nil
 local lastWalkSpeed = 16
 local resetCooldown = false
 
+local function doReset()
+    if resetCooldown then return end
+    resetCooldown = true
+    task.spawn(function()
+        LocalPlayer:LoadCharacter()
+        task.wait(2)
+        resetCooldown = false
+        lastWalkSpeed = 16
+    end)
+end
+
 RunService.Heartbeat:Connect(function()
+    if resetCooldown then return end
     local char = LocalPlayer.Character
     if not char then return end
-    if resetCooldown then return end
 
     local humanoid = char:FindFirstChild("Humanoid")
     if not humanoid then return end
 
     if humanoid.WalkSpeed == 0 and lastWalkSpeed > 0 then
-        resetCooldown = true
-        task.wait(0.1)
-        LocalPlayer:LoadCharacter()
-        task.wait(2)
-        resetCooldown = false
+        doReset()
         return
     end
 
     for _, part in pairs(char:GetDescendants()) do
         if part.Name:lower():find("handcuff") or part.Name:lower():find("cuff")
         or part.Name:lower():find("arrest") then
-            resetCooldown = true
-            task.wait(0.1)
-            LocalPlayer:LoadCharacter()
-            task.wait(2)
-            resetCooldown = false
+            doReset()
             return
         end
     end

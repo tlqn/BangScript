@@ -75,11 +75,24 @@ local function startBang(target)
     local hum = myChar and myChar:FindFirstChild("Humanoid")
 
     if hum then
-        local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://5938365243"
-        animTrack = hum:LoadAnimation(anim)
-        animTrack.Looped = true
-        animTrack:Play()
+        local success, result = pcall(function()
+            local bundle = game:GetObjects("rbxassetid://5938365243")
+            for _, obj in pairs(bundle) do
+                if obj:IsA("Animation") then
+                    animTrack = hum:LoadAnimation(obj)
+                    animTrack.Looped = true
+                    animTrack:Play()
+                    return
+                end
+            end
+        end)
+        if not success then
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://5938365243"
+            animTrack = hum:LoadAnimation(anim)
+            animTrack.Looped = true
+            animTrack:Play()
+        end
     end
 
     followConnection = RunService.Heartbeat:Connect(function()
@@ -90,7 +103,7 @@ local function startBang(target)
             local myRoot = myC:FindFirstChild("HumanoidRootPart")
             local targetRoot = targetC:FindFirstChild("HumanoidRootPart")
             if myRoot and targetRoot then
-                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 0.3)
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.5)
             end
         end
     end)

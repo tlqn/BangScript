@@ -75,13 +75,14 @@ local function startBang(target)
     local hum = myChar and myChar:FindFirstChild("Humanoid")
 
     if hum then
-        local success, result = pcall(function()
+        local success = pcall(function()
             local bundle = game:GetObjects("rbxassetid://5938365243")
             for _, obj in pairs(bundle) do
                 if obj:IsA("Animation") then
                     animTrack = hum:LoadAnimation(obj)
                     animTrack.Looped = true
                     animTrack:Play()
+                    animTrack:AdjustSpeed(2)
                     return
                 end
             end
@@ -92,6 +93,7 @@ local function startBang(target)
             animTrack = hum:LoadAnimation(anim)
             animTrack.Looped = true
             animTrack:Play()
+            animTrack:AdjustSpeed(2)
         end
     end
 

@@ -114,12 +114,12 @@ FlingBtn.MouseButton1Click:Connect(function()
                     local root = char:FindFirstChild("HumanoidRootPart")
                     if root then
                         local orig = root.CFrame
-                        root.CFrame = orig * CFrame.new(0, 9999, 0)
-                        task.wait(0.01)
+                        root.CFrame = CFrame.new(999999, 999999, 999999)
+                        task.wait(0.005)
                         root.CFrame = orig
                     end
                 end
-                task.wait(0.1)
+                task.wait(0.05)
             end
         end)
     else

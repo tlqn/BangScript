@@ -1,0 +1,80 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BangGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer.PlayerGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 250, 0, 120)
+Frame.Position = UDim2.new(1, -260, 0, 10)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "Bang Script"
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Frame
+
+local Input = Instance.new("TextBox")
+Input.Size = UDim2.new(0.9, 0, 0, 35)
+Input.Position = UDim2.new(0.05, 0, 0.28, 0)
+Input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Input.TextColor3 = Color3.fromRGB(255, 255, 255)
+Input.PlaceholderText = "Player Name..."
+Input.Text = ""
+Input.Font = Enum.Font.Gotham
+Input.TextScaled = true
+Input.ClearTextOnFocus = false
+Input.Parent = Frame
+
+Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 6)
+
+local BangBtn = Instance.new("TextButton")
+BangBtn.Size = UDim2.new(0.9, 0, 0, 35)
+BangBtn.Position = UDim2.new(0.05, 0, 0.62, 0)
+BangBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+BangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+BangBtn.Text = "Bang"
+BangBtn.Font = Enum.Font.GothamBold
+BangBtn.TextScaled = true
+BangBtn.Parent = Frame
+
+Instance.new("UICorner", BangBtn).CornerRadius = UDim.new(0, 6)
+
+BangBtn.MouseButton1Click:Connect(function()
+    local targetName = Input.Text
+    local target = nil
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Name:lower():find(targetName:lower()) and p ~= LocalPlayer then
+            target = p
+            break
+        end
+    end
+
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local myChar = LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+
+            local hum = myChar:FindFirstChild("Humanoid")
+            if hum then
+                local anim = Instance.new("Animation")
+                anim.AnimationId = "rbxassetid://507771019"
+                local track = hum:LoadAnimation(anim)
+                track:Play()
+            end
+        end
+    else
+        warn("Player not found: " .. targetName)
+    end
+end)

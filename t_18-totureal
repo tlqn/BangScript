@@ -37,6 +37,14 @@ local function watchCharacter(char)
             doReset() return
         end
     end)
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if humanoid.WalkSpeed == 0 and not resetCooldown then
+                doReset()
+            end
+        end)
+    end
 end
 
 watchCharacter(LocalPlayer.Character)
@@ -211,36 +219,6 @@ FlingBtn.MouseButton1Click:Connect(function()
     if flingActive then
         FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
         FlingBtn.Text = "الحماية شغاله"
-        task.spawn(function()
-            local mapSize = 4000
-            local positions = {
-                Vector3.new(mapSize, 0, mapSize),
-                Vector3.new(-mapSize, 0, -mapSize),
-                Vector3.new(mapSize, 0, -mapSize),
-                Vector3.new(-mapSize, 0, mapSize),
-            }
-            local posIndex = 1
-            while flingActive do
-                local char = LocalPlayer.Character
-                if char then
-                    local root = char:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        for _, obj in pairs(char:GetDescendants()) do
-                            if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint")
-                            or obj:IsA("WeldConstraint") or obj:IsA("HingeConstraint") then
-                                pcall(function() obj:Destroy() end)
-                            end
-                        end
-                        local targetPos = positions[posIndex]
-                        posIndex = (posIndex % #positions) + 1
-                        root.CFrame = CFrame.new(targetPos)
-                        task.wait(0.05)
-                        root.CFrame = CFrame.new(0, 0, 0)
-                    end
-                end
-                task.wait(0.05)
-            end
-        end)
     else
         FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
         FlingBtn.Text = "حماية كلبشة"

@@ -7,7 +7,6 @@ local animTrack = nil
 local followConnection = nil
 
 -- Anti-Handcuff: Auto Reset
-local lastWalkSpeed = 16
 local resetCooldown = false
 
 local function doReset()
@@ -15,35 +14,40 @@ local function doReset()
     resetCooldown = true
     task.spawn(function()
         LocalPlayer:LoadCharacter()
-        task.wait(2)
+        task.wait(3)
         resetCooldown = false
-        lastWalkSpeed = 16
     end)
 end
 
-RunService.Heartbeat:Connect(function()
-    if resetCooldown then return end
-    local char = LocalPlayer.Character
+local function watchCharacter(char)
     if not char then return end
 
-    local humanoid = char:FindFirstChild("Humanoid")
-    if not humanoid then return end
-
-    if humanoid.WalkSpeed == 0 and lastWalkSpeed > 0 then
-        doReset()
-        return
-    end
-
-    for _, part in pairs(char:GetDescendants()) do
-        if part.Name:lower():find("handcuff") or part.Name:lower():find("cuff")
-        or part.Name:lower():find("arrest") then
+    char.DescendantAdded:Connect(function(obj)
+        if resetCooldown then return end
+        local name = obj.Name:lower()
+        if name:find("handcuff") or name:find("cuff") or name:find("arrest") then
             doReset()
             return
         end
-    end
+        if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint")
+        or obj:IsA("WeldConstraint") or obj:IsA("HingeConstraint") then
+            doReset()
+            return
+        end
+    end)
 
-    lastWalkSpeed = humanoid.WalkSpeed
-end)
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if humanoid.WalkSpeed == 0 and not resetCooldown then
+                doReset()
+            end
+        end)
+    end
+end
+
+watchCharacter(LocalPlayer.Character)
+LocalPlayer.CharacterAdded:Connect(watchCharacter)
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGui"

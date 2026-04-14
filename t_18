@@ -76,7 +76,7 @@ local function startBang(target)
 
     if hum then
         local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://3360689184"
+        anim.AnimationId = "rbxassetid://5938365243"
         animTrack = hum:LoadAnimation(anim)
         animTrack.Looped = true
         animTrack:Play()
@@ -90,7 +90,7 @@ local function startBang(target)
             local myRoot = myC:FindFirstChild("HumanoidRootPart")
             local targetRoot = targetC:FindFirstChild("HumanoidRootPart")
             if myRoot and targetRoot then
-                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 2.5)
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 0.3)
             end
         end
     end)

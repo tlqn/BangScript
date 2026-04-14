@@ -12,27 +12,27 @@ RunService.Heartbeat:Connect(function()
     if not char then return end
 
     local humanoid = char:FindFirstChild("Humanoid")
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
 
     if humanoid then
-        if humanoid.WalkSpeed == 0 then
-            humanoid.WalkSpeed = 16
-        end
-        if humanoid.JumpPower == 0 then
-            humanoid.JumpPower = 50
-        end
+        humanoid.WalkSpeed = 16
+        humanoid.JumpPower = 50
+        humanoid.AutoRotate = true
     end
 
-    if rootPart then
-        if rootPart.Anchored then
-            rootPart.Anchored = false
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
         end
-        for _, obj in pairs(rootPart:GetChildren()) do
-            if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint")
-            or obj:IsA("BodyPosition") or obj:IsA("BodyVelocity")
-            or obj:IsA("BodyGyro") or obj:IsA("WeldConstraint") then
-                obj:Destroy()
-            end
+        if part:IsA("BallSocketConstraint") or part:IsA("RopeConstraint")
+        or part:IsA("BodyPosition") or part:IsA("BodyVelocity")
+        or part:IsA("BodyGyro") or part:IsA("WeldConstraint")
+        or part:IsA("HingeConstraint") or part:IsA("LinearVelocity")
+        or part:IsA("AlignPosition") or part:IsA("AlignOrientation") then
+            part:Destroy()
+        end
+        if part.Name:lower():find("handcuff") or part.Name:lower():find("cuff")
+        or part.Name:lower():find("arrest") or part.Name:lower():find("rope") then
+            part:Destroy()
         end
     end
 end)

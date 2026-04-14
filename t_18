@@ -6,6 +6,37 @@ local isActive = false
 local animTrack = nil
 local followConnection = nil
 
+-- Anti-Handcuff Protection
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    local humanoid = char:FindFirstChild("Humanoid")
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+
+    if humanoid then
+        if humanoid.WalkSpeed == 0 then
+            humanoid.WalkSpeed = 16
+        end
+        if humanoid.JumpPower == 0 then
+            humanoid.JumpPower = 50
+        end
+    end
+
+    if rootPart then
+        if rootPart.Anchored then
+            rootPart.Anchored = false
+        end
+        for _, obj in pairs(rootPart:GetChildren()) do
+            if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint")
+            or obj:IsA("BodyPosition") or obj:IsA("BodyVelocity")
+            or obj:IsA("BodyGyro") or obj:IsA("WeldConstraint") then
+                obj:Destroy()
+            end
+        end
+    end
+end)
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGui"
 ScreenGui.ResetOnSpawn = false

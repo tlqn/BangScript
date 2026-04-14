@@ -1,5 +1,10 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+
+local isActive = false
+local animTrack = nil
+local followConnection = nil
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGui"
@@ -12,7 +17,6 @@ Frame.Position = UDim2.new(1, -260, 0, 10)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
-
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
 
 local Title = Instance.new("TextLabel")
@@ -35,7 +39,6 @@ Input.Font = Enum.Font.Gotham
 Input.TextScaled = true
 Input.ClearTextOnFocus = false
 Input.Parent = Frame
-
 Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 6)
 
 local BangBtn = Instance.new("TextButton")
@@ -47,33 +50,67 @@ BangBtn.Text = "Bang"
 BangBtn.Font = Enum.Font.GothamBold
 BangBtn.TextScaled = true
 BangBtn.Parent = Frame
-
 Instance.new("UICorner", BangBtn).CornerRadius = UDim.new(0, 6)
 
+local function stopBang()
+    isActive = false
+    if followConnection then
+        followConnection:Disconnect()
+        followConnection = nil
+    end
+    if animTrack then
+        animTrack:Stop()
+        animTrack = nil
+    end
+    BangBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    BangBtn.Text = "Bang"
+end
+
+local function startBang(target)
+    isActive = true
+    BangBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    BangBtn.Text = "Stop"
+
+    local myChar = LocalPlayer.Character
+    local hum = myChar and myChar:FindFirstChild("Humanoid")
+
+    if hum then
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://3360689184"
+        animTrack = hum:LoadAnimation(anim)
+        animTrack.Looped = true
+        animTrack:Play()
+    end
+
+    followConnection = RunService.Heartbeat:Connect(function()
+        if not isActive then return end
+        local myC = LocalPlayer.Character
+        local targetC = target.Character
+        if myC and targetC then
+            local myRoot = myC:FindFirstChild("HumanoidRootPart")
+            local targetRoot = targetC:FindFirstChild("HumanoidRootPart")
+            if myRoot and targetRoot then
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 2.5)
+            end
+        end
+    end)
+end
+
 BangBtn.MouseButton1Click:Connect(function()
+    if isActive then
+        stopBang()
+        return
+    end
     local targetName = Input.Text
     local target = nil
-
     for _, p in pairs(Players:GetPlayers()) do
         if p.Name:lower():find(targetName:lower()) and p ~= LocalPlayer then
             target = p
             break
         end
     end
-
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local myChar = LocalPlayer.Character
-        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-            myChar.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-
-            local hum = myChar:FindFirstChild("Humanoid")
-            if hum then
-                local anim = Instance.new("Animation")
-                anim.AnimationId = "rbxassetid://507771019"
-                local track = hum:LoadAnimation(anim)
-                track:Play()
-            end
-        end
+    if target and target.Character then
+        startBang(target)
     else
         warn("Player not found: " .. targetName)
     end

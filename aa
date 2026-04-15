@@ -54,7 +54,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer.PlayerGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 250, 0, 275)
+Frame.Size = UDim2.new(0, 250, 0, 320)
 Frame.Position = UDim2.new(1, -260, 0, 10)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
@@ -166,8 +166,8 @@ local function makeBtn(text, color, yPos)
     return btn
 end
 
-local BangBtn  = makeBtn("Bang",         Color3.fromRGB(200, 50, 50),  78)
-local ResetBtn = makeBtn("Reset",        Color3.fromRGB(150, 100, 0),  121)
+local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
+local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
 local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
 
 local FlyBtn = Instance.new("TextButton")
@@ -186,25 +186,10 @@ SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedInput.PlaceholderText = "سرعة"
 SpeedInput.Text = "50"
-SpeedInput.Font = Enum.Font.Gotham
-SpeedInput.TextScaled = true
-SpeedInput.ClearTextOnFocus = false
 SpeedInput.Parent = Frame
-Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", SpeedInput)
 
-local SpeedLabel = Instance.new("TextLabel")
-SpeedLabel.Size = UDim2.new(0.9, 0, 0, 18)
-SpeedLabel.Position = UDim2.new(0.05, 0, 0, 248)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "W A S D للتحرك | Space للصعود | Shift للنزول"
-SpeedLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
-SpeedLabel.TextScaled = true
-SpeedLabel.Font = Enum.Font.Gotham
-SpeedLabel.Parent = Frame
-
--- 👇 هنا تم الإضافة فقط بدون تغيير أي شيء
 local SpeedActive = false
 
 local WalkSpeedBtn = Instance.new("TextButton")
@@ -216,20 +201,16 @@ WalkSpeedBtn.Text = "سرعة اللاعب"
 WalkSpeedBtn.Font = Enum.Font.GothamBold
 WalkSpeedBtn.TextScaled = true
 WalkSpeedBtn.Parent = Frame
-Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", WalkSpeedBtn)
 
 local WalkSpeedInput = Instance.new("TextBox")
 WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 270)
 WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-WalkSpeedInput.PlaceholderText = "سرعة"
 WalkSpeedInput.Text = "16"
-WalkSpeedInput.Font = Enum.Font.Gotham
-WalkSpeedInput.TextScaled = true
-WalkSpeedInput.ClearTextOnFocus = false
 WalkSpeedInput.Parent = Frame
-Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", WalkSpeedInput)
 
 WalkSpeedBtn.MouseButton1Click:Connect(function()
     SpeedActive = not SpeedActive

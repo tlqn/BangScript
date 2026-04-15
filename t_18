@@ -204,3 +204,50 @@ BangBtn.MouseButton1Click:Connect(function()
         warn("Player not found: " .. targetName)
     end
 end)
+SpeedLabel.Parent = Frame
+-- حماية الكلبشة (بدون تعديل)
+-- زر سرعة اللاعب
+local SpeedActive = false
+local WalkSpeedBtn = Instance.new("TextButton")
+WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
+WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 270)
+WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+WalkSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+WalkSpeedBtn.Text = "سرعة اللاعب"
+WalkSpeedBtn.Font = Enum.Font.GothamBold
+WalkSpeedBtn.TextScaled = true
+WalkSpeedBtn.Parent = Frame
+Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
+local WalkSpeedInput = Instance.new("TextBox")
+WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
+WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 270)
+WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+WalkSpeedInput.PlaceholderText = "سرعة"
+WalkSpeedInput.Text = "16"
+WalkSpeedInput.Font = Enum.Font.Gotham
+WalkSpeedInput.TextScaled = true
+WalkSpeedInput.ClearTextOnFocus = false
+WalkSpeedInput.Parent = Frame
+Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 6)
+WalkSpeedBtn.MouseButton1Click:Connect(function()
+    SpeedActive = not SpeedActive
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    if SpeedActive then
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        WalkSpeedBtn.Text = "سرعة شغاله"
+        if hum then
+            hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
+        end
+    else
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+        WalkSpeedBtn.Text = "سرعة اللاعب"
+        if hum then
+            hum.WalkSpeed = 16
+        end
+    end
+end)
+FlingBtn.MouseButton1Click:Connect(function()
+    flingActive = not flingActive
+    if flingActive then

@@ -60,16 +60,15 @@ Frame.Position = UDim2.new(1, -260, 0, 10)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
-Instance.new("UICorner", Frame)
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
 ToggleBtn.Position = UDim2.new(1, -34, 0, 10)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleBtn.Text = ""
-ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
-Instance.new("UICorner", ToggleBtn)
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     Frame.Visible = not Frame.Visible
@@ -89,29 +88,28 @@ Input.Size = UDim2.new(0.9, 0, 0, 35)
 Input.Position = UDim2.new(0.05, 0, 0, 35)
 Input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Input.TextColor3 = Color3.fromRGB(255, 255, 255)
-Input.Text = ""
 Input.PlaceholderText = "Player Name..."
+Input.Text = ""
 Input.Font = Enum.Font.Gotham
 Input.TextScaled = true
-Input.ClearTextOnFocus = false
 Input.Parent = Frame
-Instance.new("UICorner", Input)
+Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 6)
 
-local function makeBtn(text, color, yPos)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 35)
-    btn.Position = UDim2.new(0.05, 0, 0, yPos)
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Text = text
-    btn.Font = Enum.Font.GothamBold
-    btn.TextScaled = true
-    btn.Parent = Frame
-    Instance.new("UICorner", btn)
-    return btn
+local function makeBtn(text, color, y)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.9, 0, 0, 35)
+    b.Position = UDim2.new(0.05, 0, 0, y)
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Text = text
+    b.Font = Enum.Font.GothamBold
+    b.TextScaled = true
+    b.Parent = Frame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    return b
 end
 
-local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
+local BangBtn = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
 local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
 local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
 
@@ -124,7 +122,7 @@ FlyBtn.Text = "طيران"
 FlyBtn.Font = Enum.Font.GothamBold
 FlyBtn.TextScaled = true
 FlyBtn.Parent = Frame
-Instance.new("UICorner", FlyBtn)
+Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 6)
 
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
@@ -132,11 +130,79 @@ SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedInput.Text = "50"
-SpeedInput.Font = Enum.Font.Gotham
-SpeedInput.TextScaled = true
-SpeedInput.ClearTextOnFocus = false
 SpeedInput.Parent = Frame
-Instance.new("UICorner", SpeedInput)
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 6)
+
+local function stopFly()
+    flyActive = false
+    if flyConnection then flyConnection:Disconnect() end
+    flyConnection = nil
+
+    local char = LocalPlayer.Character
+    if char then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            local bv = root:FindFirstChild("FlyBV")
+            local bg = root:FindFirstChild("FlyBG")
+            if bv then bv:Destroy() end
+            if bg then bg:Destroy() end
+        end
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.PlatformStand = false end
+    end
+
+    FlyBtn.Text = "طيران"
+end
+
+FlyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    if not root or not hum then return end
+
+    if flyActive then
+        FlyBtn.Text = "ايقاف الطيران"
+        hum.PlatformStand = true
+
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyBV"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.zero
+        bv.Parent = root
+
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FlyBG"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.P = 90000
+        bg.CFrame = root.CFrame
+        bg.Parent = root
+
+        local cam = workspace.CurrentCamera
+
+        flyConnection = RunService.Heartbeat:Connect(function()
+            if not flyActive then return end
+
+            local speed = tonumber(SpeedInput.Text) or 50
+            local cf = cam.CFrame
+            local move = Vector3.zero
+
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += cf.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= cf.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= cf.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += cf.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
+
+            bv.Velocity = move * speed
+            bg.CFrame = cf
+        end)
+    else
+        stopFly()
+    end
+end)
 
 local SpeedActive = false
 
@@ -149,7 +215,7 @@ WalkSpeedBtn.Text = "سرعة اللاعب"
 WalkSpeedBtn.Font = Enum.Font.GothamBold
 WalkSpeedBtn.TextScaled = true
 WalkSpeedBtn.Parent = Frame
-Instance.new("UICorner", WalkSpeedBtn)
+Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
 
 local WalkSpeedInput = Instance.new("TextBox")
 WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
@@ -157,11 +223,8 @@ WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 270)
 WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedInput.Text = "16"
-WalkSpeedInput.Font = Enum.Font.Gotham
-WalkSpeedInput.TextScaled = true
-WalkSpeedInput.ClearTextOnFocus = false
 WalkSpeedInput.Parent = Frame
-Instance.new("UICorner", WalkSpeedInput)
+Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 6)
 
 WalkSpeedBtn.MouseButton1Click:Connect(function()
     SpeedActive = not SpeedActive
@@ -170,88 +233,11 @@ WalkSpeedBtn.MouseButton1Click:Connect(function()
 
     if SpeedActive then
         WalkSpeedBtn.Text = "سرعة شغاله"
-        if hum then
-            hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
-        end
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        if hum then hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16 end
     else
         WalkSpeedBtn.Text = "سرعة اللاعب"
-        if hum then
-            hum.WalkSpeed = 16
-        end
-    end
-end)
-
-FlyBtn.MouseButton1Click:Connect(function()
-    flyActive = not flyActive
-
-    if flyActive then
-        FlyBtn.Text = "ايقاف الطيران"
-
-        local char = LocalPlayer.Character
-        if not char then flyActive = false return end
-
-        local root = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChild("Humanoid")
-        if not root or not hum then flyActive = false return end
-
-        hum.PlatformStand = true
-
-        local bv = Instance.new("BodyVelocity")
-        bv.Name = "FlyBV"
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Velocity = Vector3.zero
-        bv.Parent = root
-
-        local bg = Instance.new("BodyGyro")
-        bg.Name = "FlyBG"
-        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-        bg.P = 9e4
-        bg.CFrame = root.CFrame
-        bg.Parent = root
-
-        local cam = workspace.CurrentCamera
-
-        flyConnection = RunService.Heartbeat:Connect(function()
-            if not flyActive then return end
-
-            local speed = tonumber(SpeedInput.Text) or 50
-            local cf = cam.CFrame
-            local vel = Vector3.zero
-
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then vel += cf.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then vel -= cf.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then vel -= cf.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then vel += cf.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then vel += Vector3.new(0,1,0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then vel -= Vector3.new(0,1,0) end
-
-            bv.Velocity = vel * speed
-            bg.CFrame = cf
-        end)
-
-    else
-        flyActive = false
-
-        if flyConnection then
-            flyConnection:Disconnect()
-            flyConnection = nil
-        end
-
-        local char = LocalPlayer.Character
-        if char then
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root then
-                for _, v in pairs(root:GetChildren()) do
-                    if v.Name == "FlyBV" or v.Name == "FlyBG" then
-                        v:Destroy()
-                    end
-                end
-            end
-
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.PlatformStand = false end
-        end
-
-        FlyBtn.Text = "طيران"
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+        if hum then hum.WalkSpeed = 16 end
     end
 end)

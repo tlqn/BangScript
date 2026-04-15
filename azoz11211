@@ -251,7 +251,7 @@ local function startBang(target)
                 if obj:IsA("Animation") then
                     animTrack = hum:LoadAnimation(obj)
                     animTrack.Looped = true
-                    animTrack:Play(0.1, 1, 2)
+                    animTrack:Play(0.1, 1, 5)
                     return
                 end
             end
@@ -261,7 +261,7 @@ local function startBang(target)
             anim.AnimationId = "rbxassetid://5938365243"
             animTrack = hum:LoadAnimation(anim)
             animTrack.Looped = true
-            animTrack:Play(0.1, 1, 2)
+            animTrack:Play(0.1, 1, 5)
         end
     end
     followConnection = RunService.Heartbeat:Connect(function()

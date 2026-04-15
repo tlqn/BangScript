@@ -204,6 +204,7 @@ BangBtn.MouseButton1Click:Connect(function()
         warn("Player not found: " .. targetName)
     end
 end)
+
 SpeedLabel.Parent = Frame
 -- حماية الكلبشة (بدون تعديل)
 -- زر سرعة اللاعب

@@ -166,31 +166,13 @@ local function makeBtn(text, color, yPos)
     return btn
 end
 
-local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
-local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
+local BangBtn  = makeBtn("Bang",         Color3.fromRGB(200, 50, 50),  78)
+local ResetBtn = makeBtn("Reset",        Color3.fromRGB(150, 100, 0),  121)
 local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
-
-local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(0, 170, 255), 192)
-
-TeleportBtn.MouseButton1Click:Connect(function()
-    local targetName = Input.Text:lower()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Name:lower():find(targetName) then
-            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local myChar = LocalPlayer.Character
-                local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                if myRoot then
-                    myRoot.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
-                end
-            end
-            break
-        end
-    end
-end)
 
 local FlyBtn = Instance.new("TextButton")
 FlyBtn.Size = UDim2.new(0.55, 0, 0, 35)
-FlyBtn.Position = UDim2.new(0.05, 0, 0, 225)
+FlyBtn.Position = UDim2.new(0.05, 0, 0, 207)
 FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
 FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 FlyBtn.Text = "طيران"
@@ -201,7 +183,7 @@ Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 6)
 
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
-SpeedInput.Position = UDim2.new(0.63, 0, 0, 225)
+SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedInput.PlaceholderText = "سرعة"
@@ -214,7 +196,7 @@ Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 6)
 
 local WalkSpeedBtn = Instance.new("TextButton")
 WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
-WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 260)
+WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 250)
 WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
 WalkSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedBtn.Text = "سرعة اللاعب"
@@ -225,7 +207,7 @@ Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
 
 local WalkSpeedInput = Instance.new("TextBox")
 WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
-WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 260)
+WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 250)
 WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedInput.PlaceholderText = "سرعة"
@@ -238,10 +220,212 @@ Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 6)
 
 local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Size = UDim2.new(0.9, 0, 0, 18)
-SpeedLabel.Position = UDim2.new(0.05, 0, 0, 298)
+SpeedLabel.Position = UDim2.new(0.05, 0, 0, 288)
 SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "W A S D | Space | Shift"
+SpeedLabel.Text = "W A S D للتحرك | Space للصعود | Shift للنزول"
 SpeedLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
 SpeedLabel.TextScaled = true
 SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.Parent = Frame
+
+WalkSpeedBtn.MouseButton1Click:Connect(function()
+    SpeedActive = not SpeedActive
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    if SpeedActive then
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        WalkSpeedBtn.Text = "سرعة شغاله"
+        if hum then
+            hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
+        end
+    else
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+        WalkSpeedBtn.Text = "سرعة اللاعب"
+        if hum then
+            hum.WalkSpeed = 16
+        end
+    end
+end)
+
+FlingBtn.MouseButton1Click:Connect(function()
+    flingActive = not flingActive
+    if flingActive then
+        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlingBtn.Text = "الحماية شغاله"
+        task.spawn(function()
+            while flingActive do
+                local char = LocalPlayer.Character
+                if char then
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local orig = root.CFrame
+                        root.CFrame = CFrame.new(99999999999, 99999999999, 99999999999)
+                        task.wait(0.02)
+                        root.CFrame = orig
+                    end
+                end
+                task.wait(0.056)
+            end
+        end)
+    else
+        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+        FlingBtn.Text = "حماية بانق"
+    end
+end)
+
+local function stopBang()
+    isActive = false
+    if followConnection then followConnection:Disconnect() followConnection = nil end
+    if animTrack then animTrack:Stop() animTrack = nil end
+    BangBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    BangBtn.Text = "Bang"
+end
+
+local function startBang(target)
+    isActive = true
+    BangBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    BangBtn.Text = "Stop"
+    local myChar = LocalPlayer.Character
+    local hum = myChar and myChar:FindFirstChild("Humanoid")
+    if hum then
+        local success = pcall(function()
+            local bundle = game:GetObjects("rbxassetid://5938365243")
+            for _, obj in pairs(bundle) do
+                if obj:IsA("Animation") then
+                    animTrack = hum:LoadAnimation(obj)
+                    animTrack.Looped = true
+                    animTrack:Play(0.1, 1, 5)
+                    return
+                end
+            end
+        end)
+        if not success then
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://5938365243"
+            animTrack = hum:LoadAnimation(anim)
+            animTrack.Looped = true
+            animTrack:Play(0.1, 1, 5)
+        end
+    end
+    followConnection = RunService.Heartbeat:Connect(function()
+        if not isActive then return end
+        local myC = LocalPlayer.Character
+        local targetC = target.Character
+        if myC and targetC then
+            local myRoot = myC:FindFirstChild("HumanoidRootPart")
+            local targetRoot = targetC:FindFirstChild("HumanoidRootPart")
+            if myRoot and targetRoot then
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.5)
+            end
+        end
+    end)
+end
+
+BangBtn.MouseButton1Click:Connect(function()
+    if isActive then stopBang() return end
+    local targetName = Input.Text
+    local target = nil
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Name:lower():find(targetName:lower()) and p ~= LocalPlayer then
+            target = p break
+        end
+    end
+    if target and target.Character then startBang(target)
+    else warn("Player not found: " .. targetName) end
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local savedPos = nil
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if root then savedPos = root.CFrame end
+    local conn
+    conn = LocalPlayer.CharacterAdded:Connect(function(newChar)
+        conn:Disconnect()
+        task.wait(1.5)
+        if savedPos then
+            local newRoot = newChar:FindFirstChild("HumanoidRootPart")
+            if newRoot then newRoot.CFrame = savedPos end
+        end
+    end)
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then hum.Health = 0 end
+end)
+
+local function stopFly()
+    flyActive = false
+    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+    local char = LocalPlayer.Character
+    if char then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            for _, obj in pairs(root:GetChildren()) do
+                if obj.Name == "FlyBV" or obj.Name == "FlyBG" then obj:Destroy() end
+            end
+        end
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.PlatformStand = false end
+    end
+    FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+    FlyBtn.Text = "طيران"
+end
+
+FlyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+    if flyActive then
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlyBtn.Text = "ايقاف الطيران"
+        local char = LocalPlayer.Character
+        if not char then flyActive = false return end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChild("Humanoid")
+        if not root or not hum then flyActive = false return end
+        hum.PlatformStand = true
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyBV"
+        bv.Velocity = Vector3.zero
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Parent = root
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FlyBG"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.P = 9e4
+        bg.Parent = root
+        local cam = workspace.CurrentCamera
+        flyConnection = RunService.Heartbeat:Connect(function()
+            if not flyActive then return end
+            local speed = tonumber(SpeedInput.Text) or 50
+            local cf = cam.CFrame
+            local vel = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then vel = vel + cf.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then vel = vel - cf.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then vel = vel - cf.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then vel = vel + cf.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then vel = vel + Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then vel = vel - Vector3.new(0,1,0) end
+            bv.Velocity = vel * speed
+            bg.CFrame = cf
+        end)
+    else
+        stopFly()
+    end
+end)
+local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(80, 200, 120), 186)
+
+TeleportBtn.MouseButton1Click:Connect(function()
+    local targetName = Input.Text
+    local target
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Name:lower():find(targetName:lower()) and #targetName >= 3 then
+            target = p
+            break
+        end
+    end
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
+        end
+    end
+end)

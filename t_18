@@ -205,6 +205,7 @@ BangBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+
 SpeedLabel.Parent = Frame
 -- حماية الكلبشة (بدون تعديل)
 -- زر سرعة اللاعب

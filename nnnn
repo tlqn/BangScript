@@ -1,0 +1,339 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local isActive = false
+local animTrack = nil
+local followConnection = nil
+local flingActive = false
+local flyActive = false
+local flyConnection = nil
+
+local resetCooldown = false
+
+local function getChar()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+local function doReset()
+    if resetCooldown then return end
+    resetCooldown = true
+    task.spawn(function()
+        LocalPlayer:LoadCharacter()
+        task.wait(3)
+        resetCooldown = false
+    end)
+end
+
+local function watchCharacter(char)
+    if not char then return end
+    char.DescendantAdded:Connect(function(obj)
+        if resetCooldown then return end
+        local name = obj.Name:lower()
+        if name:find("handcuff") or name:find("cuff") or name:find("arrest") then
+            doReset()
+            return
+        end
+        if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint")
+        or obj:IsA("WeldConstraint") or obj:IsA("HingeConstraint") then
+            doReset()
+            return
+        end
+    end)
+
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if humanoid.WalkSpeed == 0 and not resetCooldown then
+                doReset()
+            end
+        end)
+    end
+end
+
+watchCharacter(LocalPlayer.Character)
+LocalPlayer.CharacterAdded:Connect(watchCharacter)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BangGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 250, 0, 320)
+Frame.Position = UDim2.new(1, -260, 0, 10)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
+ToggleBtn.Position = UDim2.new(1, -34, 0, 10)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.Text = ""
+ToggleBtn.ZIndex = 20
+ToggleBtn.Parent = ScreenGui
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+
+local dragging, dragStart, startPos = false, nil, nil
+local tDragging, tDragStart, tStartPos = false, nil, nil
+
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        tDragging = true
+        tDragStart = input.Position
+        tStartPos = ToggleBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                tDragging = false
+            end
+        end)
+    end
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "t_18"
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Frame
+
+Title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if dragging then
+            local delta = input.Position - dragStart
+            Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+        if tDragging then
+            local delta = input.Position - tDragStart
+            ToggleBtn.Position = UDim2.new(tStartPos.X.Scale, tStartPos.X.Offset + delta.X, tStartPos.Y.Scale, tStartPos.Y.Offset + delta.Y)
+        end
+    end
+end)
+
+local Input = Instance.new("TextBox")
+Input.Size = UDim2.new(0.9, 0, 0, 35)
+Input.Position = UDim2.new(0.05, 0, 0, 35)
+Input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Input.TextColor3 = Color3.fromRGB(255, 255, 255)
+Input.PlaceholderText = "Player Name..."
+Input.Text = ""
+Input.Font = Enum.Font.Gotham
+Input.TextScaled = true
+Input.ClearTextOnFocus = false
+Input.Parent = Frame
+Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 6)
+
+local function makeBtn(text, color, y)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.9, 0, 0, 35)
+    b.Position = UDim2.new(0.05, 0, 0, y)
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Text = text
+    b.Font = Enum.Font.GothamBold
+    b.TextScaled = true
+    b.Parent = Frame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    return b
+end
+
+local BangBtn = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
+local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
+local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
+
+local FlyBtn = Instance.new("TextButton")
+FlyBtn.Size = UDim2.new(0.55, 0, 0, 35)
+FlyBtn.Position = UDim2.new(0.05, 0, 0, 207)
+FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyBtn.Text = "طيران"
+FlyBtn.Font = Enum.Font.GothamBold
+FlyBtn.TextScaled = true
+FlyBtn.Parent = Frame
+Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 6)
+
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
+SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.Text = "50"
+SpeedInput.Parent = Frame
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 6)
+
+local WalkSpeedBtn = Instance.new("TextButton")
+WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
+WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 270)
+WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+WalkSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+WalkSpeedBtn.Text = "سرعة اللاعب"
+WalkSpeedBtn.Font = Enum.Font.GothamBold
+WalkSpeedBtn.TextScaled = true
+WalkSpeedBtn.Parent = Frame
+Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
+
+local WalkSpeedInput = Instance.new("TextBox")
+WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
+WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 270)
+WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+WalkSpeedInput.Text = "16"
+WalkSpeedInput.Parent = Frame
+Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 6)
+
+WalkSpeedBtn.MouseButton1Click:Connect(function()
+    local char = getChar()
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then
+        hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
+    end
+end)
+
+FlingBtn.MouseButton1Click:Connect(function()
+    flingActive = not flingActive
+    if flingActive then
+        task.spawn(function()
+            while flingActive do
+                local char = getChar()
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local cf = root.CFrame
+                    root.CFrame = CFrame.new(1e7, 1e7, 1e7)
+                    task.wait(0.02)
+                    root.CFrame = cf
+                end
+                task.wait(0.05)
+            end
+        end)
+    end
+end)
+
+local function stopFly()
+    flyActive = false
+    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+    local char = getChar()
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then hum.PlatformStand = false end
+    if root then
+        for _,v in pairs(root:GetChildren()) do
+            if v.Name == "FlyBV" or v.Name == "FlyBG" then v:Destroy() end
+        end
+    end
+end
+
+FlyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+    if flyActive then
+        local char = getChar()
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChild("Humanoid")
+        if not root or not hum then return end
+
+        hum.PlatformStand = true
+
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyBV"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.zero
+        bv.Parent = root
+
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FlyBG"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.P = 9e4
+        bg.Parent = root
+
+        local cam = workspace.CurrentCamera
+
+        flyConnection = RunService.Heartbeat:Connect(function()
+            if not flyActive then return end
+            local speed = tonumber(SpeedInput.Text) or 50
+            local vel = Vector3.zero
+
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then vel += cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then vel -= cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then vel -= cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then vel += cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then vel += Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then vel -= Vector3.new(0,1,0) end
+
+            bv.Velocity = vel * speed
+            bg.CFrame = cam.CFrame
+        end)
+    else
+        stopFly()
+    end
+end)
+
+local function stopBang()
+    isActive = false
+    if followConnection then followConnection:Disconnect() followConnection = nil end
+    if animTrack then animTrack:Stop() animTrack = nil end
+end
+
+local function startBang(target)
+    isActive = true
+    followConnection = RunService.Heartbeat:Connect(function()
+        if not isActive then return end
+        local my = getChar()
+        local t = target and target.Character
+        if my and t then
+            local r1 = my:FindFirstChild("HumanoidRootPart")
+            local r2 = t:FindFirstChild("HumanoidRootPart")
+            if r1 and r2 then
+                r1.CFrame = r2.CFrame * CFrame.new(0,0,1.5)
+            end
+        end
+    end)
+end
+
+BangBtn.MouseButton1Click:Connect(function()
+    if isActive then stopBang() return end
+    local name = Input.Text
+    for _,p in pairs(Players:GetPlayers()) do
+        if p.Name:lower():find(name:lower()) then
+            startBang(p)
+            break
+        end
+    end
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+    local char = getChar()
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local pos = root and root.CFrame
+
+    LocalPlayer.CharacterAdded:Once(function(newChar)
+        task.wait(0.5)
+        if pos then
+            local nr = newChar:WaitForChild("HumanoidRootPart")
+            nr.CFrame = pos
+        end
+    end)
+
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then hum.Health = 0 end
+end)

@@ -411,7 +411,7 @@ FlyBtn.MouseButton1Click:Connect(function()
         stopFly()
     end
 end)
-local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(80, 200, 120), 186)
+local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(80, 200, 120), 293)
 
 TeleportBtn.MouseButton1Click:Connect(function()
     local targetName = Input.Text

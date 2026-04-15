@@ -35,6 +35,7 @@ local function watchCharacter(char)
             doReset() return
         end
     end)
+
     local humanoid = char:WaitForChild("Humanoid", 5)
     if humanoid then
         humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
@@ -89,8 +90,30 @@ Input.Position = UDim2.new(0.05, 0, 0, 35)
 Input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Input.TextColor3 = Color3.fromRGB(255, 255, 255)
 Input.Text = ""
+Input.PlaceholderText = "Player Name..."
+Input.Font = Enum.Font.Gotham
+Input.TextScaled = true
+Input.ClearTextOnFocus = false
 Input.Parent = Frame
 Instance.new("UICorner", Input)
+
+local function makeBtn(text, color, yPos)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.Position = UDim2.new(0.05, 0, 0, yPos)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextScaled = true
+    btn.Parent = Frame
+    Instance.new("UICorner", btn)
+    return btn
+end
+
+local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
+local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
+local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
 
 local FlyBtn = Instance.new("TextButton")
 FlyBtn.Size = UDim2.new(0.55, 0, 0, 35)
@@ -98,6 +121,8 @@ FlyBtn.Position = UDim2.new(0.05, 0, 0, 207)
 FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
 FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 FlyBtn.Text = "طيران"
+FlyBtn.Font = Enum.Font.GothamBold
+FlyBtn.TextScaled = true
 FlyBtn.Parent = Frame
 Instance.new("UICorner", FlyBtn)
 
@@ -107,8 +132,13 @@ SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedInput.Text = "50"
+SpeedInput.Font = Enum.Font.Gotham
+SpeedInput.TextScaled = true
+SpeedInput.ClearTextOnFocus = false
 SpeedInput.Parent = Frame
 Instance.new("UICorner", SpeedInput)
+
+local SpeedActive = false
 
 local WalkSpeedBtn = Instance.new("TextButton")
 WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
@@ -116,6 +146,8 @@ WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 270)
 WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
 WalkSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedBtn.Text = "سرعة اللاعب"
+WalkSpeedBtn.Font = Enum.Font.GothamBold
+WalkSpeedBtn.TextScaled = true
 WalkSpeedBtn.Parent = Frame
 Instance.new("UICorner", WalkSpeedBtn)
 
@@ -125,10 +157,11 @@ WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 270)
 WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedInput.Text = "16"
+WalkSpeedInput.Font = Enum.Font.Gotham
+WalkSpeedInput.TextScaled = true
+WalkSpeedInput.ClearTextOnFocus = false
 WalkSpeedInput.Parent = Frame
 Instance.new("UICorner", WalkSpeedInput)
-
-local SpeedActive = false
 
 WalkSpeedBtn.MouseButton1Click:Connect(function()
     SpeedActive = not SpeedActive
@@ -137,10 +170,14 @@ WalkSpeedBtn.MouseButton1Click:Connect(function()
 
     if SpeedActive then
         WalkSpeedBtn.Text = "سرعة شغاله"
-        if hum then hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16 end
+        if hum then
+            hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
+        end
     else
         WalkSpeedBtn.Text = "سرعة اللاعب"
-        if hum then hum.WalkSpeed = 16 end
+        if hum then
+            hum.WalkSpeed = 16
+        end
     end
 end)
 
@@ -151,11 +188,11 @@ FlyBtn.MouseButton1Click:Connect(function()
         FlyBtn.Text = "ايقاف الطيران"
 
         local char = LocalPlayer.Character
-        if not char then return end
+        if not char then flyActive = false return end
 
         local root = char:FindFirstChild("HumanoidRootPart")
         local hum = char:FindFirstChild("Humanoid")
-        if not root or not hum then return end
+        if not root or not hum then flyActive = false return end
 
         hum.PlatformStand = true
 
@@ -210,6 +247,7 @@ FlyBtn.MouseButton1Click:Connect(function()
                     end
                 end
             end
+
             local hum = char:FindFirstChild("Humanoid")
             if hum then hum.PlatformStand = false end
         end

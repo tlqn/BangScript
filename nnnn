@@ -368,6 +368,7 @@ FlyBtn.MouseButton1Click:Connect(function()
         stopFly()
     end
 end)
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 

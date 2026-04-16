@@ -12,6 +12,14 @@ local flyConnection = nil
 local SpeedActive = false
 local resetCooldown = false
 
+local SpectateActive = false
+local SpectateConnection = nil
+local SpectateGui = nil
+local SpectateCamera = nil
+local SpectateTarget = nil
+local OriginalCameraType = nil
+local OriginalCameraSubject = nil
+
 local function doReset()
     if resetCooldown then return end
     resetCooldown = true
@@ -54,7 +62,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer.PlayerGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 250, 0, 360)
+Frame.Size = UDim2.new(0, 250, 0, 405)
 Frame.Position = UDim2.new(1, -260, 0, 10)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
@@ -166,8 +174,8 @@ local function makeBtn(text, color, yPos)
     return btn
 end
 
-local BangBtn  = makeBtn("Bang",         Color3.fromRGB(200, 50, 50),  78)
-local ResetBtn = makeBtn("Reset",        Color3.fromRGB(150, 100, 0),  121)
+local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
+local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
 local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
 
 local FlyBtn = Instance.new("TextButton")
@@ -411,13 +419,15 @@ FlyBtn.MouseButton1Click:Connect(function()
         stopFly()
     end
 end)
+
 local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(80, 200, 120), 293)
+local SpectateBtn = makeBtn("مشاهده", Color3.fromRGB(120, 80, 220), 336)
 
 TeleportBtn.MouseButton1Click:Connect(function()
     local targetName = Input.Text
     local target
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Name:lower():find(targetName:lower()) and #targetName >= 3 then
+        if p ~= LocalPlayer and #targetName >= 3 and p.Name:lower():find(targetName:lower(), 1, true) then
             target = p
             break
         end
@@ -427,5 +437,124 @@ TeleportBtn.MouseButton1Click:Connect(function()
         if root then
             root.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
         end
+    end
+end)
+
+local function findTargetPlayer()
+    local targetName = Input.Text
+    if not targetName or #targetName < 3 then
+        return nil
+    end
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Name:lower():find(targetName:lower(), 1, true) then
+            return p
+        end
+    end
+
+    return nil
+end
+
+local function restoreMyCamera()
+    local camera = workspace.CurrentCamera
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if camera then
+        camera.CameraType = OriginalCameraType or Enum.CameraType.Custom
+        camera.CameraSubject = hum or OriginalCameraSubject
+    end
+
+    OriginalCameraType = nil
+    OriginalCameraSubject = nil
+end
+
+local function stopSpectate()
+    SpectateActive = false
+    SpectateTarget = nil
+
+    if SpectateConnection then
+        SpectateConnection:Disconnect()
+        SpectateConnection = nil
+    end
+
+    restoreMyCamera()
+
+    SpectateBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 220)
+    SpectateBtn.Text = "مشاهده"
+end
+
+local function startSpectate(target)
+    if not target or not target.Character then
+        return
+    end
+
+    local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
+    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+
+    if not targetHumanoid or not targetRoot then
+        return
+    end
+
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return
+    end
+
+    OriginalCameraType = camera.CameraType
+    OriginalCameraSubject = camera.CameraSubject
+
+    SpectateActive = true
+    SpectateTarget = target
+
+    SpectateBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    SpectateBtn.Text = "الغاء المشاهده"
+
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = targetHumanoid
+
+    SpectateConnection = RunService.RenderStepped:Connect(function()
+        if not SpectateActive or not SpectateTarget then
+            stopSpectate()
+            return
+        end
+
+        local char = SpectateTarget.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+
+        if not char or not hum or not root or hum.Health <= 0 then
+            stopSpectate()
+            return
+        end
+
+        local currentCamera = workspace.CurrentCamera
+        if currentCamera then
+            currentCamera.CameraType = Enum.CameraType.Custom
+            currentCamera.CameraSubject = hum
+        end
+    end)
+end
+
+SpectateBtn.MouseButton1Click:Connect(function()
+    if SpectateActive then
+        stopSpectate()
+        return
+    end
+
+    local target = findTargetPlayer()
+
+    if target then
+        startSpectate(target)
+    else
+        warn("Player not found or name is too short")
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if SpectateActive then
+        stopSpectate()
+    else
+        restoreMyCamera()
     end
 end)

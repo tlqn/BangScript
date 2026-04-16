@@ -137,13 +137,7 @@ local function makeSideTab(text, y, active)
     return tab
 end
 
-makeSideTab("Home | الرئيسية", 8, true)
-makeSideTab("Game | التخريب", 51, false)
-makeSideTab("Character | اللاعب", 94, false)
-makeSideTab("Target | الهدف", 137, false)
-makeSideTab("Admins | ادمن", 180, false)
-makeSideTab("Misc | اخرى", 223, false)
-makeSideTab("News | اخبار", 266, false)
+makeSideTab("استهداف", 8, true)
 
 local ProfileCard = Instance.new("Frame")
 ProfileCard.Size = UDim2.new(0, 366, 0, 68)
@@ -170,7 +164,7 @@ Instance.new("UICorner", AvatarBox).CornerRadius = UDim.new(0, 10)
 local AvatarText = Instance.new("TextLabel")
 AvatarText.Size = UDim2.new(1, 0, 1, 0)
 AvatarText.BackgroundTransparency = 1
-AvatarText.Text = "VR7"
+AvatarText.Text = "t_18"
 AvatarText.TextColor3 = Color3.fromRGB(34, 211, 238)
 AvatarText.TextScaled = true
 AvatarText.Font = Enum.Font.GothamBlack
@@ -217,7 +211,7 @@ local Footer = Instance.new("TextLabel")
 Footer.Size = UDim2.new(1, -24, 0, 16)
 Footer.Position = UDim2.new(0, 12, 1, -18)
 Footer.BackgroundTransparency = 1
-Footer.Text = "© All rights reserved VR7"
+Footer.Text = "© All rights reserved t_18"
 Footer.TextColor3 = Color3.fromRGB(100, 116, 139)
 Footer.TextScaled = true
 Footer.TextXAlignment = Enum.TextXAlignment.Left

@@ -582,11 +582,11 @@ local function startSpectate(target)
         end
 
         local lookDirection = root.CFrame.LookVector
-        local cameraPosition = Vector3.new(0, 2.2, 0)
-        local lookAtPosition = cameraPosition + lookDirection * 12
+local cameraPosition = Vector3.new(0, 3.2, 8)
+local lookAtPosition = Vector3.new(0, 2.2, 0)
 
-        SpectateCamera.CFrame = CFrame.lookAt(cameraPosition, lookAtPosition)
-        SpectateCamera.FieldOfView = 70
+SpectateCamera.CFrame = CFrame.lookAt(cameraPosition, lookAtPosition)
+SpectateCamera.FieldOfView = 75
     end)
 end
 

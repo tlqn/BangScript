@@ -103,45 +103,9 @@ HeaderLine.BackgroundColor3 = Color3.fromRGB(34, 211, 238)
 HeaderLine.BorderSizePixel = 0
 HeaderLine.Parent = Header
 
-local LockIcon = Instance.new("TextLabel")
-LockIcon.Size = UDim2.new(0, 34, 0, 34)
-LockIcon.Position = UDim2.new(1, -44, 0, 10)
-LockIcon.BackgroundColor3 = Color3.fromRGB(248, 250, 252)
-LockIcon.TextColor3 = Color3.fromRGB(15, 23, 42)
-LockIcon.Text = "🔒"
-LockIcon.TextScaled = true
-LockIcon.Font = Enum.Font.GothamBold
-LockIcon.Parent = Header
-Instance.new("UICorner", LockIcon).CornerRadius = UDim.new(0, 8)
-
-local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 138, 1, -74)
-Sidebar.Position = UDim2.new(0, 12, 0, 64)
-Sidebar.BackgroundColor3 = Color3.fromRGB(226, 232, 240)
-Sidebar.BackgroundTransparency = 0.04
-Sidebar.BorderSizePixel = 0
-Sidebar.Parent = Frame
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
-
-local function makeSideTab(text, y, active)
-    local tab = Instance.new("TextLabel")
-    tab.Size = UDim2.new(1, -14, 0, 37)
-    tab.Position = UDim2.new(0, 7, 0, y)
-    tab.BackgroundColor3 = active and Color3.fromRGB(15, 23, 42) or Color3.fromRGB(203, 213, 225)
-    tab.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(30, 41, 59)
-    tab.Text = text
-    tab.TextScaled = true
-    tab.Font = Enum.Font.GothamBold
-    tab.Parent = Sidebar
-    Instance.new("UICorner", tab).CornerRadius = UDim.new(0, 7)
-    return tab
-end
-
-makeSideTab("استهداف", 8, true)
-
 local ProfileCard = Instance.new("Frame")
-ProfileCard.Size = UDim2.new(0, 366, 0, 68)
-ProfileCard.Position = UDim2.new(0, 160, 0, 66)
+ProfileCard.Size = UDim2.new(1, -24, 0, 68)
+ProfileCard.Position = UDim2.new(0, 12, 0, 66)
 ProfileCard.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
 ProfileCard.BackgroundTransparency = 0.08
 ProfileCard.BorderSizePixel = 0
@@ -193,8 +157,8 @@ PlanLabel.Font = Enum.Font.Gotham
 PlanLabel.Parent = ProfileCard
 
 local ContentPanel = Instance.new("Frame")
-ContentPanel.Size = UDim2.new(0, 366, 0, 300)
-ContentPanel.Position = UDim2.new(0, 160, 0, 146)
+ContentPanel.Size = UDim2.new(1, -24, 0, 300)
+ContentPanel.Position = UDim2.new(0, 12, 0, 146)
 ContentPanel.BackgroundColor3 = Color3.fromRGB(2, 6, 23)
 ContentPanel.BackgroundTransparency = 0.05
 ContentPanel.BorderSizePixel = 0
@@ -250,7 +214,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Size = UDim2.new(1, -36, 1, 0)
 Title.Position = UDim2.new(0, 18, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "t_18"
@@ -332,7 +296,7 @@ end
 
 local BangBtn  = makeBtn("بانق", Color3.fromRGB(236, 72, 153), 62)
 local ResetBtn = makeBtn("ريسيت", Color3.fromRGB(245, 158, 11), 62)
-ResetBtn.Position = UDim2.new(0, 196, 0, 62)
+ResetBtn.Position = UDim2.new(0, 366, 0, 62)
 local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(59, 130, 246), 104)
 FlingBtn.Size = UDim2.new(1, -32, 0, 34)
 
@@ -351,7 +315,7 @@ Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 9)
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 SpeedInput.Size = UDim2.new(0, 154, 0, 34)
-SpeedInput.Position = UDim2.new(0, 196, 0, 146)
+SpeedInput.Position = UDim2.new(0, 366, 0, 146)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedInput.PlaceholderText = "سرعة"
@@ -377,7 +341,7 @@ Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 9)
 local WalkSpeedInput = Instance.new("TextBox")
 WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 WalkSpeedInput.Size = UDim2.new(0, 154, 0, 34)
-WalkSpeedInput.Position = UDim2.new(0, 196, 0, 188)
+WalkSpeedInput.Position = UDim2.new(0, 366, 0, 188)
 WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
 WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedInput.PlaceholderText = "سرعة"
@@ -586,12 +550,12 @@ end)
 local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(20, 184, 166), 254)
 local SpectateBtn = makeBtn("مشاهده", Color3.fromRGB(139, 92, 246), 254)
 local SavePlaceBtn = makeBtn("حفظ مكاني", Color3.fromRGB(6, 182, 212), 254)
-TeleportBtn.Size = UDim2.new(0, 100, 0, 32)
-SpectateBtn.Size = UDim2.new(0, 100, 0, 32)
-SavePlaceBtn.Size = UDim2.new(0, 102, 0, 32)
+TeleportBtn.Size = UDim2.new(0, 154, 0, 32)
+SpectateBtn.Size = UDim2.new(0, 154, 0, 32)
+SavePlaceBtn.Size = UDim2.new(0, 154, 0, 32)
 TeleportBtn.Position = UDim2.new(0, 16, 0, 254)
-SpectateBtn.Position = UDim2.new(0, 132, 0, 254)
-SavePlaceBtn.Position = UDim2.new(0, 248, 0, 254)
+SpectateBtn.Position = UDim2.new(0, 183, 0, 254)
+SavePlaceBtn.Position = UDim2.new(0, 350, 0, 254)
 
 local function showSpectateWarning(message)
     if SpectateWarningLabel then

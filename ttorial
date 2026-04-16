@@ -563,7 +563,6 @@ local function showSpectateWarning(message)
     if SpectateWarningLabel then
         SpectateWarningLabel.Text = message
         SpectateWarningLabel.Visible = true
-
         task.delay(3, function()
             if SpectateWarningLabel then
                 SpectateWarningLabel.Visible = false
@@ -577,12 +576,10 @@ end
 SavePlaceBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
-
     if not root then
         warn("Cannot save location")
         return
     end
-
     if SavedLocation then
         root.CFrame = SavedLocation
         SavePlaceBtn.Text = "حفظ مكاني"
@@ -598,14 +595,12 @@ end)
 TeleportBtn.MouseButton1Click:Connect(function()
     local targetName = Input.Text
     local target
-
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and #targetName >= 3 and p.Name:lower():find(targetName:lower(), 1, true) then
             target = p
             break
         end
     end
-
     if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
         local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if root then
@@ -624,13 +619,11 @@ local function findTargetPlayer()
     if not targetName or #targetName < 3 then
         return nil
     end
-
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Name:lower():find(targetName:lower(), 1, true) then
             return p
         end
     end
-
     return nil
 end
 
@@ -638,12 +631,10 @@ local function restoreMyCamera()
     local camera = workspace.CurrentCamera
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-
     if camera then
         camera.CameraType = OriginalCameraType or Enum.CameraType.Custom
         camera.CameraSubject = hum or OriginalCameraSubject
     end
-
     OriginalCameraType = nil
     OriginalCameraSubject = nil
 end
@@ -653,7 +644,6 @@ local function clearSpectateLabels(keepWarning)
         SpectateNameLabel:Destroy()
         SpectateNameLabel = nil
     end
-
     if SpectateWarningLabel and not keepWarning then
         SpectateWarningLabel:Destroy()
         SpectateWarningLabel = nil
@@ -662,29 +652,23 @@ end
 
 local function stopSpectate(keepWarning)
     SpectateActive = false
-
     if SpectateConnection then
         SpectateConnection:Disconnect()
         SpectateConnection = nil
     end
-
     if SpectatePlayerRemovingConnection then
         SpectatePlayerRemovingConnection:Disconnect()
         SpectatePlayerRemovingConnection = nil
     end
-
     restoreMyCamera()
     clearSpectateLabels(keepWarning)
-
     SpectateTarget = nil
-
     SpectateBtn.BackgroundColor3 = ButtonColor
     SpectateBtn.Text = "مشاهده"
 end
 
 local function createSpectateLabels(target)
     clearSpectateLabels()
-
     SpectateNameLabel = Instance.new("TextLabel")
     SpectateNameLabel.Size = UDim2.new(0, 300, 0, 36)
     SpectateNameLabel.Position = UDim2.new(0.5, -150, 0, 15)
@@ -696,7 +680,6 @@ local function createSpectateLabels(target)
     SpectateNameLabel.Text = "مشاهدة: " .. target.Name
     SpectateNameLabel.Parent = ScreenGui
     Instance.new("UICorner", SpectateNameLabel).CornerRadius = UDim.new(0, 8)
-
     SpectateWarningLabel = Instance.new("TextLabel")
     SpectateWarningLabel.Size = UDim2.new(0, 360, 0, 40)
     SpectateWarningLabel.Position = UDim2.new(0.5, -180, 0, 58)
@@ -712,38 +695,23 @@ local function createSpectateLabels(target)
 end
 
 local function startSpectate(target)
-    if not target or not target.Character then
-        return
-    end
-
+    if not target or not target.Character then return end
     local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
     local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-
-    if not targetHumanoid or not targetRoot then
-        return
-    end
-
+    if not targetHumanoid or not targetRoot then return end
     local camera = workspace.CurrentCamera
-    if not camera then
-        return
-    end
-
+    if not camera then return end
     OriginalCameraType = camera.CameraType
     OriginalCameraSubject = camera.CameraSubject
-
     SpectateActive = true
     SpectateTarget = target
-
     SpectateBtn.BackgroundColor3 = ButtonActiveColor
     SpectateBtn.Text = "الغاء المشاهده"
-
     createSpectateLabels(target)
-
     if SpectatePlayerRemovingConnection then
         SpectatePlayerRemovingConnection:Disconnect()
         SpectatePlayerRemovingConnection = nil
     end
-
     SpectatePlayerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
         if player == target then
             showSpectateWarning("اللاعب طلع من اللعبة")
@@ -754,36 +722,29 @@ local function startSpectate(target)
             end)
         end
     end)
-
     camera.CameraType = Enum.CameraType.Custom
     camera.CameraSubject = targetHumanoid
-
     SpectateConnection = RunService.RenderStepped:Connect(function()
         if not SpectateActive or not SpectateTarget then
             stopSpectate(true)
             return
         end
-
         local char = SpectateTarget.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         local root = char and char:FindFirstChild("HumanoidRootPart")
-
         if not Players:FindFirstChild(SpectateTarget.Name) then
             showSpectateWarning("اللاعب طلع من اللعبة")
             stopSpectate(true)
             return
         end
-
         if not char or not hum or not root or hum.Health <= 0 then
             showSpectateWarning("المشاهدة توقفت، اللاعب غير متاح")
             stopSpectate()
             return
         end
-
         if SpectateNameLabel then
             SpectateNameLabel.Text = "مشاهدة: " .. SpectateTarget.Name
         end
-
         local currentCamera = workspace.CurrentCamera
         if currentCamera then
             currentCamera.CameraType = Enum.CameraType.Custom
@@ -797,9 +758,7 @@ SpectateBtn.MouseButton1Click:Connect(function()
         stopSpectate()
         return
     end
-
     local target = findTargetPlayer()
-
     if target then
         startSpectate(target)
     else

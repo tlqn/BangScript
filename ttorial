@@ -17,6 +17,17 @@ local SpectateConnection = nil
 local SpectateGui = nil
 local SpectateCamera = nil
 local SpectateTarget = nil
+local OriginalCameraType = nil
+local OriginalCameraSubject = nil
+local SpectateNameLabel = nil
+local SpectateWarningLabel = nil
+local SpectatePlayerRemovingConnection = nil
+local SavedLocation = nil
+
+local ButtonColor = Color3.fromRGB(31, 35, 48)
+local ButtonActiveColor = Color3.fromRGB(55, 65, 81)
+local ButtonTextColor = Color3.fromRGB(255, 255, 255)
+local BlackStroke = Color3.fromRGB(0, 0, 0)
 
 local function doReset()
     if resetCooldown then return end
@@ -60,17 +71,128 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer.PlayerGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 250, 0, 405)
-Frame.Position = UDim2.new(1, -260, 0, 10)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Size = UDim2.new(0, 540, 0, 470)
+Frame.Position = UDim2.new(0.5, -270, 0.5, -235)
+Frame.BackgroundColor3 = Color3.fromRGB(14, 18, 32)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
-Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 14)
+
+local FrameStroke = Instance.new("UIStroke")
+FrameStroke.Color = Color3.fromRGB(255, 255, 255)
+FrameStroke.Thickness = 2
+FrameStroke.Transparency = 0
+FrameStroke.Parent = Frame
+
+local FrameGradient = Instance.new("UIGradient")
+FrameGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 14, 26)),
+    ColorSequenceKeypoint.new(0.55, Color3.fromRGB(18, 24, 42)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 10, 20))
+})
+FrameGradient.Rotation = 35
+FrameGradient.Parent = Frame
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 54)
+Header.Position = UDim2.new(0, 0, 0, 0)
+Header.BackgroundColor3 = Color3.fromRGB(7, 10, 18)
+Header.BorderSizePixel = 0
+Header.Parent = Frame
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 14)
+
+local HeaderLine = Instance.new("Frame")
+HeaderLine.Size = UDim2.new(1, -24, 0, 2)
+HeaderLine.Position = UDim2.new(0, 12, 1, -2)
+HeaderLine.BackgroundColor3 = Color3.fromRGB(31, 35, 48)
+HeaderLine.BorderSizePixel = 0
+HeaderLine.Parent = Header
+
+local ProfileCard = Instance.new("Frame")
+ProfileCard.Size = UDim2.new(1, -24, 0, 68)
+ProfileCard.Position = UDim2.new(0, 12, 0, 66)
+ProfileCard.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
+ProfileCard.BackgroundTransparency = 0.08
+ProfileCard.BorderSizePixel = 0
+ProfileCard.Parent = Frame
+Instance.new("UICorner", ProfileCard).CornerRadius = UDim.new(0, 12)
+
+local ProfileStroke = Instance.new("UIStroke")
+ProfileStroke.Color = Color3.fromRGB(18, 18, 18)
+ProfileStroke.Thickness = 1
+ProfileStroke.Parent = ProfileCard
+
+local AvatarBox = Instance.new("Frame")
+AvatarBox.Size = UDim2.new(0, 54, 0, 54)
+AvatarBox.Position = UDim2.new(0, 10, 0, 7)
+AvatarBox.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
+AvatarBox.BorderSizePixel = 0
+AvatarBox.Parent = ProfileCard
+Instance.new("UICorner", AvatarBox).CornerRadius = UDim.new(0, 10)
+
+local AvatarText = Instance.new("TextLabel")
+AvatarText.Size = UDim2.new(1, 0, 1, 0)
+AvatarText.BackgroundTransparency = 1
+AvatarText.Text = "t_18"
+AvatarText.TextColor3 = Color3.fromRGB(255, 255, 255)
+AvatarText.TextStrokeColor3 = BlackStroke
+AvatarText.TextStrokeTransparency = 0
+AvatarText.TextScaled = true
+AvatarText.Font = Enum.Font.GothamBlack
+AvatarText.Parent = AvatarBox
+
+local WelcomeLabel = Instance.new("TextLabel")
+WelcomeLabel.Size = UDim2.new(1, -82, 0, 22)
+WelcomeLabel.Position = UDim2.new(0, 74, 0, 9)
+WelcomeLabel.BackgroundTransparency = 1
+WelcomeLabel.Text = "مساء النور @T_18"
+WelcomeLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+WelcomeLabel.TextScaled = true
+WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Right
+WelcomeLabel.Font = Enum.Font.GothamBold
+WelcomeLabel.Parent = ProfileCard
+
+local PlanLabel = Instance.new("TextLabel")
+PlanLabel.Size = UDim2.new(1, -82, 0, 28)
+PlanLabel.Position = UDim2.new(0, 74, 0, 32)
+PlanLabel.BackgroundTransparency = 1
+PlanLabel.Text = "Free User | للاخفاء اضغط الزر الصغير"
+PlanLabel.TextColor3 = Color3.fromRGB(203, 213, 225)
+PlanLabel.TextScaled = true
+PlanLabel.TextXAlignment = Enum.TextXAlignment.Right
+PlanLabel.Font = Enum.Font.Gotham
+PlanLabel.Parent = ProfileCard
+
+local ContentPanel = Instance.new("Frame")
+ContentPanel.Size = UDim2.new(1, -24, 0, 300)
+ContentPanel.Position = UDim2.new(0, 12, 0, 146)
+ContentPanel.BackgroundColor3 = Color3.fromRGB(2, 6, 23)
+ContentPanel.BackgroundTransparency = 0.05
+ContentPanel.BorderSizePixel = 0
+ContentPanel.Parent = Frame
+Instance.new("UICorner", ContentPanel).CornerRadius = UDim.new(0, 12)
+
+local ContentStroke = Instance.new("UIStroke")
+ContentStroke.Color = Color3.fromRGB(18, 18, 18)
+ContentStroke.Thickness = 1
+ContentStroke.Transparency = 0.15
+ContentStroke.Parent = ContentPanel
+
+local Footer = Instance.new("TextLabel")
+Footer.Size = UDim2.new(1, -24, 0, 16)
+Footer.Position = UDim2.new(0, 12, 1, -18)
+Footer.BackgroundTransparency = 1
+Footer.Text = "© All rights reserved t_18"
+Footer.TextColor3 = Color3.fromRGB(100, 116, 139)
+Footer.TextScaled = true
+Footer.TextXAlignment = Enum.TextXAlignment.Left
+Footer.Font = Enum.Font.Gotham
+Footer.Parent = Frame
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
 ToggleBtn.Position = UDim2.new(1, -34, 0, 10)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.BackgroundColor3 = ButtonColor
 ToggleBtn.Text = ""
 ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
@@ -99,13 +221,17 @@ ToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Size = UDim2.new(1, -36, 1, 0)
+Title.Position = UDim2.new(0, 18, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "t_18"
-Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextStrokeColor3 = BlackStroke
+Title.TextStrokeTransparency = 0
 Title.TextScaled = true
-Title.Font = Enum.Font.GothamBold
-Title.Parent = Frame
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBlack
+Title.Parent = Header
 
 local dragging = false
 local dragStart = nil
@@ -146,106 +272,130 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 local Input = Instance.new("TextBox")
-Input.Size = UDim2.new(0.9, 0, 0, 35)
-Input.Position = UDim2.new(0.05, 0, 0, 35)
-Input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Input.TextColor3 = Color3.fromRGB(255, 255, 255)
+Input.Size = UDim2.new(1, -32, 0, 34)
+Input.Position = UDim2.new(0, 16, 0, 16)
+Input.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
+Input.TextColor3 = ButtonTextColor
+Input.TextStrokeColor3 = BlackStroke
+Input.TextStrokeTransparency = 0
 Input.PlaceholderText = "Player Name..."
 Input.Text = ""
 Input.Font = Enum.Font.Gotham
 Input.TextScaled = true
 Input.ClearTextOnFocus = false
-Input.Parent = Frame
-Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 6)
+Input.Parent = ContentPanel
+Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 8)
 
 local function makeBtn(text, color, yPos)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 35)
-    btn.Position = UDim2.new(0.05, 0, 0, yPos)
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Size = UDim2.new(0, 154, 0, 34)
+    btn.Position = UDim2.new(0, 16, 0, yPos)
+    btn.BackgroundColor3 = ButtonColor
+    btn.TextColor3 = ButtonTextColor
+    btn.TextStrokeColor3 = BlackStroke
+    btn.TextStrokeTransparency = 0
     btn.Text = text
     btn.Font = Enum.Font.GothamBold
     btn.TextScaled = true
-    btn.Parent = Frame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    btn.Parent = ContentPanel
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 9)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = BlackStroke
+    stroke.Transparency = 0.15
+    stroke.Thickness = 1
+    stroke.Parent = btn
     return btn
 end
 
-local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
-local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
-local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
+local BangBtn  = makeBtn("بانق", ButtonColor, 62)
+local ResetBtn = makeBtn("ريسيت", Color3.fromRGB(245, 158, 11), 62)
+ResetBtn.Position = UDim2.new(0, 346, 0, 62)
+local FlingBtn = makeBtn("حماية بانق", ButtonColor, 104)
+FlingBtn.Size = UDim2.new(1, -32, 0, 34)
 
 local FlyBtn = Instance.new("TextButton")
 FlyBtn.Size = UDim2.new(0.55, 0, 0, 35)
-FlyBtn.Position = UDim2.new(0.05, 0, 0, 207)
-FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
-FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyBtn.Size = UDim2.new(0, 154, 0, 34)
+FlyBtn.Position = UDim2.new(0, 16, 0, 146)
+FlyBtn.BackgroundColor3 = ButtonColor
+FlyBtn.TextColor3 = ButtonTextColor
+FlyBtn.TextStrokeColor3 = BlackStroke
+FlyBtn.TextStrokeTransparency = 0
 FlyBtn.Text = "طيران"
 FlyBtn.Font = Enum.Font.GothamBold
 FlyBtn.TextScaled = true
-FlyBtn.Parent = Frame
-Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 6)
+FlyBtn.Parent = ContentPanel
+Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 9)
 
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
-SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.Size = UDim2.new(0, 154, 0, 34)
+SpeedInput.Position = UDim2.new(0, 346, 0, 146)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
+SpeedInput.TextColor3 = ButtonTextColor
+SpeedInput.TextStrokeColor3 = BlackStroke
+SpeedInput.TextStrokeTransparency = 0
 SpeedInput.PlaceholderText = "سرعة"
 SpeedInput.Text = "50"
 SpeedInput.Font = Enum.Font.Gotham
 SpeedInput.TextScaled = true
 SpeedInput.ClearTextOnFocus = false
-SpeedInput.Parent = Frame
-Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 6)
+SpeedInput.Parent = ContentPanel
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 9)
 
 local WalkSpeedBtn = Instance.new("TextButton")
 WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
-WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 250)
-WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
-WalkSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+WalkSpeedBtn.Size = UDim2.new(0, 154, 0, 34)
+WalkSpeedBtn.Position = UDim2.new(0, 16, 0, 188)
+WalkSpeedBtn.BackgroundColor3 = ButtonColor
+WalkSpeedBtn.TextColor3 = ButtonTextColor
+WalkSpeedBtn.TextStrokeColor3 = BlackStroke
+WalkSpeedBtn.TextStrokeTransparency = 0
 WalkSpeedBtn.Text = "سرعة اللاعب"
 WalkSpeedBtn.Font = Enum.Font.GothamBold
 WalkSpeedBtn.TextScaled = true
-WalkSpeedBtn.Parent = Frame
-Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
+WalkSpeedBtn.Parent = ContentPanel
+Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 9)
 
 local WalkSpeedInput = Instance.new("TextBox")
 WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
-WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 250)
-WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+WalkSpeedInput.Size = UDim2.new(0, 154, 0, 34)
+WalkSpeedInput.Position = UDim2.new(0, 346, 0, 188)
+WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
+WalkSpeedInput.TextColor3 = ButtonTextColor
+WalkSpeedInput.TextStrokeColor3 = BlackStroke
+WalkSpeedInput.TextStrokeTransparency = 0
 WalkSpeedInput.PlaceholderText = "سرعة"
 WalkSpeedInput.Text = "16"
 WalkSpeedInput.Font = Enum.Font.Gotham
 WalkSpeedInput.TextScaled = true
 WalkSpeedInput.ClearTextOnFocus = false
-WalkSpeedInput.Parent = Frame
-Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 6)
+WalkSpeedInput.Parent = ContentPanel
+Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 9)
 
 local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Size = UDim2.new(0.9, 0, 0, 18)
-SpeedLabel.Position = UDim2.new(0.05, 0, 0, 288)
+SpeedLabel.Size = UDim2.new(1, -32, 0, 18)
+SpeedLabel.Position = UDim2.new(0, 16, 0, 226)
 SpeedLabel.BackgroundTransparency = 1
 SpeedLabel.Text = "W A S D للتحرك | Space للصعود | Shift للنزول"
-SpeedLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+SpeedLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 SpeedLabel.TextScaled = true
 SpeedLabel.Font = Enum.Font.Gotham
-SpeedLabel.Parent = Frame
+SpeedLabel.Parent = ContentPanel
 
 WalkSpeedBtn.MouseButton1Click:Connect(function()
     SpeedActive = not SpeedActive
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChild("Humanoid")
     if SpeedActive then
-        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        WalkSpeedBtn.BackgroundColor3 = ButtonActiveColor
         WalkSpeedBtn.Text = "سرعة شغاله"
         if hum then
             hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
         end
     else
-        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+        WalkSpeedBtn.BackgroundColor3 = ButtonColor
         WalkSpeedBtn.Text = "سرعة اللاعب"
         if hum then
             hum.WalkSpeed = 16
@@ -256,7 +406,7 @@ end)
 FlingBtn.MouseButton1Click:Connect(function()
     flingActive = not flingActive
     if flingActive then
-        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlingBtn.BackgroundColor3 = ButtonActiveColor
         FlingBtn.Text = "الحماية شغاله"
         task.spawn(function()
             while flingActive do
@@ -274,7 +424,7 @@ FlingBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+        FlingBtn.BackgroundColor3 = ButtonColor
         FlingBtn.Text = "حماية بانق"
     end
 end)
@@ -283,14 +433,14 @@ local function stopBang()
     isActive = false
     if followConnection then followConnection:Disconnect() followConnection = nil end
     if animTrack then animTrack:Stop() animTrack = nil end
-    BangBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    BangBtn.Text = "Bang"
+    BangBtn.BackgroundColor3 = ButtonColor
+    BangBtn.Text = "بانق"
 end
 
 local function startBang(target)
     isActive = true
-    BangBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-    BangBtn.Text = "Stop"
+    BangBtn.BackgroundColor3 = ButtonActiveColor
+    BangBtn.Text = "ايقاف"
     local myChar = LocalPlayer.Character
     local hum = myChar and myChar:FindFirstChild("Humanoid")
     if hum then
@@ -373,14 +523,14 @@ local function stopFly()
         local hum = char:FindFirstChild("Humanoid")
         if hum then hum.PlatformStand = false end
     end
-    FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+    FlyBtn.BackgroundColor3 = ButtonColor
     FlyBtn.Text = "طيران"
 end
 
 FlyBtn.MouseButton1Click:Connect(function()
     flyActive = not flyActive
     if flyActive then
-        FlyBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlyBtn.BackgroundColor3 = ButtonActiveColor
         FlyBtn.Text = "ايقاف الطيران"
         local char = LocalPlayer.Character
         if not char then flyActive = false return end
@@ -418,21 +568,71 @@ FlyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(80, 200, 120), 293)
-local SpectateBtn = makeBtn("مشاهده", Color3.fromRGB(120, 80, 220), 336)
+local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(20, 184, 166), 254)
+local SpectateBtn = makeBtn("مشاهده", ButtonColor, 254)
+local SavePlaceBtn = makeBtn("حفظ مكاني", ButtonColor, 254)
+TeleportBtn.Size = UDim2.new(0, 154, 0, 32)
+SpectateBtn.Size = UDim2.new(0, 154, 0, 32)
+SavePlaceBtn.Size = UDim2.new(0, 154, 0, 32)
+TeleportBtn.Position = UDim2.new(0, 16, 0, 254)
+SpectateBtn.Position = UDim2.new(0, 181, 0, 254)
+SavePlaceBtn.Position = UDim2.new(0, 346, 0, 254)
+
+local function showSpectateWarning(message)
+    if SpectateWarningLabel then
+        SpectateWarningLabel.Text = message
+        SpectateWarningLabel.Visible = true
+
+        task.delay(3, function()
+            if SpectateWarningLabel then
+                SpectateWarningLabel.Visible = false
+            end
+        end)
+    else
+        warn(message)
+    end
+end
+
+SavePlaceBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+
+    if not root then
+        warn("Cannot save location")
+        return
+    end
+
+    if SavedLocation then
+        root.CFrame = SavedLocation
+        SavePlaceBtn.Text = "حفظ مكاني"
+        SavePlaceBtn.BackgroundColor3 = ButtonColor
+        SavedLocation = nil
+    else
+        SavedLocation = root.CFrame
+        SavePlaceBtn.Text = "رجوع للمكان"
+        SavePlaceBtn.BackgroundColor3 = ButtonActiveColor
+    end
+end)
 
 TeleportBtn.MouseButton1Click:Connect(function()
     local targetName = Input.Text
     local target
+
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Name:lower():find(targetName:lower()) and #targetName >= 3 then
+        if p ~= LocalPlayer and #targetName >= 3 and p.Name:lower():find(targetName:lower(), 1, true) then
             target = p
             break
         end
     end
+
     if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
         local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if root then
+            if not SavedLocation then
+                SavedLocation = root.CFrame
+                SavePlaceBtn.Text = "رجوع للمكان"
+                SavePlaceBtn.BackgroundColor3 = ButtonActiveColor
+            end
             root.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
         end
     end
@@ -453,24 +653,81 @@ local function findTargetPlayer()
     return nil
 end
 
-local function stopSpectate()
+local function restoreMyCamera()
+    local camera = workspace.CurrentCamera
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if camera then
+        camera.CameraType = OriginalCameraType or Enum.CameraType.Custom
+        camera.CameraSubject = hum or OriginalCameraSubject
+    end
+
+    OriginalCameraType = nil
+    OriginalCameraSubject = nil
+end
+
+local function clearSpectateLabels(keepWarning)
+    if SpectateNameLabel then
+        SpectateNameLabel:Destroy()
+        SpectateNameLabel = nil
+    end
+
+    if SpectateWarningLabel and not keepWarning then
+        SpectateWarningLabel:Destroy()
+        SpectateWarningLabel = nil
+    end
+end
+
+local function stopSpectate(keepWarning)
     SpectateActive = false
-    SpectateTarget = nil
 
     if SpectateConnection then
         SpectateConnection:Disconnect()
         SpectateConnection = nil
     end
 
-    if SpectateGui then
-        SpectateGui:Destroy()
-        SpectateGui = nil
+    if SpectatePlayerRemovingConnection then
+        SpectatePlayerRemovingConnection:Disconnect()
+        SpectatePlayerRemovingConnection = nil
     end
 
-    SpectateCamera = nil
+    restoreMyCamera()
+    clearSpectateLabels(keepWarning)
 
-    SpectateBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 220)
+    SpectateTarget = nil
+
+    SpectateBtn.BackgroundColor3 = ButtonColor
     SpectateBtn.Text = "مشاهده"
+end
+
+local function createSpectateLabels(target)
+    clearSpectateLabels()
+
+    SpectateNameLabel = Instance.new("TextLabel")
+    SpectateNameLabel.Size = UDim2.new(0, 300, 0, 36)
+    SpectateNameLabel.Position = UDim2.new(0.5, -150, 0, 15)
+    SpectateNameLabel.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
+    SpectateNameLabel.BackgroundTransparency = 0.35
+    SpectateNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SpectateNameLabel.TextScaled = true
+    SpectateNameLabel.Font = Enum.Font.GothamBold
+    SpectateNameLabel.Text = "مشاهدة: " .. target.Name
+    SpectateNameLabel.Parent = ScreenGui
+    Instance.new("UICorner", SpectateNameLabel).CornerRadius = UDim.new(0, 8)
+
+    SpectateWarningLabel = Instance.new("TextLabel")
+    SpectateWarningLabel.Size = UDim2.new(0, 360, 0, 40)
+    SpectateWarningLabel.Position = UDim2.new(0.5, -180, 0, 58)
+    SpectateWarningLabel.BackgroundColor3 = Color3.fromRGB(220, 38, 38)
+    SpectateWarningLabel.BackgroundTransparency = 0.15
+    SpectateWarningLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SpectateWarningLabel.TextScaled = true
+    SpectateWarningLabel.Font = Enum.Font.GothamBold
+    SpectateWarningLabel.Text = ""
+    SpectateWarningLabel.Visible = false
+    SpectateWarningLabel.Parent = ScreenGui
+    Instance.new("UICorner", SpectateWarningLabel).CornerRadius = UDim.new(0, 8)
 end
 
 local function startSpectate(target)
@@ -478,186 +735,79 @@ local function startSpectate(target)
         return
     end
 
+    local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
+    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+
+    if not targetHumanoid or not targetRoot then
+        return
+    end
+
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return
+    end
+
+    OriginalCameraType = camera.CameraType
+    OriginalCameraSubject = camera.CameraSubject
+
     SpectateActive = true
     SpectateTarget = target
 
-    SpectateBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-    SpectateBtn.Text = "ايقاف المشاهده"
+    SpectateBtn.BackgroundColor3 = ButtonActiveColor
+    SpectateBtn.Text = "الغاء المشاهده"
 
-    SpectateGui = Instance.new("ScreenGui")
-    SpectateGui.Name = "SpectateSplitGui"
-    SpectateGui.ResetOnSpawn = false
-    SpectateGui.IgnoreGuiInset = true
-    SpectateGui.Parent = LocalPlayer.PlayerGui
+    createSpectateLabels(target)
 
-    local LeftFrame = Instance.new("Frame")
-    LeftFrame.Size = UDim2.new(0.5, 0, 1, 0)
-    LeftFrame.Position = UDim2.new(0, 0, 0, 0)
-    LeftFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    LeftFrame.BorderSizePixel = 0
-    LeftFrame.Parent = SpectateGui
-
-    local Viewport = Instance.new("ViewportFrame")
-    Viewport.Size = UDim2.new(1, 0, 1, 0)
-    Viewport.Position = UDim2.new(0, 0, 0, 0)
-    Viewport.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    Viewport.BorderSizePixel = 0
-    Viewport.Parent = LeftFrame
-
-    SpectateCamera = Instance.new("Camera")
-    SpectateCamera.Parent = Viewport
-    Viewport.CurrentCamera = SpectateCamera
-
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, 0, 0, 34)
-    Label.Position = UDim2.new(0, 0, 0, 0)
-    Label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Label.BackgroundTransparency = 0.35
-    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Label.TextScaled = true
-    Label.Font = Enum.Font.GothamBold
-    Label.Text = "مشاهدة: " .. target.Name
-    Label.Parent = LeftFrame
-
-    local WorldModel = Instance.new("WorldModel")
-    WorldModel.Parent = Viewport
-
-    local EnvironmentFolder = Instance.new("Folder")
-    EnvironmentFolder.Name = "Environment"
-    EnvironmentFolder.Parent = WorldModel
-
-    local CharacterFolder = Instance.new("Folder")
-    CharacterFolder.Name = "Characters"
-    CharacterFolder.Parent = WorldModel
-
-    local clonedChar = nil
-    local lastRefreshTime = 0
-    local environmentRadius = 160
-
-    local function isPlayerCharacterPart(obj)
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr.Character and obj:IsDescendantOf(plr.Character) then
-                return true
-            end
-        end
-        return false
+    if SpectatePlayerRemovingConnection then
+        SpectatePlayerRemovingConnection:Disconnect()
+        SpectatePlayerRemovingConnection = nil
     end
 
-    local function cleanClone(clone)
-        for _, obj in pairs(clone:GetDescendants()) do
-            if obj:IsA("Script") or obj:IsA("LocalScript") then
-                obj:Destroy()
-            elseif obj:IsA("BasePart") then
-                obj.Anchored = true
-                obj.CanCollide = false
-            end
-        end
-    end
-
-    local function cloneBasePart(obj, parent)
-        local success, clone = pcall(function()
-            return obj:Clone()
-        end)
-
-        if success and clone then
-            cleanClone(clone)
-            if clone:IsA("BasePart") then
-                clone.CFrame = obj.CFrame
-                clone.Size = obj.Size
-                clone.Transparency = obj.Transparency
-                clone.Color = obj.Color
-                clone.Material = obj.Material
-            end
-            clone.Parent = parent
-        end
-    end
-
-    local function refreshEnvironment(centerPosition)
-        EnvironmentFolder:ClearAllChildren()
-
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart")
-            and obj.Transparency < 1
-            and not isPlayerCharacterPart(obj)
-            and not obj:IsDescendantOf(SpectateGui)
-            and (obj.Position - centerPosition).Magnitude <= environmentRadius then
-                cloneBasePart(obj, EnvironmentFolder)
-            end
-        end
-    end
-
-    local function refreshPlayers()
-        CharacterFolder:ClearAllChildren()
-        clonedChar = nil
-
-        for _, plr in pairs(Players:GetPlayers()) do
-            local char = plr.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local root = char.HumanoidRootPart
-                local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-
-                if targetRoot and (root.Position - targetRoot.Position).Magnitude <= environmentRadius then
-                    local oldArchivable = char.Archivable
-                    char.Archivable = true
-
-                    local success, clone = pcall(function()
-                        return char:Clone()
-                    end)
-
-                    char.Archivable = oldArchivable
-
-                    if success and clone then
-                        cleanClone(clone)
-                        clone.Parent = CharacterFolder
-
-                        if plr == target then
-                            clonedChar = clone
-                        end
-                    end
+    SpectatePlayerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
+        if player == target then
+            showSpectateWarning("اللاعب طلع من اللعبة")
+            task.delay(0.7, function()
+                if SpectateTarget == target then
+                    stopSpectate(true)
                 end
-            end
+            end)
         end
-    end
+    end)
 
-    local function refreshView(rootPosition)
-        refreshPlayers()
-        refreshEnvironment(rootPosition)
-    end
-
-    local firstRoot = target.Character:FindFirstChild("HumanoidRootPart")
-    if firstRoot then
-        refreshView(firstRoot.Position)
-    end
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = targetHumanoid
 
     SpectateConnection = RunService.RenderStepped:Connect(function()
         if not SpectateActive or not SpectateTarget then
-            stopSpectate()
+            stopSpectate(true)
             return
         end
 
         local char = SpectateTarget.Character
-        if not char then
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+
+        if not Players:FindFirstChild(SpectateTarget.Name) then
+            showSpectateWarning("اللاعب طلع من اللعبة")
+            stopSpectate(true)
+            return
+        end
+
+        if not char or not hum or not root or hum.Health <= 0 then
+            showSpectateWarning("المشاهدة توقفت، اللاعب غير متاح")
             stopSpectate()
             return
         end
 
-        local root = char:FindFirstChild("HumanoidRootPart")
-        local head = char:FindFirstChild("Head")
-
-        if not root or not head then
-            return
+        if SpectateNameLabel then
+            SpectateNameLabel.Text = "مشاهدة: " .. SpectateTarget.Name
         end
 
-        if tick() - lastRefreshTime > 0.1 then
-            lastRefreshTime = tick()
-            refreshView(root.Position)
+        local currentCamera = workspace.CurrentCamera
+        if currentCamera then
+            currentCamera.CameraType = Enum.CameraType.Custom
+            currentCamera.CameraSubject = hum
         end
-
-        local cameraPosition = root.Position - root.CFrame.LookVector * 12 + Vector3.new(0, 5, 0)
-        local lookAtPosition = root.Position + Vector3.new(0, 2, 0)
-
-        SpectateCamera.CFrame = CFrame.lookAt(cameraPosition, lookAtPosition)
-        SpectateCamera.FieldOfView = 75
     end)
 end
 
@@ -679,5 +829,7 @@ end)
 LocalPlayer.CharacterAdded:Connect(function()
     if SpectateActive then
         stopSpectate()
+    else
+        restoreMyCamera()
     end
 end)

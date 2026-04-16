@@ -68,7 +68,7 @@ ScreenGui.Parent = LocalPlayer.PlayerGui
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 250, 0, 448)
 Frame.Position = UDim2.new(1, -260, 0, 10)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BackgroundColor3 = Color3.fromRGB(14, 18, 32)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
@@ -76,7 +76,7 @@ Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
 ToggleBtn.Position = UDim2.new(1, -34, 0, 10)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(124, 58, 237)
 ToggleBtn.Text = ""
 ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
@@ -108,7 +108,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundTransparency = 1
 Title.Text = "t_18"
-Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.TextColor3 = Color3.fromRGB(34, 211, 238)
 Title.TextScaled = true
 Title.Font = Enum.Font.GothamBold
 Title.Parent = Frame
@@ -154,7 +154,7 @@ end)
 local Input = Instance.new("TextBox")
 Input.Size = UDim2.new(0.9, 0, 0, 35)
 Input.Position = UDim2.new(0.05, 0, 0, 35)
-Input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Input.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
 Input.TextColor3 = Color3.fromRGB(255, 255, 255)
 Input.PlaceholderText = "Player Name..."
 Input.Text = ""
@@ -178,14 +178,14 @@ local function makeBtn(text, color, yPos)
     return btn
 end
 
-local BangBtn  = makeBtn("Bang", Color3.fromRGB(200, 50, 50), 78)
-local ResetBtn = makeBtn("Reset", Color3.fromRGB(150, 100, 0), 121)
-local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(50, 100, 200), 164)
+local BangBtn  = makeBtn("بانق", Color3.fromRGB(236, 72, 153), 78)
+local ResetBtn = makeBtn("ريسيت", Color3.fromRGB(245, 158, 11), 121)
+local FlingBtn = makeBtn("حماية بانق", Color3.fromRGB(59, 130, 246), 164)
 
 local FlyBtn = Instance.new("TextButton")
 FlyBtn.Size = UDim2.new(0.55, 0, 0, 35)
 FlyBtn.Position = UDim2.new(0.05, 0, 0, 207)
-FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+FlyBtn.BackgroundColor3 = Color3.fromRGB(124, 58, 237)
 FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 FlyBtn.Text = "طيران"
 FlyBtn.Font = Enum.Font.GothamBold
@@ -196,7 +196,7 @@ Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 6)
 local SpeedInput = Instance.new("TextBox")
 SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 SpeedInput.Position = UDim2.new(0.63, 0, 0, 207)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedInput.PlaceholderText = "سرعة"
 SpeedInput.Text = "50"
@@ -209,7 +209,7 @@ Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 6)
 local WalkSpeedBtn = Instance.new("TextButton")
 WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
 WalkSpeedBtn.Position = UDim2.new(0.05, 0, 0, 250)
-WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(249, 115, 22)
 WalkSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedBtn.Text = "سرعة اللاعب"
 WalkSpeedBtn.Font = Enum.Font.GothamBold
@@ -220,7 +220,7 @@ Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 6)
 local WalkSpeedInput = Instance.new("TextBox")
 WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 WalkSpeedInput.Position = UDim2.new(0.63, 0, 0, 250)
-WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
 WalkSpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 WalkSpeedInput.PlaceholderText = "سرعة"
 WalkSpeedInput.Text = "16"
@@ -235,7 +235,7 @@ SpeedLabel.Size = UDim2.new(0.9, 0, 0, 18)
 SpeedLabel.Position = UDim2.new(0.05, 0, 0, 288)
 SpeedLabel.BackgroundTransparency = 1
 SpeedLabel.Text = "W A S D للتحرك | Space للصعود | Shift للنزول"
-SpeedLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+SpeedLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 SpeedLabel.TextScaled = true
 SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.Parent = Frame
@@ -245,13 +245,13 @@ WalkSpeedBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChild("Humanoid")
     if SpeedActive then
-        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
         WalkSpeedBtn.Text = "سرعة شغاله"
         if hum then
             hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
         end
     else
-        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 0)
+        WalkSpeedBtn.BackgroundColor3 = Color3.fromRGB(249, 115, 22)
         WalkSpeedBtn.Text = "سرعة اللاعب"
         if hum then
             hum.WalkSpeed = 16
@@ -262,7 +262,7 @@ end)
 FlingBtn.MouseButton1Click:Connect(function()
     flingActive = not flingActive
     if flingActive then
-        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlingBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
         FlingBtn.Text = "الحماية شغاله"
         task.spawn(function()
             while flingActive do
@@ -280,7 +280,7 @@ FlingBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        FlingBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+        FlingBtn.BackgroundColor3 = Color3.fromRGB(59, 130, 246)
         FlingBtn.Text = "حماية بانق"
     end
 end)
@@ -289,14 +289,14 @@ local function stopBang()
     isActive = false
     if followConnection then followConnection:Disconnect() followConnection = nil end
     if animTrack then animTrack:Stop() animTrack = nil end
-    BangBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    BangBtn.Text = "Bang"
+    BangBtn.BackgroundColor3 = Color3.fromRGB(236, 72, 153)
+    BangBtn.Text = "بانق"
 end
 
 local function startBang(target)
     isActive = true
-    BangBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-    BangBtn.Text = "Stop"
+    BangBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
+    BangBtn.Text = "ايقاف"
     local myChar = LocalPlayer.Character
     local hum = myChar and myChar:FindFirstChild("Humanoid")
     if hum then
@@ -379,14 +379,14 @@ local function stopFly()
         local hum = char:FindFirstChild("Humanoid")
         if hum then hum.PlatformStand = false end
     end
-    FlyBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+    FlyBtn.BackgroundColor3 = Color3.fromRGB(124, 58, 237)
     FlyBtn.Text = "طيران"
 end
 
 FlyBtn.MouseButton1Click:Connect(function()
     flyActive = not flyActive
     if flyActive then
-        FlyBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
         FlyBtn.Text = "ايقاف الطيران"
         local char = LocalPlayer.Character
         if not char then flyActive = false return end
@@ -424,9 +424,9 @@ FlyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(80, 200, 120), 293)
-local SpectateBtn = makeBtn("مشاهده", Color3.fromRGB(120, 80, 220), 336)
-local SavePlaceBtn = makeBtn("حفظ مكاني", Color3.fromRGB(60, 160, 160), 379)
+local TeleportBtn = makeBtn("تنقل", Color3.fromRGB(20, 184, 166), 293)
+local SpectateBtn = makeBtn("مشاهده", Color3.fromRGB(139, 92, 246), 336)
+local SavePlaceBtn = makeBtn("حفظ مكاني", Color3.fromRGB(6, 182, 212), 379)
 
 local function showSpectateWarning(message)
     if SpectateWarningLabel then
@@ -455,12 +455,12 @@ SavePlaceBtn.MouseButton1Click:Connect(function()
     if SavedLocation then
         root.CFrame = SavedLocation
         SavePlaceBtn.Text = "حفظ مكاني"
-        SavePlaceBtn.BackgroundColor3 = Color3.fromRGB(60, 160, 160)
+        SavePlaceBtn.BackgroundColor3 = Color3.fromRGB(6, 182, 212)
         SavedLocation = nil
     else
         SavedLocation = root.CFrame
         SavePlaceBtn.Text = "رجوع للمكان"
-        SavePlaceBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        SavePlaceBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
     end
 end)
 
@@ -481,7 +481,7 @@ TeleportBtn.MouseButton1Click:Connect(function()
             if not SavedLocation then
                 SavedLocation = root.CFrame
                 SavePlaceBtn.Text = "رجوع للمكان"
-                SavePlaceBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+                SavePlaceBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
             end
             root.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
         end
@@ -547,7 +547,7 @@ local function stopSpectate(keepWarning)
 
     SpectateTarget = nil
 
-    SpectateBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 220)
+    SpectateBtn.BackgroundColor3 = Color3.fromRGB(139, 92, 246)
     SpectateBtn.Text = "مشاهده"
 end
 
@@ -557,7 +557,7 @@ local function createSpectateLabels(target)
     SpectateNameLabel = Instance.new("TextLabel")
     SpectateNameLabel.Size = UDim2.new(0, 300, 0, 36)
     SpectateNameLabel.Position = UDim2.new(0.5, -150, 0, 15)
-    SpectateNameLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    SpectateNameLabel.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
     SpectateNameLabel.BackgroundTransparency = 0.35
     SpectateNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     SpectateNameLabel.TextScaled = true
@@ -569,7 +569,7 @@ local function createSpectateLabels(target)
     SpectateWarningLabel = Instance.new("TextLabel")
     SpectateWarningLabel.Size = UDim2.new(0, 360, 0, 40)
     SpectateWarningLabel.Position = UDim2.new(0.5, -180, 0, 58)
-    SpectateWarningLabel.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
+    SpectateWarningLabel.BackgroundColor3 = Color3.fromRGB(220, 38, 38)
     SpectateWarningLabel.BackgroundTransparency = 0.15
     SpectateWarningLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     SpectateWarningLabel.TextScaled = true
@@ -603,7 +603,7 @@ local function startSpectate(target)
     SpectateActive = true
     SpectateTarget = target
 
-    SpectateBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    SpectateBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
     SpectateBtn.Text = "الغاء المشاهده"
 
     createSpectateLabels(target)

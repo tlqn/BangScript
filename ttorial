@@ -122,28 +122,9 @@ ProfileStroke.Color = Color3.fromRGB(18, 18, 18)
 ProfileStroke.Thickness = 1
 ProfileStroke.Parent = ProfileCard
 
-local AvatarBox = Instance.new("Frame")
-AvatarBox.Size = UDim2.new(0, 54, 0, 54)
-AvatarBox.Position = UDim2.new(0, 10, 0, 7)
-AvatarBox.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
-AvatarBox.BorderSizePixel = 0
-AvatarBox.Parent = ProfileCard
-Instance.new("UICorner", AvatarBox).CornerRadius = UDim.new(0, 10)
-
-local AvatarText = Instance.new("TextLabel")
-AvatarText.Size = UDim2.new(1, 0, 1, 0)
-AvatarText.BackgroundTransparency = 1
-AvatarText.Text = "t_18"
-AvatarText.TextColor3 = Color3.fromRGB(255, 255, 255)
-AvatarText.TextStrokeColor3 = BlackStroke
-AvatarText.TextStrokeTransparency = 0
-AvatarText.TextScaled = true
-AvatarText.Font = Enum.Font.GothamBlack
-AvatarText.Parent = AvatarBox
-
 local WelcomeLabel = Instance.new("TextLabel")
-WelcomeLabel.Size = UDim2.new(1, -82, 0, 22)
-WelcomeLabel.Position = UDim2.new(0, 74, 0, 9)
+WelcomeLabel.Size = UDim2.new(1, -20, 0, 22)
+WelcomeLabel.Position = UDim2.new(0, 10, 0, 9)
 WelcomeLabel.BackgroundTransparency = 1
 WelcomeLabel.Text = "مساء النور @T_18"
 WelcomeLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
@@ -153,8 +134,8 @@ WelcomeLabel.Font = Enum.Font.GothamBold
 WelcomeLabel.Parent = ProfileCard
 
 local PlanLabel = Instance.new("TextLabel")
-PlanLabel.Size = UDim2.new(1, -82, 0, 28)
-PlanLabel.Position = UDim2.new(0, 74, 0, 32)
+PlanLabel.Size = UDim2.new(1, -20, 0, 28)
+PlanLabel.Position = UDim2.new(0, 10, 0, 32)
 PlanLabel.BackgroundTransparency = 1
 PlanLabel.Text = "Free User | للاخفاء اضغط الزر الصغير"
 PlanLabel.TextColor3 = Color3.fromRGB(203, 213, 225)

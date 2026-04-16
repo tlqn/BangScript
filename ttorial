@@ -522,32 +522,112 @@ local function startSpectate(target)
     local WorldModel = Instance.new("WorldModel")
     WorldModel.Parent = Viewport
 
+    local EnvironmentFolder = Instance.new("Folder")
+    EnvironmentFolder.Name = "Environment"
+    EnvironmentFolder.Parent = WorldModel
+
+    local CharacterFolder = Instance.new("Folder")
+    CharacterFolder.Name = "Characters"
+    CharacterFolder.Parent = WorldModel
+
     local clonedChar = nil
-    local lastCloneTime = 0
+    local lastRefreshTime = 0
+    local environmentRadius = 160
 
-    local function refreshClone()
-        if clonedChar then
-            clonedChar:Destroy()
-            clonedChar = nil
+    local function isPlayerCharacterPart(obj)
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr.Character and obj:IsDescendantOf(plr.Character) then
+                return true
+            end
         end
+        return false
+    end
 
-        local char = target.Character
-        if not char then return end
-
-        char.Archivable = true
-        clonedChar = char:Clone()
-        clonedChar.Parent = WorldModel
-
-        for _, obj in pairs(clonedChar:GetDescendants()) do
+    local function cleanClone(clone)
+        for _, obj in pairs(clone:GetDescendants()) do
             if obj:IsA("Script") or obj:IsA("LocalScript") then
                 obj:Destroy()
             elseif obj:IsA("BasePart") then
                 obj.Anchored = true
+                obj.CanCollide = false
             end
         end
     end
 
-    refreshClone()
+    local function cloneBasePart(obj, parent)
+        local success, clone = pcall(function()
+            return obj:Clone()
+        end)
+
+        if success and clone then
+            cleanClone(clone)
+            if clone:IsA("BasePart") then
+                clone.CFrame = obj.CFrame
+                clone.Size = obj.Size
+                clone.Transparency = obj.Transparency
+                clone.Color = obj.Color
+                clone.Material = obj.Material
+            end
+            clone.Parent = parent
+        end
+    end
+
+    local function refreshEnvironment(centerPosition)
+        EnvironmentFolder:ClearAllChildren()
+
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart")
+            and obj.Transparency < 1
+            and not isPlayerCharacterPart(obj)
+            and not obj:IsDescendantOf(SpectateGui)
+            and (obj.Position - centerPosition).Magnitude <= environmentRadius then
+                cloneBasePart(obj, EnvironmentFolder)
+            end
+        end
+    end
+
+    local function refreshPlayers()
+        CharacterFolder:ClearAllChildren()
+        clonedChar = nil
+
+        for _, plr in pairs(Players:GetPlayers()) do
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local root = char.HumanoidRootPart
+                local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+
+                if targetRoot and (root.Position - targetRoot.Position).Magnitude <= environmentRadius then
+                    local oldArchivable = char.Archivable
+                    char.Archivable = true
+
+                    local success, clone = pcall(function()
+                        return char:Clone()
+                    end)
+
+                    char.Archivable = oldArchivable
+
+                    if success and clone then
+                        cleanClone(clone)
+                        clone.Parent = CharacterFolder
+
+                        if plr == target then
+                            clonedChar = clone
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local function refreshView(rootPosition)
+        refreshPlayers()
+        refreshEnvironment(rootPosition)
+    end
+
+    local firstRoot = target.Character:FindFirstChild("HumanoidRootPart")
+    if firstRoot then
+        refreshView(firstRoot.Position)
+    end
 
     SpectateConnection = RunService.RenderStepped:Connect(function()
         if not SpectateActive or not SpectateTarget then
@@ -568,25 +648,16 @@ local function startSpectate(target)
             return
         end
 
-        if tick() - lastCloneTime > 0.2 then
-            lastCloneTime = tick()
-            refreshClone()
+        if tick() - lastRefreshTime > 0.1 then
+            lastRefreshTime = tick()
+            refreshView(root.Position)
         end
 
-        if clonedChar then
-            local cloneRoot = clonedChar:FindFirstChild("HumanoidRootPart")
-            if cloneRoot then
-                local offset = CFrame.new(0, 0, 0)
-                clonedChar:PivotTo(offset)
-            end
-        end
+        local cameraPosition = root.Position - root.CFrame.LookVector * 12 + Vector3.new(0, 5, 0)
+        local lookAtPosition = root.Position + Vector3.new(0, 2, 0)
 
-        local lookDirection = root.CFrame.LookVector
-local cameraPosition = Vector3.new(0, 3.2, 8)
-local lookAtPosition = Vector3.new(0, 2.2, 0)
-
-SpectateCamera.CFrame = CFrame.lookAt(cameraPosition, lookAtPosition)
-SpectateCamera.FieldOfView = 75
+        SpectateCamera.CFrame = CFrame.lookAt(cameraPosition, lookAtPosition)
+        SpectateCamera.FieldOfView = 75
     end)
 end
 

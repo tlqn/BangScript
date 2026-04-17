@@ -173,7 +173,8 @@ Footer.Parent = Frame
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 48, 0, 48)
 ToggleBtn.Position = UDim2.new(1, -58, 0, 10)
-ToggleBtn.BackgroundTransparency = 1
+ToggleBtn.BackgroundColor3 = ButtonColor
+ToggleBtn.BackgroundTransparency = 0
 ToggleBtn.Text = ""
 ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
@@ -376,15 +377,11 @@ WalkSpeedBtn.MouseButton1Click:Connect(function()
 	if SpeedActive then
 		WalkSpeedBtn.BackgroundColor3 = ButtonActiveColor
 		WalkSpeedBtn.Text = "سرعة شغاله"
-		if hum then
-			hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16
-		end
+		if hum then hum.WalkSpeed = tonumber(WalkSpeedInput.Text) or 16 end
 	else
 		WalkSpeedBtn.BackgroundColor3 = ButtonColor
 		WalkSpeedBtn.Text = "سرعة اللاعب"
-		if hum then
-			hum.WalkSpeed = 16
-		end
+		if hum then hum.WalkSpeed = 16 end
 	end
 end)
 
@@ -568,9 +565,7 @@ local function showSpectateWarning(message)
 		SpectateWarningLabel.Text = message
 		SpectateWarningLabel.Visible = true
 		task.delay(3, function()
-			if SpectateWarningLabel then
-				SpectateWarningLabel.Visible = false
-			end
+			if SpectateWarningLabel then SpectateWarningLabel.Visible = false end
 		end)
 	else
 		warn(message)
@@ -598,8 +593,7 @@ TeleportBtn.MouseButton1Click:Connect(function()
 	local target
 	for _, p in pairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer and #targetName >= 3 and p.Name:lower():find(targetName:lower(), 1, true) then
-			target = p
-			break
+			target = p break
 		end
 	end
 	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
@@ -619,9 +613,7 @@ local function findTargetPlayer()
 	local targetName = Input.Text
 	if not targetName or #targetName < 3 then return nil end
 	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p.Name:lower():find(targetName:lower(), 1, true) then
-			return p
-		end
+		if p ~= LocalPlayer and p.Name:lower():find(targetName:lower(), 1, true) then return p end
 	end
 	return nil
 end
@@ -639,26 +631,14 @@ local function restoreMyCamera()
 end
 
 local function clearSpectateLabels(keepWarning)
-	if SpectateNameLabel then
-		SpectateNameLabel:Destroy()
-		SpectateNameLabel = nil
-	end
-	if SpectateWarningLabel and not keepWarning then
-		SpectateWarningLabel:Destroy()
-		SpectateWarningLabel = nil
-	end
+	if SpectateNameLabel then SpectateNameLabel:Destroy() SpectateNameLabel = nil end
+	if SpectateWarningLabel and not keepWarning then SpectateWarningLabel:Destroy() SpectateWarningLabel = nil end
 end
 
 local function stopSpectate(keepWarning)
 	SpectateActive = false
-	if SpectateConnection then
-		SpectateConnection:Disconnect()
-		SpectateConnection = nil
-	end
-	if SpectatePlayerRemovingConnection then
-		SpectatePlayerRemovingConnection:Disconnect()
-		SpectatePlayerRemovingConnection = nil
-	end
+	if SpectateConnection then SpectateConnection:Disconnect() SpectateConnection = nil end
+	if SpectatePlayerRemovingConnection then SpectatePlayerRemovingConnection:Disconnect() SpectatePlayerRemovingConnection = nil end
 	restoreMyCamera()
 	clearSpectateLabels(keepWarning)
 	SpectateTarget = nil
@@ -670,105 +650,4 @@ local function createSpectateLabels(target)
 	clearSpectateLabels()
 	SpectateNameLabel = Instance.new("TextLabel")
 	SpectateNameLabel.Size = UDim2.new(0, 300, 0, 36)
-	SpectateNameLabel.Position = UDim2.new(0.5, -150, 0, 15)
-	SpectateNameLabel.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
-	SpectateNameLabel.BackgroundTransparency = 0.35
-	SpectateNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	SpectateNameLabel.TextScaled = true
-	SpectateNameLabel.Font = Enum.Font.GothamBold
-	SpectateNameLabel.Text = "مشاهدة: " .. target.Name
-	SpectateNameLabel.Parent = ScreenGui
-	Instance.new("UICorner", SpectateNameLabel).CornerRadius = UDim.new(0, 8)
-	SpectateWarningLabel = Instance.new("TextLabel")
-	SpectateWarningLabel.Size = UDim2.new(0, 360, 0, 40)
-	SpectateWarningLabel.Position = UDim2.new(0.5, -180, 0, 58)
-	SpectateWarningLabel.BackgroundColor3 = Color3.fromRGB(220, 38, 38)
-	SpectateWarningLabel.BackgroundTransparency = 0.15
-	SpectateWarningLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	SpectateWarningLabel.TextScaled = true
-	SpectateWarningLabel.Font = Enum.Font.GothamBold
-	SpectateWarningLabel.Text = ""
-	SpectateWarningLabel.Visible = false
-	SpectateWarningLabel.Parent = ScreenGui
-	Instance.new("UICorner", SpectateWarningLabel).CornerRadius = UDim.new(0, 8)
-end
-
-local function startSpectate(target)
-	if not target or not target.Character then return end
-	local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
-	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-	if not targetHumanoid or not targetRoot then return end
-	local camera = workspace.CurrentCamera
-	if not camera then return end
-	OriginalCameraType = camera.CameraType
-	OriginalCameraSubject = camera.CameraSubject
-	SpectateActive = true
-	SpectateTarget = target
-	SpectateBtn.BackgroundColor3 = ButtonActiveColor
-	SpectateBtn.Text = "الغاء المشاهده"
-	createSpectateLabels(target)
-	if SpectatePlayerRemovingConnection then
-		SpectatePlayerRemovingConnection:Disconnect()
-		SpectatePlayerRemovingConnection = nil
-	end
-	SpectatePlayerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
-		if player == target then
-			showSpectateWarning("اللاعب طلع من اللعبة")
-			task.delay(0.7, function()
-				if SpectateTarget == target then
-					stopSpectate(true)
-				end
-			end)
-		end
-	end)
-	camera.CameraType = Enum.CameraType.Custom
-	camera.CameraSubject = targetHumanoid
-	SpectateConnection = RunService.RenderStepped:Connect(function()
-		if not SpectateActive or not SpectateTarget then
-			stopSpectate(true)
-			return
-		end
-		local char = SpectateTarget.Character
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		local root = char and char:FindFirstChild("HumanoidRootPart")
-		if not Players:FindFirstChild(SpectateTarget.Name) then
-			showSpectateWarning("اللاعب طلع من اللعبة")
-			stopSpectate(true)
-			return
-		end
-		if not char or not hum or not root or hum.Health <= 0 then
-			showSpectateWarning("المشاهدة توقفت، اللاعب غير متاح")
-			stopSpectate()
-			return
-		end
-		if SpectateNameLabel then
-			SpectateNameLabel.Text = "مشاهدة: " .. SpectateTarget.Name
-		end
-		local currentCamera = workspace.CurrentCamera
-		if currentCamera then
-			currentCamera.CameraType = Enum.CameraType.Custom
-			currentCamera.CameraSubject = hum
-		end
-	end)
-end
-
-SpectateBtn.MouseButton1Click:Connect(function()
-	if SpectateActive then
-		stopSpectate()
-		return
-	end
-	local target = findTargetPlayer()
-	if target then
-		startSpectate(target)
-	else
-		warn("Player not found or name is too short")
-	end
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-	if SpectateActive then
-		stopSpectate()
-	else
-		restoreMyCamera()
-	end
-end)
+	SpectateName

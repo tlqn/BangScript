@@ -171,9 +171,9 @@ Footer.Font = Enum.Font.Gotham
 Footer.Parent = Frame
 
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
-ToggleBtn.Position = UDim2.new(1, -34, 0, 10)
-ToggleBtn.BackgroundColor3 = ButtonColor
+ToggleBtn.Size = UDim2.new(0, 48, 0, 48)
+ToggleBtn.Position = UDim2.new(1, -58, 0, 10)
+ToggleBtn.BackgroundTransparency = 1
 ToggleBtn.Text = ""
 ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui

@@ -179,9 +179,13 @@ ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
-local tDragging = false
-local tDragStart = nil
-local tStartPos = nil
+local ToggleImg = Instance.new("ImageLabel")
+ToggleImg.Size = UDim2.new(1, 0, 1, 0)
+ToggleImg.BackgroundTransparency = 1
+ToggleImg.Image = "rbxassetid://74974196723682"
+ToggleImg.ScaleType = Enum.ScaleType.Fit
+ToggleImg.Parent = ToggleBtn
+Instance.new("UICorner", ToggleImg).CornerRadius = UDim.new(1, 0)
 
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1

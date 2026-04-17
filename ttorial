@@ -650,4 +650,84 @@ local function createSpectateLabels(target)
 	clearSpectateLabels()
 	SpectateNameLabel = Instance.new("TextLabel")
 	SpectateNameLabel.Size = UDim2.new(0, 300, 0, 36)
-	SpectateName
+	SpectateNameLabel.Position = UDim2.new(0.5, -150, 0, 15)
+	SpectateNameLabel.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
+	SpectateNameLabel.BackgroundTransparency = 0.35
+	SpectateNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	SpectateNameLabel.TextScaled = true
+	SpectateNameLabel.Font = Enum.Font.GothamBold
+	SpectateNameLabel.Text = "مشاهدة: " .. target.Name
+	SpectateNameLabel.Parent = ScreenGui
+	Instance.new("UICorner", SpectateNameLabel).CornerRadius = UDim.new(0, 8)
+	SpectateWarningLabel = Instance.new("TextLabel")
+	SpectateWarningLabel.Size = UDim2.new(0, 360, 0, 40)
+	SpectateWarningLabel.Position = UDim2.new(0.5, -180, 0, 58)
+	SpectateWarningLabel.BackgroundColor3 = Color3.fromRGB(220, 38, 38)
+	SpectateWarningLabel.BackgroundTransparency = 0.15
+	SpectateWarningLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	SpectateWarningLabel.TextScaled = true
+	SpectateWarningLabel.Font = Enum.Font.GothamBold
+	SpectateWarningLabel.Text = ""
+	SpectateWarningLabel.Visible = false
+	SpectateWarningLabel.Parent = ScreenGui
+	Instance.new("UICorner", SpectateWarningLabel).CornerRadius = UDim.new(0, 8)
+end
+
+local function startSpectate(target)
+	if not target or not target.Character then return end
+	local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
+	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetHumanoid or not targetRoot then return end
+	local camera = workspace.CurrentCamera
+	if not camera then return end
+	OriginalCameraType = camera.CameraType
+	OriginalCameraSubject = camera.CameraSubject
+	SpectateActive = true
+	SpectateTarget = target
+	SpectateBtn.BackgroundColor3 = ButtonActiveColor
+	SpectateBtn.Text = "الغاء المشاهده"
+	createSpectateLabels(target)
+	if SpectatePlayerRemovingConnection then SpectatePlayerRemovingConnection:Disconnect() SpectatePlayerRemovingConnection = nil end
+	SpectatePlayerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
+		if player == target then
+			showSpectateWarning("اللاعب طلع من اللعبة")
+			task.delay(0.7, function()
+				if SpectateTarget == target then stopSpectate(true) end
+			end)
+		end
+	end)
+	camera.CameraType = Enum.CameraType.Custom
+	camera.CameraSubject = targetHumanoid
+	SpectateConnection = RunService.RenderStepped:Connect(function()
+		if not SpectateActive or not SpectateTarget then stopSpectate(true) return end
+		local char = SpectateTarget.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not Players:FindFirstChild(SpectateTarget.Name) then
+			showSpectateWarning("اللاعب طلع من اللعبة")
+			stopSpectate(true) return
+		end
+		if not char or not hum or not root or hum.Health <= 0 then
+			showSpectateWarning("المشاهدة توقفت، اللاعب غير متاح")
+			stopSpectate() return
+		end
+		if SpectateNameLabel then SpectateNameLabel.Text = "مشاهدة: " .. SpectateTarget.Name end
+		local currentCamera = workspace.CurrentCamera
+		if currentCamera then
+			currentCamera.CameraType = Enum.CameraType.Custom
+			currentCamera.CameraSubject = hum
+		end
+	end)
+end
+
+SpectateBtn.MouseButton1Click:Connect(function()
+	if SpectateActive then stopSpectate() return end
+	local target = findTargetPlayer()
+	if target then startSpectate(target)
+	else warn("Player not found or name is too short") end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+	if SpectateActive then stopSpectate()
+	else restoreMyCamera() end
+end)

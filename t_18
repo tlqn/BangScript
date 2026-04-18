@@ -403,11 +403,11 @@ FlingBtn.MouseButton1Click:Connect(function()
                     if root then
                         local orig = root.CFrame
                         root.CFrame = CFrame.new(999999999999999, 999999999999999, 999999999999999)
-                        task.wait(0.02)
+                        task.wait(0.03)
                         root.CFrame = orig
                     end
                 end
-                task.wait(0.056)
+                task.wait(0.040)
             end
         end)
     else

@@ -407,7 +407,7 @@ FlingBtn.MouseButton1Click:Connect(function()
                         root.CFrame = orig
                     end
                 end
-                task.wait(0.040)
+                task.wait(0.2)
             end
         end)
     else

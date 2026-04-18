@@ -171,9 +171,10 @@ Footer.Font = Enum.Font.Gotham
 Footer.Parent = Frame
 
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
-ToggleBtn.Position = UDim2.new(1, -34, 0, 10)
+ToggleBtn.Size = UDim2.new(0, 48, 0, 48)
+ToggleBtn.Position = UDim2.new(1, -58, 0, 10)
 ToggleBtn.BackgroundColor3 = ButtonColor
+ToggleBtn.BackgroundTransparency = 0
 ToggleBtn.Text = ""
 ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
@@ -181,11 +182,17 @@ Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local ToggleImg = Instance.new("ImageLabel")
 ToggleImg.Size = UDim2.new(1, 0, 1, 0)
+ToggleImg.Position = UDim2.new(0, 0, 0, 0)
 ToggleImg.BackgroundTransparency = 1
-ToggleImg.Image = "rbxassetid://74974196723682"
+ToggleImg.Image = "rbxassetid://93582248656670"
 ToggleImg.ScaleType = Enum.ScaleType.Fit
+ToggleImg.ZIndex = 21
 ToggleImg.Parent = ToggleBtn
 Instance.new("UICorner", ToggleImg).CornerRadius = UDim.new(1, 0)
+
+local tDragging = false
+local tDragStart = nil
+local tStartPos = nil
 
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -299,7 +306,6 @@ local FlingBtn = makeBtn("حماية بانق", ButtonColor, 104)
 FlingBtn.Size = UDim2.new(1, -32, 0, 34)
 
 local FlyBtn = Instance.new("TextButton")
-FlyBtn.Size = UDim2.new(0.55, 0, 0, 35)
 FlyBtn.Size = UDim2.new(0, 154, 0, 34)
 FlyBtn.Position = UDim2.new(0, 16, 0, 146)
 FlyBtn.BackgroundColor3 = ButtonColor
@@ -313,7 +319,6 @@ FlyBtn.Parent = ContentPanel
 Instance.new("UICorner", FlyBtn).CornerRadius = UDim.new(0, 9)
 
 local SpeedInput = Instance.new("TextBox")
-SpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 SpeedInput.Size = UDim2.new(0, 154, 0, 34)
 SpeedInput.Position = UDim2.new(0, 346, 0, 146)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
@@ -329,7 +334,6 @@ SpeedInput.Parent = ContentPanel
 Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 9)
 
 local WalkSpeedBtn = Instance.new("TextButton")
-WalkSpeedBtn.Size = UDim2.new(0.55, 0, 0, 35)
 WalkSpeedBtn.Size = UDim2.new(0, 154, 0, 34)
 WalkSpeedBtn.Position = UDim2.new(0, 16, 0, 188)
 WalkSpeedBtn.BackgroundColor3 = ButtonColor
@@ -343,7 +347,6 @@ WalkSpeedBtn.Parent = ContentPanel
 Instance.new("UICorner", WalkSpeedBtn).CornerRadius = UDim.new(0, 9)
 
 local WalkSpeedInput = Instance.new("TextBox")
-WalkSpeedInput.Size = UDim2.new(0.32, 0, 0, 35)
 WalkSpeedInput.Size = UDim2.new(0, 154, 0, 34)
 WalkSpeedInput.Position = UDim2.new(0, 346, 0, 188)
 WalkSpeedInput.BackgroundColor3 = Color3.fromRGB(24, 31, 50)
@@ -359,7 +362,6 @@ WalkSpeedInput.Parent = ContentPanel
 Instance.new("UICorner", WalkSpeedInput).CornerRadius = UDim.new(0, 9)
 
 local SpeedLabel = Instance.new("TextLabel")
-SpeedLabel.Size = UDim2.new(0.9, 0, 0, 18)
 SpeedLabel.Size = UDim2.new(1, -32, 0, 18)
 SpeedLabel.Position = UDim2.new(0, 16, 0, 226)
 SpeedLabel.BackgroundTransparency = 1
@@ -580,10 +582,7 @@ end
 SavePlaceBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then
-        warn("Cannot save location")
-        return
-    end
+    if not root then warn("Cannot save location") return end
     if SavedLocation then
         root.CFrame = SavedLocation
         SavePlaceBtn.Text = "حفظ مكاني"
@@ -620,13 +619,9 @@ end)
 
 local function findTargetPlayer()
     local targetName = Input.Text
-    if not targetName or #targetName < 3 then
-        return nil
-    end
+    if not targetName or #targetName < 3 then return nil end
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Name:lower():find(targetName:lower(), 1, true) then
-            return p
-        end
+        if p ~= LocalPlayer and p.Name:lower():find(targetName:lower(), 1, true) then return p end
     end
     return nil
 end

@@ -361,11 +361,11 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     button.BackgroundColor3 = baseColor or Theme.ButtonDefault
     button.AutoButtonColor = false
     button.Text = text
-    button.TextColor3 = Theme.Text
-    button.TextStrokeTransparency = 0.75
-    button.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextStrokeTransparency = 0.25
+    button.TextStrokeColor3 = Color3.fromRGB(8, 12, 20)
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 15
+    button.TextSize = 16
     button.Parent = ContentPanel
     makeCorner(button, 12)
     makeStroke(button, Theme.Border, 1, 0.05)
@@ -373,11 +373,11 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     local shine = Instance.new("UIGradient")
     shine.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, accentColor or Color3.fromRGB(203, 213, 225)),
+        ColorSequenceKeypoint.new(1, accentColor or Color3.fromRGB(255, 255, 255)),
     })
     shine.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.68),
-        NumberSequenceKeypoint.new(1, 0.9),
+        NumberSequenceKeypoint.new(0, 0.84),
+        NumberSequenceKeypoint.new(1, 0.94),
     })
     shine.Rotation = 90
     shine.Parent = button

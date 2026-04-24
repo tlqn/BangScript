@@ -362,25 +362,13 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     button.AutoButtonColor = false
     button.Text = text
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextStrokeTransparency = 0.25
-    button.TextStrokeColor3 = Color3.fromRGB(8, 12, 20)
+    button.TextStrokeTransparency = 0
+    button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 16
+    button.TextSize = 17
     button.Parent = ContentPanel
     makeCorner(button, 12)
     makeStroke(button, Theme.Border, 1, 0.05)
-
-    local shine = Instance.new("UIGradient")
-    shine.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, accentColor or Color3.fromRGB(255, 255, 255)),
-    })
-    shine.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.84),
-        NumberSequenceKeypoint.new(1, 0.94),
-    })
-    shine.Rotation = 90
-    shine.Parent = button
 
     local accentBar = Instance.new("Frame")
     accentBar.Name = "AccentBar"
@@ -388,8 +376,20 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     accentBar.Position = UDim2.new(0, 0, 0, 0)
     accentBar.BackgroundColor3 = accentColor or Theme.Accent
     accentBar.BorderSizePixel = 0
+    accentBar.ZIndex = 1
     accentBar.Parent = button
     makeCorner(accentBar, 12)
+
+    local highlight = Instance.new("Frame")
+    highlight.Name = "Highlight"
+    highlight.Size = UDim2.new(1, -2, 0, 12)
+    highlight.Position = UDim2.new(0, 1, 0, 1)
+    highlight.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    highlight.BackgroundTransparency = 0.9
+    highlight.BorderSizePixel = 0
+    highlight.ZIndex = 1
+    highlight.Parent = button
+    makeCorner(highlight, 11)
 
     return button
 end

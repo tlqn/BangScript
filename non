@@ -3,6 +3,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
+local isTouchDevice = UserInputService.TouchEnabled
 
 local isActive = false
 local animTrack = nil
@@ -24,6 +25,17 @@ local SpectatePlayerRemovingConnection = nil
 local SavedLocation = nil
 
 local characterConnections = {}
+local viewportConnection = nil
+local FrameScale = nil
+local FlyTouchFrame = nil
+local mobileFlyInput = {
+    Up = false,
+    Down = false,
+    Forward = false,
+    Backward = false,
+    Left = false,
+    Right = false,
+}
 
 local Theme = {
     Bg = Color3.fromRGB(10, 15, 26),
@@ -180,6 +192,38 @@ Frame.Parent = ScreenGui
 makeCorner(Frame, 22)
 makeStroke(Frame, Theme.Border, 1, 0.1)
 makeShadow(Frame)
+
+FrameScale = Instance.new("UIScale")
+FrameScale.Parent = Frame
+
+local function updateResponsiveLayout()
+    local camera = workspace.CurrentCamera
+    if not camera or not FrameScale then
+        return
+    end
+
+    local viewport = camera.ViewportSize
+    local scale = math.min(viewport.X / 690, viewport.Y / 650, 1)
+    if isTouchDevice and viewport.X < 900 then
+        scale *= 0.96
+    end
+
+    FrameScale.Scale = math.clamp(scale, 0.42, 1)
+end
+
+local function bindViewportListener()
+    if viewportConnection then
+        viewportConnection:Disconnect()
+        viewportConnection = nil
+    end
+
+    local camera = workspace.CurrentCamera
+    if camera then
+        viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateResponsiveLayout)
+    end
+
+    updateResponsiveLayout()
+end
 
 local FrameGradient = Instance.new("UIGradient")
 FrameGradient.Color = ColorSequence.new({
@@ -353,7 +397,7 @@ Input.Parent = ContentPanel
 makeCorner(Input, 12)
 makeStroke(Input, Theme.Border, 1, 0.2)
 
-local function makeButton(name, text, size, position, baseColor, accentColor)
+local function makeButton(name, text, size, position, baseColor)
     local button = Instance.new("TextButton")
     button.Name = name
     button.Size = size
@@ -403,12 +447,12 @@ local function makeInput(name, placeholder, defaultText, position)
     return box
 end
 
-local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 82), Theme.ButtonDefault, Theme.ButtonRed)
-local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 82), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
-local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 130), Theme.ButtonDefault, Theme.ButtonBlue)
-local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 178), Theme.ButtonDefault, Theme.ButtonBlue)
+local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 82), Theme.ButtonDefault)
+local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 82), Theme.ButtonOrange)
+local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 130), Theme.ButtonDefault)
+local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 178), Theme.ButtonDefault)
 local SpeedInput = makeInput("SpeedInput", "سرعة الطيران", "50", UDim2.new(0, 190, 0, 178))
-local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 226), Theme.ButtonDefault, Theme.ButtonBlue)
+local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 226), Theme.ButtonDefault)
 local WalkSpeedInput = makeInput("WalkSpeedInput", "سرعة المشي", "16", UDim2.new(0, 190, 0, 226))
 
 local SpeedLabel = Instance.new("TextLabel")
@@ -422,9 +466,9 @@ SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.TextSize = 13
 SpeedLabel.Parent = ContentPanel
 
-local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonBlue, Theme.Accent)
-local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 274), Theme.ButtonDefault, Theme.ButtonGreen)
-local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 168, 0, 38), UDim2.new(1, -172, 0, 274), Theme.ButtonDefaultAlt, Theme.ButtonOrange)
+local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonBlue)
+local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 274), Theme.ButtonDefault)
+local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 168, 0, 38), UDim2.new(1, -172, 0, 274), Theme.ButtonDefaultAlt)
 
 local Footer = Instance.new("TextLabel")
 Footer.Size = UDim2.new(1, -32, 0, 18)
@@ -457,6 +501,78 @@ ToggleImg.Image = "rbxassetid://93582248656670"
 ToggleImg.ScaleType = Enum.ScaleType.Fit
 ToggleImg.ZIndex = 21
 ToggleImg.Parent = ToggleBtn
+
+local function makeFlyTouchButton(name, text, position)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Size = UDim2.new(0, 52, 0, 38)
+    button.Position = position
+    button.BackgroundColor3 = Theme.ButtonDefault
+    button.Text = text
+    button.TextColor3 = Theme.Text
+    button.TextStrokeTransparency = 0
+    button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 14
+    button.AutoButtonColor = false
+    button.Parent = FlyTouchFrame
+    makeCorner(button, 10)
+    makeStroke(button, Theme.Border, 1, 0.08)
+    return button
+end
+
+local function bindFlyTouchButton(button, inputName)
+    button.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch
+            or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            mobileFlyInput[inputName] = true
+        end
+    end)
+
+    button.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch
+            or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            mobileFlyInput[inputName] = false
+        end
+    end)
+end
+
+FlyTouchFrame = Instance.new("Frame")
+FlyTouchFrame.Name = "FlyTouchControls"
+FlyTouchFrame.AnchorPoint = Vector2.new(1, 1)
+FlyTouchFrame.Size = UDim2.new(0, 184, 0, 150)
+FlyTouchFrame.Position = UDim2.new(1, -14, 1, -14)
+FlyTouchFrame.BackgroundColor3 = Theme.Panel
+FlyTouchFrame.BackgroundTransparency = 0.08
+FlyTouchFrame.BorderSizePixel = 0
+FlyTouchFrame.Visible = false
+FlyTouchFrame.Parent = ScreenGui
+makeCorner(FlyTouchFrame, 16)
+makeStroke(FlyTouchFrame, Theme.Border, 1, 0.15)
+
+local FlyTouchTitle = Instance.new("TextLabel")
+FlyTouchTitle.Size = UDim2.new(1, 0, 0, 24)
+FlyTouchTitle.Position = UDim2.new(0, 0, 0, 4)
+FlyTouchTitle.BackgroundTransparency = 1
+FlyTouchTitle.Text = "Fly Controls"
+FlyTouchTitle.TextColor3 = Theme.Text
+FlyTouchTitle.Font = Enum.Font.GothamBold
+FlyTouchTitle.TextSize = 13
+FlyTouchTitle.Parent = FlyTouchFrame
+
+local TouchUpBtn = makeFlyTouchButton("TouchUpBtn", "UP", UDim2.new(0, 10, 0, 32))
+local TouchForwardBtn = makeFlyTouchButton("TouchForwardBtn", "FWD", UDim2.new(0, 66, 0, 32))
+local TouchDownBtn = makeFlyTouchButton("TouchDownBtn", "DOWN", UDim2.new(0, 122, 0, 32))
+local TouchLeftBtn = makeFlyTouchButton("TouchLeftBtn", "LEFT", UDim2.new(0, 10, 0, 82))
+local TouchBackBtn = makeFlyTouchButton("TouchBackBtn", "BACK", UDim2.new(0, 66, 0, 82))
+local TouchRightBtn = makeFlyTouchButton("TouchRightBtn", "RIGHT", UDim2.new(0, 122, 0, 82))
+
+bindFlyTouchButton(TouchUpBtn, "Up")
+bindFlyTouchButton(TouchDownBtn, "Down")
+bindFlyTouchButton(TouchForwardBtn, "Forward")
+bindFlyTouchButton(TouchBackBtn, "Backward")
+bindFlyTouchButton(TouchLeftBtn, "Left")
+bindFlyTouchButton(TouchRightBtn, "Right")
 
 local tDragging = false
 local tDragStart = nil
@@ -711,16 +827,29 @@ local function stopFly()
     end
 
     setButtonState(FlyBtn, false, "إيقاف الطيران", "طيران", Theme.Active, Theme.PanelSoft)
+    if FlyTouchFrame then
+        FlyTouchFrame.Visible = false
+    end
+    for key in pairs(mobileFlyInput) do
+        mobileFlyInput[key] = false
+    end
 end
 
 FlyBtn.MouseButton1Click:Connect(function()
     flyActive = not flyActive
     if flyActive then
         setButtonState(FlyBtn, true, "إيقاف الطيران", "طيران", Theme.Active, Theme.PanelSoft)
+        if FlyTouchFrame and isTouchDevice then
+            FlyTouchFrame.Visible = true
+        end
 
         local char = LocalPlayer.Character
         if not char then
             flyActive = false
+            if FlyTouchFrame then
+                FlyTouchFrame.Visible = false
+            end
+            setButtonState(FlyBtn, false, "إيقاف الطيران", "طيران", Theme.Active, Theme.PanelSoft)
             return
         end
 
@@ -728,6 +857,10 @@ FlyBtn.MouseButton1Click:Connect(function()
         local hum = char:FindFirstChild("Humanoid")
         if not root or not hum then
             flyActive = false
+            if FlyTouchFrame then
+                FlyTouchFrame.Visible = false
+            end
+            setButtonState(FlyBtn, false, "إيقاف الطيران", "طيران", Theme.Active, Theme.PanelSoft)
             return
         end
 
@@ -745,14 +878,18 @@ FlyBtn.MouseButton1Click:Connect(function()
         bg.P = 90000
         bg.Parent = root
 
-        local cam = workspace.CurrentCamera
         flyConnection = RunService.Heartbeat:Connect(function()
             if not flyActive then
                 return
             end
 
             local speed = tonumber(SpeedInput.Text) or 50
-            local cf = cam.CFrame
+            local currentCamera = workspace.CurrentCamera
+            if not currentCamera then
+                return
+            end
+
+            local cf = currentCamera.CFrame
             local velocity = Vector3.zero
 
             if UserInputService:IsKeyDown(Enum.KeyCode.W) then
@@ -774,6 +911,29 @@ FlyBtn.MouseButton1Click:Connect(function()
                 velocity -= Vector3.new(0, 1, 0)
             end
 
+            if mobileFlyInput.Forward then
+                velocity += cf.LookVector
+            end
+            if mobileFlyInput.Backward then
+                velocity -= cf.LookVector
+            end
+            if mobileFlyInput.Left then
+                velocity -= cf.RightVector
+            end
+            if mobileFlyInput.Right then
+                velocity += cf.RightVector
+            end
+            if mobileFlyInput.Up then
+                velocity += Vector3.new(0, 1, 0)
+            end
+            if mobileFlyInput.Down then
+                velocity -= Vector3.new(0, 1, 0)
+            end
+
+            if isTouchDevice and hum.MoveDirection.Magnitude > 0 then
+                velocity += hum.MoveDirection
+            end
+
             bv.Velocity = velocity * speed
             bg.CFrame = cf
         end)
@@ -781,6 +941,9 @@ FlyBtn.MouseButton1Click:Connect(function()
         stopFly()
     end
 end)
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindViewportListener)
+task.defer(bindViewportListener)
 
 local function showSpectateWarning(message)
     if SpectateWarningLabel then

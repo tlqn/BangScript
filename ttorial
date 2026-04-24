@@ -26,21 +26,21 @@ local SavedLocation = nil
 local characterConnections = {}
 
 local Theme = {
-    Bg = Color3.fromRGB(8, 12, 20),
-    Panel = Color3.fromRGB(13, 19, 33),
-    PanelSoft = Color3.fromRGB(17, 25, 42),
-    Header = Color3.fromRGB(11, 16, 28),
-    Card = Color3.fromRGB(19, 28, 46),
-    Input = Color3.fromRGB(24, 34, 55),
-    Border = Color3.fromRGB(46, 61, 88),
-    Text = Color3.fromRGB(243, 244, 246),
-    Muted = Color3.fromRGB(155, 167, 187),
-    Accent = Color3.fromRGB(56, 189, 248),
-    AccentSoft = Color3.fromRGB(14, 116, 144),
-    Active = Color3.fromRGB(34, 197, 94),
-    Warning = Color3.fromRGB(245, 158, 11),
-    Danger = Color3.fromRGB(239, 68, 68),
-    Shadow = Color3.fromRGB(2, 6, 23),
+    Bg = Color3.fromRGB(10, 15, 26),
+    Panel = Color3.fromRGB(18, 24, 39),
+    PanelSoft = Color3.fromRGB(34, 44, 66),
+    Header = Color3.fromRGB(14, 19, 31),
+    Card = Color3.fromRGB(24, 33, 51),
+    Input = Color3.fromRGB(26, 35, 53),
+    Border = Color3.fromRGB(83, 98, 128),
+    Text = Color3.fromRGB(248, 250, 252),
+    Muted = Color3.fromRGB(189, 198, 214),
+    Accent = Color3.fromRGB(37, 99, 235),
+    AccentSoft = Color3.fromRGB(30, 64, 175),
+    Active = Color3.fromRGB(22, 163, 74),
+    Warning = Color3.fromRGB(217, 119, 6),
+    Danger = Color3.fromRGB(220, 38, 38),
+    Shadow = Color3.fromRGB(2, 6, 18),
 }
 
 local function connect(list, signal, callback)
@@ -140,12 +140,12 @@ local function makeShadow(parent)
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
     shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.Position = UDim2.new(0.5, 0, 0.5, 12)
-    shadow.Size = UDim2.new(1, 46, 1, 46)
+    shadow.Position = UDim2.new(0.5, 0, 0.5, 8)
+    shadow.Size = UDim2.new(1, 20, 1, 20)
     shadow.BackgroundTransparency = 1
     shadow.Image = "rbxassetid://1316045217"
     shadow.ImageColor3 = Theme.Shadow
-    shadow.ImageTransparency = 0.42
+    shadow.ImageTransparency = 0.78
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceCenter = Rect.new(10, 10, 118, 118)
     shadow.ZIndex = parent.ZIndex - 1
@@ -162,7 +162,7 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 local Frame = Instance.new("Frame")
 Frame.Name = "Main"
 Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-Frame.Size = UDim2.new(0, 610, 0, 500)
+Frame.Size = UDim2.new(0, 610, 0, 570)
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Theme.Panel
 Frame.BorderSizePixel = 0
@@ -173,9 +173,9 @@ makeShadow(Frame)
 
 local FrameGradient = Instance.new("UIGradient")
 FrameGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 29, 49)),
-    ColorSequenceKeypoint.new(0.45, Color3.fromRGB(12, 19, 34)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 12, 23)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 47, 71)),
+    ColorSequenceKeypoint.new(0.45, Color3.fromRGB(20, 28, 44)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 18, 29)),
 })
 FrameGradient.Rotation = 125
 FrameGradient.Parent = Frame
@@ -218,7 +218,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(0.58, 0, 0, 18)
 Subtitle.Position = UDim2.new(0, 18, 0, 42)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "واجهة مطورة بشكل أنظف وأوضح"
+Subtitle.Text = "واجهة أوضح بتباين أفضل"
 Subtitle.TextColor3 = Theme.Muted
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 Subtitle.Font = Enum.Font.Gotham
@@ -304,7 +304,7 @@ PlanLabel.TextSize = 13
 PlanLabel.Parent = ProfileCard
 
 local ContentPanel = Instance.new("Frame")
-ContentPanel.Size = UDim2.new(1, -32, 0, 290)
+ContentPanel.Size = UDim2.new(1, -32, 0, 350)
 ContentPanel.Position = UDim2.new(0, 16, 0, 190)
 ContentPanel.BackgroundColor3 = Theme.Bg
 ContentPanel.BorderSizePixel = 0
@@ -341,7 +341,7 @@ Input.TextSize = 16
 Input.ClearTextOnFocus = false
 Input.Parent = ContentPanel
 makeCorner(Input, 12)
-makeStroke(Input, Theme.Border, 1, 0.45)
+makeStroke(Input, Theme.Border, 1, 0.2)
 
 local function makeButton(name, text, size, position, baseColor)
     local button = Instance.new("TextButton")
@@ -356,7 +356,7 @@ local function makeButton(name, text, size, position, baseColor)
     button.TextSize = 15
     button.Parent = ContentPanel
     makeCorner(button, 12)
-    makeStroke(button, Theme.Border, 1, 0.3)
+    makeStroke(button, Theme.Border, 1, 0.12)
 
     local shine = Instance.new("UIGradient")
     shine.Color = ColorSequence.new({
@@ -364,8 +364,8 @@ local function makeButton(name, text, size, position, baseColor)
         ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 210, 255)),
     })
     shine.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.88),
-        NumberSequenceKeypoint.new(1, 0.96),
+        NumberSequenceKeypoint.new(0, 0.78),
+        NumberSequenceKeypoint.new(1, 0.92),
     })
     shine.Rotation = 90
     shine.Parent = button
@@ -388,7 +388,7 @@ local function makeInput(name, placeholder, defaultText, position)
     box.ClearTextOnFocus = false
     box.Parent = ContentPanel
     makeCorner(box, 12)
-    makeStroke(box, Theme.Border, 1, 0.45)
+    makeStroke(box, Theme.Border, 1, 0.2)
     return box
 end
 

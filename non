@@ -40,31 +40,31 @@ local mobileFlyInput = {
 }
 
 local Theme = {
-    Bg = Color3.fromRGB(10, 15, 26),
-    Panel = Color3.fromRGB(18, 24, 39),
-    PanelSoft = Color3.fromRGB(34, 44, 66),
-    Header = Color3.fromRGB(14, 19, 31),
-    Card = Color3.fromRGB(24, 33, 51),
-    Input = Color3.fromRGB(26, 35, 53),
-    Border = Color3.fromRGB(83, 98, 128),
-    Text = Color3.fromRGB(248, 250, 252),
-    Muted = Color3.fromRGB(189, 198, 214),
-    Accent = Color3.fromRGB(37, 99, 235),
-    AccentSoft = Color3.fromRGB(30, 64, 175),
-    Active = Color3.fromRGB(22, 163, 74),
-    Warning = Color3.fromRGB(217, 119, 6),
+    Bg = Color3.fromRGB(2, 6, 23),
+    Panel = Color3.fromRGB(14, 18, 32),
+    PanelSoft = Color3.fromRGB(31, 35, 48),
+    Header = Color3.fromRGB(7, 10, 18),
+    Card = Color3.fromRGB(15, 23, 42),
+    Input = Color3.fromRGB(24, 31, 50),
+    Border = Color3.fromRGB(18, 18, 18),
+    Text = Color3.fromRGB(255, 255, 255),
+    Muted = Color3.fromRGB(203, 213, 225),
+    Accent = Color3.fromRGB(31, 35, 48),
+    AccentSoft = Color3.fromRGB(30, 41, 59),
+    Active = Color3.fromRGB(55, 65, 81),
+    Warning = Color3.fromRGB(245, 158, 11),
     Danger = Color3.fromRGB(220, 38, 38),
     Shadow = Color3.fromRGB(2, 6, 18),
-    ButtonDefault = Color3.fromRGB(56, 71, 102),
-    ButtonDefaultAlt = Color3.fromRGB(44, 56, 82),
-    ButtonBlue = Color3.fromRGB(37, 99, 235),
-    ButtonBlueAlt = Color3.fromRGB(29, 78, 216),
-    ButtonGreen = Color3.fromRGB(22, 163, 74),
-    ButtonGreenAlt = Color3.fromRGB(21, 128, 61),
-    ButtonOrange = Color3.fromRGB(217, 119, 6),
-    ButtonOrangeAlt = Color3.fromRGB(180, 83, 9),
-    ButtonRed = Color3.fromRGB(220, 38, 38),
-    ButtonRedAlt = Color3.fromRGB(185, 28, 28),
+    ButtonDefault = Color3.fromRGB(31, 35, 48),
+    ButtonDefaultAlt = Color3.fromRGB(31, 35, 48),
+    ButtonBlue = Color3.fromRGB(31, 35, 48),
+    ButtonBlueAlt = Color3.fromRGB(55, 65, 81),
+    ButtonGreen = Color3.fromRGB(31, 35, 48),
+    ButtonGreenAlt = Color3.fromRGB(55, 65, 81),
+    ButtonOrange = Color3.fromRGB(31, 35, 48),
+    ButtonOrangeAlt = Color3.fromRGB(55, 65, 81),
+    ButtonRed = Color3.fromRGB(31, 35, 48),
+    ButtonRedAlt = Color3.fromRGB(55, 65, 81),
 }
 
 local function connect(list, signal, callback)
@@ -193,7 +193,7 @@ Frame.BackgroundColor3 = Theme.Panel
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 makeCorner(Frame, 22)
-makeStroke(Frame, Theme.Border, 1, 0.1)
+makeStroke(Frame, Color3.fromRGB(255, 255, 255), 1, 0.2)
 makeShadow(Frame)
 
 FrameScale = Instance.new("UIScale")
@@ -251,11 +251,11 @@ end
 
 local FrameGradient = Instance.new("UIGradient")
 FrameGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 47, 71)),
-    ColorSequenceKeypoint.new(0.45, Color3.fromRGB(20, 28, 44)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 18, 29)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 14, 26)),
+    ColorSequenceKeypoint.new(0.55, Color3.fromRGB(18, 24, 42)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 10, 20)),
 })
-FrameGradient.Rotation = 125
+FrameGradient.Rotation = 35
 FrameGradient.Parent = Frame
 
 local Header = Instance.new("Frame")
@@ -315,7 +315,7 @@ makeStroke(TopBadge, Theme.Border, 1, 0.35)
 local TopBadgeDot = Instance.new("Frame")
 TopBadgeDot.Size = UDim2.new(0, 10, 0, 10)
 TopBadgeDot.Position = UDim2.new(0, 12, 0.5, -5)
-TopBadgeDot.BackgroundColor3 = Theme.Active
+TopBadgeDot.BackgroundColor3 = Theme.PanelSoft
 TopBadgeDot.BorderSizePixel = 0
 TopBadgeDot.Parent = TopBadge
 makeCorner(TopBadgeDot, 99)
@@ -484,7 +484,7 @@ SpeedLabel.Size = UDim2.new(0, 178, 0, 40)
 SpeedLabel.Position = UDim2.new(1, -176, 0, 176)
 SpeedLabel.BackgroundTransparency = 1
 SpeedLabel.Text = "W A S D | Space | Shift"
-SpeedLabel.TextColor3 = Theme.Muted
+SpeedLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 SpeedLabel.TextXAlignment = Enum.TextXAlignment.Right
 SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.TextSize = 13
@@ -494,12 +494,265 @@ local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 168, 0, 3
 local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 274), Theme.ButtonDefault, Theme.ButtonGreen)
 local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 168, 0, 38), UDim2.new(1, -172, 0, 274), Theme.ButtonDefaultAlt, Theme.ButtonOrange)
 
+PanelPadding:Destroy()
+SectionLabel:Destroy()
+ContentPanel.ClipsDescendants = true
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 132, 1, -20)
+Sidebar.Position = UDim2.new(0, 10, 0, 10)
+Sidebar.BackgroundColor3 = Theme.Header
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = ContentPanel
+makeCorner(Sidebar, 14)
+makeStroke(Sidebar, Theme.Border, 1, 0.2)
+
+local SidebarTitle = Instance.new("TextLabel")
+SidebarTitle.Size = UDim2.new(1, -16, 0, 22)
+SidebarTitle.Position = UDim2.new(0, 8, 0, 12)
+SidebarTitle.BackgroundTransparency = 1
+SidebarTitle.Text = "القوائم"
+SidebarTitle.TextColor3 = Theme.Text
+SidebarTitle.TextXAlignment = Enum.TextXAlignment.Right
+SidebarTitle.Font = Enum.Font.GothamBold
+SidebarTitle.TextSize = 14
+SidebarTitle.Parent = Sidebar
+
+local SidebarHint = Instance.new("TextLabel")
+SidebarHint.Size = UDim2.new(1, -16, 0, 28)
+SidebarHint.Position = UDim2.new(0, 8, 0, 34)
+SidebarHint.BackgroundTransparency = 1
+SidebarHint.Text = "اختر القسم"
+SidebarHint.TextColor3 = Theme.Muted
+SidebarHint.TextXAlignment = Enum.TextXAlignment.Right
+SidebarHint.Font = Enum.Font.Gotham
+SidebarHint.TextSize = 12
+SidebarHint.Parent = Sidebar
+
+local PagesHost = Instance.new("Frame")
+PagesHost.Name = "PagesHost"
+PagesHost.Size = UDim2.new(1, -162, 1, -20)
+PagesHost.Position = UDim2.new(0, 152, 0, 10)
+PagesHost.BackgroundColor3 = Theme.Card
+PagesHost.BackgroundTransparency = 0.08
+PagesHost.BorderSizePixel = 0
+PagesHost.Parent = ContentPanel
+makeCorner(PagesHost, 14)
+makeStroke(PagesHost, Theme.Border, 1, 0.2)
+
+local function makePage(name)
+    local page = Instance.new("Frame")
+    page.Name = name
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = PagesHost
+    return page
+end
+
+local function makePageTitle(parent, titleText, subtitleText)
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 22)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = titleText
+    titleLabel.TextColor3 = Theme.Text
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Right
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 17
+    titleLabel.Parent = parent
+
+    local subtitleLabel = Instance.new("TextLabel")
+    subtitleLabel.Size = UDim2.new(1, -20, 0, 18)
+    subtitleLabel.Position = UDim2.new(0, 10, 0, 34)
+    subtitleLabel.BackgroundTransparency = 1
+    subtitleLabel.Text = subtitleText
+    subtitleLabel.TextColor3 = Theme.Muted
+    subtitleLabel.TextXAlignment = Enum.TextXAlignment.Right
+    subtitleLabel.Font = Enum.Font.Gotham
+    subtitleLabel.TextSize = 12
+    subtitleLabel.Parent = parent
+end
+
+local MainPage = makePage("MainPage")
+local PlayerPage = makePage("PlayerPage")
+local TargetPage = makePage("TargetPage")
+local ImportantPage = makePage("ImportantPage")
+
+makePageTitle(MainPage, "القائمة الرئيسية", "مفتوحة بشكل افتراضي")
+makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
+makePageTitle(TargetPage, "استهداف", "أوامر التعامل مع اللاعبين")
+makePageTitle(ImportantPage, "مهم", "رسالة داخل السكربت")
+
+local MainCard = Instance.new("Frame")
+MainCard.Size = UDim2.new(1, -20, 1, -72)
+MainCard.Position = UDim2.new(0, 10, 0, 58)
+MainCard.BackgroundColor3 = Theme.Panel
+MainCard.BackgroundTransparency = 0.05
+MainCard.BorderSizePixel = 0
+MainCard.Parent = MainPage
+makeCorner(MainCard, 12)
+makeStroke(MainCard, Theme.Border, 1, 0.2)
+
+local MainText = Instance.new("TextLabel")
+MainText.Size = UDim2.new(1, -24, 1, -24)
+MainText.Position = UDim2.new(0, 12, 0, 12)
+MainText.BackgroundTransparency = 1
+MainText.Text = "هذي الصفحة الرئيسية للسكربت.\n\nقسم اللاعب فيه أوامر الطيران والسرعة.\nقسم الاستهداف فيه الأوامر المتعلقة باللاعبين.\nقسم مهم فيه رسالة وتنبيه بخصوص السكربت."
+MainText.TextColor3 = Theme.Text
+MainText.TextXAlignment = Enum.TextXAlignment.Right
+MainText.TextYAlignment = Enum.TextYAlignment.Top
+MainText.TextWrapped = true
+MainText.Font = Enum.Font.Gotham
+MainText.TextSize = 15
+MainText.Parent = MainCard
+
+local ImportantCard = Instance.new("Frame")
+ImportantCard.Size = UDim2.new(1, -20, 1, -72)
+ImportantCard.Position = UDim2.new(0, 10, 0, 58)
+ImportantCard.BackgroundColor3 = Theme.Panel
+ImportantCard.BackgroundTransparency = 0.05
+ImportantCard.BorderSizePixel = 0
+ImportantCard.Parent = ImportantPage
+makeCorner(ImportantCard, 12)
+makeStroke(ImportantCard, Theme.Border, 1, 0.2)
+
+local ImportantText = Instance.new("TextLabel")
+ImportantText.Size = UDim2.new(1, -24, 1, -24)
+ImportantText.Position = UDim2.new(0, 12, 0, 12)
+ImportantText.BackgroundTransparency = 1
+ImportantText.Text = "السلام عليكم ورحمة الله وبركاته\n\nطبعاً السكربت ذا ببدايته يعني باقي ما اشتغلت عليه والاوامر بدائيه ومستقبلاً بتشوفون اوامر اكثر وحماية اقوى ان شاء الله\n\n+ السكربت مافيه مشتركين يعني ريح بالك محد طاردك ولا احد بيذلك ب اوامره\n\nوبس اتمنى تستمتع بالسكربت\n\n(ملاحظة ترا حماية البانق ما تشتغل الا على الي مفعلين عليك من VR7)"
+ImportantText.TextColor3 = Theme.Text
+ImportantText.TextXAlignment = Enum.TextXAlignment.Right
+ImportantText.TextYAlignment = Enum.TextYAlignment.Top
+ImportantText.TextWrapped = true
+ImportantText.Font = Enum.Font.Gotham
+ImportantText.TextSize = 14
+ImportantText.Parent = ImportantCard
+
+Input.Parent = TargetPage
+Input.Size = UDim2.new(1, -20, 0, 40)
+Input.Position = UDim2.new(0, 10, 0, 58)
+
+BangBtn.Parent = TargetPage
+BangBtn.Size = UDim2.new(0.5, -14, 0, 38)
+BangBtn.Position = UDim2.new(0, 10, 0, 108)
+
+ResetBtn.Parent = TargetPage
+ResetBtn.Size = UDim2.new(0.5, -14, 0, 38)
+ResetBtn.Position = UDim2.new(0.5, 4, 0, 108)
+
+FlingBtn.Parent = TargetPage
+FlingBtn.Size = UDim2.new(1, -20, 0, 38)
+FlingBtn.Position = UDim2.new(0, 10, 0, 156)
+
+TeleportBtn.Parent = TargetPage
+TeleportBtn.Size = UDim2.new(0.5, -14, 0, 38)
+TeleportBtn.Position = UDim2.new(0, 10, 0, 206)
+
+SpectateBtn.Parent = TargetPage
+SpectateBtn.Size = UDim2.new(0.5, -14, 0, 38)
+SpectateBtn.Position = UDim2.new(0.5, 4, 0, 206)
+
+SavePlaceBtn.Parent = TargetPage
+SavePlaceBtn.Size = UDim2.new(1, -20, 0, 38)
+SavePlaceBtn.Position = UDim2.new(0, 10, 0, 254)
+
+FlyBtn.Parent = PlayerPage
+FlyBtn.Size = UDim2.new(0.5, -14, 0, 38)
+FlyBtn.Position = UDim2.new(0, 10, 0, 58)
+
+SpeedInput.Parent = PlayerPage
+SpeedInput.Size = UDim2.new(0.5, -14, 0, 38)
+SpeedInput.Position = UDim2.new(0.5, 4, 0, 58)
+
+WalkSpeedBtn.Parent = PlayerPage
+WalkSpeedBtn.Size = UDim2.new(0.5, -14, 0, 38)
+WalkSpeedBtn.Position = UDim2.new(0, 10, 0, 108)
+
+WalkSpeedInput.Parent = PlayerPage
+WalkSpeedInput.Size = UDim2.new(0.5, -14, 0, 38)
+WalkSpeedInput.Position = UDim2.new(0.5, 4, 0, 108)
+
+SpeedLabel.Parent = PlayerPage
+SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 10, 0, 158)
+
+local function makeMenuButton(text, yOffset)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, -16, 0, 40)
+    button.Position = UDim2.new(0, 8, 0, yOffset)
+    button.BackgroundColor3 = Theme.PanelSoft
+    button.Text = text
+    button.TextColor3 = Theme.Text
+    button.TextXAlignment = Enum.TextXAlignment.Right
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 13
+    button.AutoButtonColor = false
+    button.Parent = Sidebar
+    makeCorner(button, 10)
+    makeStroke(button, Theme.Border, 1, 0.15)
+    return button
+end
+
+local MainMenuBtn = makeMenuButton("القائمة الرئيسية", 74)
+local PlayerMenuBtn = makeMenuButton("اللاعب", 120)
+local TargetMenuBtn = makeMenuButton("استهداف", 166)
+local ImportantMenuBtn = makeMenuButton("مهم", 212)
+
+local Pages = {
+    main = MainPage,
+    player = PlayerPage,
+    target = TargetPage,
+    important = ImportantPage,
+}
+
+local MenuButtons = {
+    main = MainMenuBtn,
+    player = PlayerMenuBtn,
+    target = TargetMenuBtn,
+    important = ImportantMenuBtn,
+}
+
+local function setMenuState(activeKey)
+    for key, page in pairs(Pages) do
+        page.Visible = key == activeKey
+    end
+
+    for key, button in pairs(MenuButtons) do
+        if key == activeKey then
+            button.BackgroundColor3 = Theme.Active
+        else
+            button.BackgroundColor3 = Theme.PanelSoft
+        end
+    end
+end
+
+MainMenuBtn.MouseButton1Click:Connect(function()
+    setMenuState("main")
+end)
+
+PlayerMenuBtn.MouseButton1Click:Connect(function()
+    setMenuState("player")
+end)
+
+TargetMenuBtn.MouseButton1Click:Connect(function()
+    setMenuState("target")
+end)
+
+ImportantMenuBtn.MouseButton1Click:Connect(function()
+    setMenuState("important")
+end)
+
+setMenuState("main")
+
 local Footer = Instance.new("TextLabel")
 Footer.Size = UDim2.new(1, -32, 0, 18)
 Footer.Position = UDim2.new(0, 16, 1, -24)
 Footer.BackgroundTransparency = 1
 Footer.Text = "© All rights reserved t_18"
-Footer.TextColor3 = Theme.Muted
+Footer.TextColor3 = Color3.fromRGB(100, 116, 139)
 Footer.TextXAlignment = Enum.TextXAlignment.Left
 Footer.Font = Enum.Font.Gotham
 Footer.TextSize = 12

@@ -41,6 +41,16 @@ local Theme = {
     Warning = Color3.fromRGB(217, 119, 6),
     Danger = Color3.fromRGB(220, 38, 38),
     Shadow = Color3.fromRGB(2, 6, 18),
+    ButtonDefault = Color3.fromRGB(56, 71, 102),
+    ButtonDefaultAlt = Color3.fromRGB(44, 56, 82),
+    ButtonBlue = Color3.fromRGB(37, 99, 235),
+    ButtonBlueAlt = Color3.fromRGB(29, 78, 216),
+    ButtonGreen = Color3.fromRGB(22, 163, 74),
+    ButtonGreenAlt = Color3.fromRGB(21, 128, 61),
+    ButtonOrange = Color3.fromRGB(217, 119, 6),
+    ButtonOrangeAlt = Color3.fromRGB(180, 83, 9),
+    ButtonRed = Color3.fromRGB(220, 38, 38),
+    ButtonRedAlt = Color3.fromRGB(185, 28, 28),
 }
 
 local function connect(list, signal, callback)
@@ -343,32 +353,43 @@ Input.Parent = ContentPanel
 makeCorner(Input, 12)
 makeStroke(Input, Theme.Border, 1, 0.2)
 
-local function makeButton(name, text, size, position, baseColor)
+local function makeButton(name, text, size, position, baseColor, accentColor)
     local button = Instance.new("TextButton")
     button.Name = name
     button.Size = size
     button.Position = position
-    button.BackgroundColor3 = baseColor or Theme.PanelSoft
+    button.BackgroundColor3 = baseColor or Theme.ButtonDefault
     button.AutoButtonColor = false
     button.Text = text
     button.TextColor3 = Theme.Text
+    button.TextStrokeTransparency = 0.75
+    button.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     button.Font = Enum.Font.GothamBold
     button.TextSize = 15
     button.Parent = ContentPanel
     makeCorner(button, 12)
-    makeStroke(button, Theme.Border, 1, 0.12)
+    makeStroke(button, Theme.Border, 1, 0.05)
 
     local shine = Instance.new("UIGradient")
     shine.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 210, 255)),
+        ColorSequenceKeypoint.new(1, accentColor or Color3.fromRGB(203, 213, 225)),
     })
     shine.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.78),
-        NumberSequenceKeypoint.new(1, 0.92),
+        NumberSequenceKeypoint.new(0, 0.68),
+        NumberSequenceKeypoint.new(1, 0.9),
     })
     shine.Rotation = 90
     shine.Parent = button
+
+    local accentBar = Instance.new("Frame")
+    accentBar.Name = "AccentBar"
+    accentBar.Size = UDim2.new(1, 0, 0, 3)
+    accentBar.Position = UDim2.new(0, 0, 0, 0)
+    accentBar.BackgroundColor3 = accentColor or Theme.Accent
+    accentBar.BorderSizePixel = 0
+    accentBar.Parent = button
+    makeCorner(accentBar, 12)
 
     return button
 end
@@ -392,12 +413,12 @@ local function makeInput(name, placeholder, defaultText, position)
     return box
 end
 
-local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 82), Theme.PanelSoft)
-local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 178, 0, 40), UDim2.new(0, 200, 0, 82), Theme.Warning)
-local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 132), Theme.PanelSoft)
-local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 182), Theme.PanelSoft)
+local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 82), Theme.ButtonDefault, Theme.ButtonRed)
+local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 178, 0, 40), UDim2.new(0, 200, 0, 82), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 132), Theme.ButtonDefault, Theme.ButtonBlue)
+local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 182), Theme.ButtonDefault, Theme.ButtonBlue)
 local SpeedInput = makeInput("SpeedInput", "سرعة الطيران", "50", UDim2.new(0, 200, 0, 182))
-local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 232), Theme.PanelSoft)
+local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 232), Theme.ButtonDefault, Theme.ButtonBlue)
 local WalkSpeedInput = makeInput("WalkSpeedInput", "سرعة المشي", "16", UDim2.new(0, 200, 0, 232))
 
 local SpeedLabel = Instance.new("TextLabel")
@@ -411,9 +432,9 @@ SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.TextSize = 13
 SpeedLabel.Parent = ContentPanel
 
-local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 282), Theme.AccentSoft)
-local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 178, 0, 40), UDim2.new(0, 200, 0, 282), Theme.PanelSoft)
-local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 178, 0, 40), UDim2.new(1, -178, 0, 282), Theme.PanelSoft)
+local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 282), Theme.ButtonBlue, Theme.Accent)
+local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 178, 0, 40), UDim2.new(0, 200, 0, 282), Theme.ButtonDefault, Theme.ButtonGreen)
+local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 178, 0, 40), UDim2.new(1, -178, 0, 282), Theme.ButtonDefaultAlt, Theme.ButtonOrange)
 
 local Footer = Instance.new("TextLabel")
 Footer.Size = UDim2.new(1, -32, 0, 18)

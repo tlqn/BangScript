@@ -1,87 +1,1016 @@
--- ضع هذا السكربت كـ LocalScript في StarterPlayer > StarterPlayerScripts
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
-local player = Players.LocalPlayer
-local mouse = player:GetMouse()
+local LocalPlayer = Players.LocalPlayer
 
--- متغيرات تتحدث مع كل إحياء
-local character
-local humanoid
-local torso
-local rightShoulder
-local originalC0
-local renderConnection
+local isActive = false
+local animTrack = nil
+local followConnection = nil
+local flingActive = false
+local flyActive = false
+local flyConnection = nil
+local SpeedActive = false
+local resetCooldown = false
 
--- دالة الإيقاف والتنظيف
-local function cleanup()
-    if renderConnection then
-        renderConnection:Disconnect()
-        renderConnection = nil
-    end
-    if rightShoulder and originalC0 then
-        pcall(function()
-            rightShoulder.C0 = originalC0
-        end)
-    end
-    rightShoulder = nil
-    originalC0 = nil
+local SpectateActive = false
+local SpectateConnection = nil
+local SpectateTarget = nil
+local OriginalCameraType = nil
+local OriginalCameraSubject = nil
+local SpectateNameLabel = nil
+local SpectateWarningLabel = nil
+local SpectatePlayerRemovingConnection = nil
+local SavedLocation = nil
+
+local characterConnections = {}
+
+local Theme = {
+    Bg = Color3.fromRGB(8, 12, 20),
+    Panel = Color3.fromRGB(13, 19, 33),
+    PanelSoft = Color3.fromRGB(17, 25, 42),
+    Header = Color3.fromRGB(11, 16, 28),
+    Card = Color3.fromRGB(19, 28, 46),
+    Input = Color3.fromRGB(24, 34, 55),
+    Border = Color3.fromRGB(46, 61, 88),
+    Text = Color3.fromRGB(243, 244, 246),
+    Muted = Color3.fromRGB(155, 167, 187),
+    Accent = Color3.fromRGB(56, 189, 248),
+    AccentSoft = Color3.fromRGB(14, 116, 144),
+    Active = Color3.fromRGB(34, 197, 94),
+    Warning = Color3.fromRGB(245, 158, 11),
+    Danger = Color3.fromRGB(239, 68, 68),
+    Shadow = Color3.fromRGB(2, 6, 23),
+}
+
+local function connect(list, signal, callback)
+    local connection = signal:Connect(callback)
+    table.insert(list, connection)
+    return connection
 end
 
--- دالة التهيئة عند ظهور الشخصية
-local function onCharacterAdded(newCharacter)
-    cleanup()
-    character = newCharacter
-    humanoid = character:WaitForChild("Humanoid")
-
-    -- تحديد نوع الـ Rig (R6 أو R15) واختيار المفصل المناسب
-    local rigType = humanoid.RigType
-    local shoulderParent
-    local shoulderName
-
-    if rigType == Enum.HumanoidRigType.R6 then
-        torso = character:WaitForChild("Torso")
-        shoulderParent = torso
-        shoulderName = "Right Shoulder"
-    else
-        torso = character:WaitForChild("UpperTorso")
-        shoulderParent = torso
-        shoulderName = "RightShoulder"
+local function disconnectAll(list)
+    for _, connection in ipairs(list) do
+        connection:Disconnect()
     end
+    table.clear(list)
+end
 
-    rightShoulder = shoulderParent:WaitForChild(shoulderName)
-    originalC0 = rightShoulder.C0
-
-    -- التعامل مع الموت
-    humanoid.Died:Connect(cleanup)
-
-    -- تحديث توجيه الكتف كل فريم
-    renderConnection = RunService.RenderStepped:Connect(function()
-        if not rightShoulder or not rightShoulder.Parent then
-            cleanup()
-            return
-        end
-
-        local hit = mouse.Hit
-        if not hit then return end
-
-        -- نحسب اتجاه الكتف بالنسبة للجذع
-        local shoulderWorldPos = (torso.CFrame * originalC0).Position
-        local lookCFrame = CFrame.new(shoulderWorldPos, hit.Position)
-
-        -- تحويل الـ CFrame من المساحة العالمية إلى المساحة المحلية للجذع
-        local relativeCFrame = torso.CFrame:ToObjectSpace(lookCFrame)
-
-        -- تطبيق الدوران مع الحفاظ على موضع الكتف الأصلي
-        rightShoulder.C0 = CFrame.new(originalC0.Position) * (relativeCFrame - relativeCFrame.Position) * CFrame.Angles(0, math.rad(90), 0)
+local function doReset()
+    if resetCooldown then
+        return
+    end
+    resetCooldown = true
+    task.spawn(function()
+        LocalPlayer:LoadCharacter()
+        task.wait(3)
+        resetCooldown = false
     end)
 end
 
--- ربط الأحداث
-player.CharacterAdded:Connect(onCharacterAdded)
+local function watchCharacter(char)
+    if not char then
+        return
+    end
 
--- إذا الشخصية موجودة بالفعل عند تشغيل السكربت
-if player.Character then
-    onCharacterAdded(player.Character)
+    disconnectAll(characterConnections)
+
+    connect(characterConnections, char.DescendantAdded, function(obj)
+        if resetCooldown then
+            return
+        end
+
+        local name = obj.Name:lower()
+        if name:find("handcuff") or name:find("cuff") or name:find("arrest") then
+            doReset()
+            return
+        end
+
+        if obj:IsA("BallSocketConstraint")
+            or obj:IsA("RopeConstraint")
+            or obj:IsA("WeldConstraint")
+            or obj:IsA("HingeConstraint") then
+            doReset()
+        end
+    end)
+
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    if humanoid then
+        connect(characterConnections, humanoid:GetPropertyChangedSignal("WalkSpeed"), function()
+            if humanoid.WalkSpeed == 0 and not resetCooldown then
+                doReset()
+            end
+        end)
+    end
 end
+
+watchCharacter(LocalPlayer.Character)
+LocalPlayer.CharacterAdded:Connect(function(char)
+    watchCharacter(char)
+    if SpeedActive then
+        local hum = char:WaitForChild("Humanoid", 5)
+        if hum then
+            hum.WalkSpeed = tonumber((script:FindFirstChild("SavedWalkSpeedValue") and script.SavedWalkSpeedValue.Value) or "16") or 16
+        end
+    end
+end)
+
+local savedWalkSpeedValue = Instance.new("StringValue")
+savedWalkSpeedValue.Name = "SavedWalkSpeedValue"
+savedWalkSpeedValue.Value = "16"
+savedWalkSpeedValue.Parent = script
+
+local function makeCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius)
+    corner.Parent = parent
+    return corner
+end
+
+local function makeStroke(parent, color, thickness, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color
+    stroke.Thickness = thickness or 1
+    stroke.Transparency = transparency or 0
+    stroke.Parent = parent
+    return stroke
+end
+
+local function makeShadow(parent)
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadow.Position = UDim2.new(0.5, 0, 0.5, 12)
+    shadow.Size = UDim2.new(1, 46, 1, 46)
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageColor3 = Theme.Shadow
+    shadow.ImageTransparency = 0.42
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.ZIndex = parent.ZIndex - 1
+    shadow.Parent = parent
+    return shadow
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BangGuiPro"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local Frame = Instance.new("Frame")
+Frame.Name = "Main"
+Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+Frame.Size = UDim2.new(0, 610, 0, 500)
+Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+Frame.BackgroundColor3 = Theme.Panel
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+makeCorner(Frame, 22)
+makeStroke(Frame, Theme.Border, 1, 0.1)
+makeShadow(Frame)
+
+local FrameGradient = Instance.new("UIGradient")
+FrameGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 29, 49)),
+    ColorSequenceKeypoint.new(0.45, Color3.fromRGB(12, 19, 34)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 12, 23)),
+})
+FrameGradient.Rotation = 125
+FrameGradient.Parent = Frame
+
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 76)
+Header.BackgroundColor3 = Theme.Header
+Header.BorderSizePixel = 0
+Header.Parent = Frame
+makeCorner(Header, 22)
+
+local HeaderBottomMask = Instance.new("Frame")
+HeaderBottomMask.Size = UDim2.new(1, 0, 0, 24)
+HeaderBottomMask.Position = UDim2.new(0, 0, 1, -24)
+HeaderBottomMask.BackgroundColor3 = Theme.Header
+HeaderBottomMask.BorderSizePixel = 0
+HeaderBottomMask.Parent = Header
+
+local AccentLine = Instance.new("Frame")
+AccentLine.Size = UDim2.new(1, -32, 0, 3)
+AccentLine.Position = UDim2.new(0, 16, 1, -3)
+AccentLine.BackgroundColor3 = Theme.Accent
+AccentLine.BorderSizePixel = 0
+AccentLine.Parent = Header
+makeCorner(AccentLine, 6)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0.55, 0, 0, 28)
+Title.Position = UDim2.new(0, 18, 0, 12)
+Title.BackgroundTransparency = 1
+Title.Text = "T_18 Control Panel"
+Title.TextColor3 = Theme.Text
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 24
+Title.Parent = Header
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0.58, 0, 0, 18)
+Subtitle.Position = UDim2.new(0, 18, 0, 42)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "واجهة مطورة بشكل أنظف وأوضح"
+Subtitle.TextColor3 = Theme.Muted
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextSize = 13
+Subtitle.Parent = Header
+
+local TopBadge = Instance.new("Frame")
+TopBadge.Size = UDim2.new(0, 150, 0, 34)
+TopBadge.Position = UDim2.new(1, -166, 0, 20)
+TopBadge.BackgroundColor3 = Theme.PanelSoft
+TopBadge.BorderSizePixel = 0
+TopBadge.Parent = Header
+makeCorner(TopBadge, 12)
+makeStroke(TopBadge, Theme.Border, 1, 0.35)
+
+local TopBadgeDot = Instance.new("Frame")
+TopBadgeDot.Size = UDim2.new(0, 10, 0, 10)
+TopBadgeDot.Position = UDim2.new(0, 12, 0.5, -5)
+TopBadgeDot.BackgroundColor3 = Theme.Active
+TopBadgeDot.BorderSizePixel = 0
+TopBadgeDot.Parent = TopBadge
+makeCorner(TopBadgeDot, 99)
+
+local TopBadgeText = Instance.new("TextLabel")
+TopBadgeText.Size = UDim2.new(1, -34, 1, 0)
+TopBadgeText.Position = UDim2.new(0, 28, 0, 0)
+TopBadgeText.BackgroundTransparency = 1
+TopBadgeText.Text = "Ready"
+TopBadgeText.TextColor3 = Theme.Text
+TopBadgeText.TextXAlignment = Enum.TextXAlignment.Left
+TopBadgeText.Font = Enum.Font.GothamMedium
+TopBadgeText.TextSize = 14
+TopBadgeText.Parent = TopBadge
+
+local ProfileCard = Instance.new("Frame")
+ProfileCard.Size = UDim2.new(1, -32, 0, 84)
+ProfileCard.Position = UDim2.new(0, 16, 0, 92)
+ProfileCard.BackgroundColor3 = Theme.Card
+ProfileCard.BackgroundTransparency = 0.03
+ProfileCard.BorderSizePixel = 0
+ProfileCard.Parent = Frame
+makeCorner(ProfileCard, 18)
+makeStroke(ProfileCard, Theme.Border, 1, 0.28)
+
+local ProfileGlow = Instance.new("Frame")
+ProfileGlow.Size = UDim2.new(0, 72, 0, 72)
+ProfileGlow.Position = UDim2.new(0, 10, 0.5, -36)
+ProfileGlow.BackgroundColor3 = Theme.AccentSoft
+ProfileGlow.BackgroundTransparency = 0.12
+ProfileGlow.BorderSizePixel = 0
+ProfileGlow.Parent = ProfileCard
+makeCorner(ProfileGlow, 18)
+
+local AvatarLetter = Instance.new("TextLabel")
+AvatarLetter.Size = UDim2.new(1, 0, 1, 0)
+AvatarLetter.BackgroundTransparency = 1
+AvatarLetter.Text = string.upper(string.sub(LocalPlayer.DisplayName, 1, 1))
+AvatarLetter.TextColor3 = Theme.Text
+AvatarLetter.Font = Enum.Font.GothamBlack
+AvatarLetter.TextSize = 30
+AvatarLetter.Parent = ProfileGlow
+
+local WelcomeLabel = Instance.new("TextLabel")
+WelcomeLabel.Size = UDim2.new(1, -110, 0, 28)
+WelcomeLabel.Position = UDim2.new(0, 98, 0, 14)
+WelcomeLabel.BackgroundTransparency = 1
+WelcomeLabel.Text = "أهلًا " .. LocalPlayer.DisplayName
+WelcomeLabel.TextColor3 = Theme.Text
+WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Right
+WelcomeLabel.Font = Enum.Font.GothamBold
+WelcomeLabel.TextSize = 24
+WelcomeLabel.Parent = ProfileCard
+
+local PlanLabel = Instance.new("TextLabel")
+PlanLabel.Size = UDim2.new(1, -110, 0, 18)
+PlanLabel.Position = UDim2.new(0, 98, 0, 46)
+PlanLabel.BackgroundTransparency = 1
+PlanLabel.Text = "لوحة تحكم سريعة | اضغط الزر الصغير لإخفاء النافذة"
+PlanLabel.TextColor3 = Theme.Muted
+PlanLabel.TextXAlignment = Enum.TextXAlignment.Right
+PlanLabel.Font = Enum.Font.Gotham
+PlanLabel.TextSize = 13
+PlanLabel.Parent = ProfileCard
+
+local ContentPanel = Instance.new("Frame")
+ContentPanel.Size = UDim2.new(1, -32, 0, 290)
+ContentPanel.Position = UDim2.new(0, 16, 0, 190)
+ContentPanel.BackgroundColor3 = Theme.Bg
+ContentPanel.BorderSizePixel = 0
+ContentPanel.Parent = Frame
+makeCorner(ContentPanel, 18)
+makeStroke(ContentPanel, Theme.Border, 1, 0.35)
+
+local PanelPadding = Instance.new("UIPadding")
+PanelPadding.PaddingTop = UDim.new(0, 16)
+PanelPadding.PaddingLeft = UDim.new(0, 16)
+PanelPadding.PaddingRight = UDim.new(0, 16)
+PanelPadding.Parent = ContentPanel
+
+local SectionLabel = Instance.new("TextLabel")
+SectionLabel.Size = UDim2.new(1, 0, 0, 18)
+SectionLabel.BackgroundTransparency = 1
+SectionLabel.Text = "التحكم الرئيسي"
+SectionLabel.TextColor3 = Theme.Muted
+SectionLabel.TextXAlignment = Enum.TextXAlignment.Right
+SectionLabel.Font = Enum.Font.GothamMedium
+SectionLabel.TextSize = 13
+SectionLabel.Parent = ContentPanel
+
+local Input = Instance.new("TextBox")
+Input.Size = UDim2.new(1, 0, 0, 42)
+Input.Position = UDim2.new(0, 0, 0, 26)
+Input.BackgroundColor3 = Theme.Input
+Input.PlaceholderText = "اكتب اسم اللاعب هنا"
+Input.Text = ""
+Input.TextColor3 = Theme.Text
+Input.PlaceholderColor3 = Theme.Muted
+Input.Font = Enum.Font.Gotham
+Input.TextSize = 16
+Input.ClearTextOnFocus = false
+Input.Parent = ContentPanel
+makeCorner(Input, 12)
+makeStroke(Input, Theme.Border, 1, 0.45)
+
+local function makeButton(name, text, size, position, baseColor)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Size = size
+    button.Position = position
+    button.BackgroundColor3 = baseColor or Theme.PanelSoft
+    button.AutoButtonColor = false
+    button.Text = text
+    button.TextColor3 = Theme.Text
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 15
+    button.Parent = ContentPanel
+    makeCorner(button, 12)
+    makeStroke(button, Theme.Border, 1, 0.3)
+
+    local shine = Instance.new("UIGradient")
+    shine.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 210, 255)),
+    })
+    shine.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.88),
+        NumberSequenceKeypoint.new(1, 0.96),
+    })
+    shine.Rotation = 90
+    shine.Parent = button
+
+    return button
+end
+
+local function makeInput(name, placeholder, defaultText, position)
+    local box = Instance.new("TextBox")
+    box.Name = name
+    box.Size = UDim2.new(0, 178, 0, 40)
+    box.Position = position
+    box.BackgroundColor3 = Theme.Input
+    box.TextColor3 = Theme.Text
+    box.PlaceholderColor3 = Theme.Muted
+    box.PlaceholderText = placeholder
+    box.Text = defaultText or ""
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 15
+    box.ClearTextOnFocus = false
+    box.Parent = ContentPanel
+    makeCorner(box, 12)
+    makeStroke(box, Theme.Border, 1, 0.45)
+    return box
+end
+
+local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 82), Theme.PanelSoft)
+local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 178, 0, 40), UDim2.new(0, 200, 0, 82), Theme.Warning)
+local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 132), Theme.PanelSoft)
+local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 182), Theme.PanelSoft)
+local SpeedInput = makeInput("SpeedInput", "سرعة الطيران", "50", UDim2.new(0, 200, 0, 182))
+local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 232), Theme.PanelSoft)
+local WalkSpeedInput = makeInput("WalkSpeedInput", "سرعة المشي", "16", UDim2.new(0, 200, 0, 232))
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(0, 178, 0, 40)
+SpeedLabel.Position = UDim2.new(1, -178, 0, 182)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "W A S D | Space | Shift"
+SpeedLabel.TextColor3 = Theme.Muted
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Right
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextSize = 13
+SpeedLabel.Parent = ContentPanel
+
+local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 178, 0, 40), UDim2.new(0, 0, 0, 282), Theme.AccentSoft)
+local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 178, 0, 40), UDim2.new(0, 200, 0, 282), Theme.PanelSoft)
+local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 178, 0, 40), UDim2.new(1, -178, 0, 282), Theme.PanelSoft)
+
+local Footer = Instance.new("TextLabel")
+Footer.Size = UDim2.new(1, -32, 0, 18)
+Footer.Position = UDim2.new(0, 16, 1, -24)
+Footer.BackgroundTransparency = 1
+Footer.Text = "© All rights reserved t_18"
+Footer.TextColor3 = Theme.Muted
+Footer.TextXAlignment = Enum.TextXAlignment.Left
+Footer.Font = Enum.Font.Gotham
+Footer.TextSize = 12
+Footer.Parent = Frame
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "Toggle"
+ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
+ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+ToggleBtn.BackgroundColor3 = Theme.PanelSoft
+ToggleBtn.Text = ""
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.ZIndex = 20
+ToggleBtn.Parent = ScreenGui
+makeCorner(ToggleBtn, 999)
+makeStroke(ToggleBtn, Theme.Border, 1, 0.15)
+
+local ToggleImg = Instance.new("ImageLabel")
+ToggleImg.Size = UDim2.new(1, -12, 1, -12)
+ToggleImg.Position = UDim2.new(0, 6, 0, 6)
+ToggleImg.BackgroundTransparency = 1
+ToggleImg.Image = "rbxassetid://93582248656670"
+ToggleImg.ScaleType = Enum.ScaleType.Fit
+ToggleImg.ZIndex = 21
+ToggleImg.Parent = ToggleBtn
+
+local tDragging = false
+local tDragStart = nil
+local tStartPos = nil
+
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        tDragging = true
+        tDragStart = input.Position
+        tStartPos = ToggleBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                tDragging = false
+            end
+        end)
+    end
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+Title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+        if dragging then
+            local delta = input.Position - dragStart
+            Frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+        if tDragging then
+            local delta = input.Position - tDragStart
+            ToggleBtn.Position = UDim2.new(
+                tStartPos.X.Scale,
+                tStartPos.X.Offset + delta.X,
+                tStartPos.Y.Scale,
+                tStartPos.Y.Offset + delta.Y
+            )
+        end
+    end
+end)
+
+local function setButtonState(button, enabled, onText, offText, onColor, offColor)
+    if enabled then
+        button.BackgroundColor3 = onColor or Theme.Active
+        button.Text = onText
+    else
+        button.BackgroundColor3 = offColor or Theme.PanelSoft
+        button.Text = offText
+    end
+end
+
+WalkSpeedBtn.MouseButton1Click:Connect(function()
+    SpeedActive = not SpeedActive
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    local newSpeed = tonumber(WalkSpeedInput.Text) or 16
+    savedWalkSpeedValue.Value = tostring(newSpeed)
+
+    if SpeedActive then
+        setButtonState(WalkSpeedBtn, true, "السرعة مفعلة", "سرعة اللاعب", Theme.Active, Theme.PanelSoft)
+        if hum then
+            hum.WalkSpeed = newSpeed
+        end
+    else
+        setButtonState(WalkSpeedBtn, false, "السرعة مفعلة", "سرعة اللاعب", Theme.Active, Theme.PanelSoft)
+        if hum then
+            hum.WalkSpeed = 16
+        end
+    end
+end)
+
+FlingBtn.MouseButton1Click:Connect(function()
+    flingActive = not flingActive
+    if flingActive then
+        setButtonState(FlingBtn, true, "الحماية شغالة", "حماية بانق", Theme.Active, Theme.PanelSoft)
+        task.spawn(function()
+            while flingActive do
+                local char = LocalPlayer.Character
+                if char then
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local original = root.CFrame
+                        root.CFrame = CFrame.new(99999999999, 99999999999, 99999999999)
+                        task.wait(0.04)
+                        root.CFrame = original
+                    end
+                end
+                task.wait(0.05)
+            end
+        end)
+    else
+        setButtonState(FlingBtn, false, "الحماية شغالة", "حماية بانق", Theme.Active, Theme.PanelSoft)
+    end
+end)
+
+local function stopBang()
+    isActive = false
+    if followConnection then
+        followConnection:Disconnect()
+        followConnection = nil
+    end
+    if animTrack then
+        animTrack:Stop()
+        animTrack = nil
+    end
+    setButtonState(BangBtn, false, "إيقاف", "بانق", Theme.Danger, Theme.PanelSoft)
+end
+
+local function startBang(target)
+    isActive = true
+    setButtonState(BangBtn, true, "إيقاف", "بانق", Theme.Danger, Theme.PanelSoft)
+
+    local myChar = LocalPlayer.Character
+    local hum = myChar and myChar:FindFirstChild("Humanoid")
+    if hum then
+        local success = pcall(function()
+            local bundle = game:GetObjects("rbxassetid://5938365243")
+            for _, obj in ipairs(bundle) do
+                if obj:IsA("Animation") then
+                    animTrack = hum:LoadAnimation(obj)
+                    animTrack.Looped = true
+                    animTrack:Play(0.1, 1, 5)
+                    return
+                end
+            end
+        end)
+
+        if not success then
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://5938365243"
+            animTrack = hum:LoadAnimation(anim)
+            animTrack.Looped = true
+            animTrack:Play(0.1, 1, 5)
+        end
+    end
+
+    followConnection = RunService.Heartbeat:Connect(function()
+        if not isActive then
+            return
+        end
+
+        local myCharacter = LocalPlayer.Character
+        local targetCharacter = target.Character
+        if myCharacter and targetCharacter then
+            local myRoot = myCharacter:FindFirstChild("HumanoidRootPart")
+            local targetRoot = targetCharacter:FindFirstChild("HumanoidRootPart")
+            if myRoot and targetRoot then
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.5)
+            end
+        end
+    end)
+end
+
+BangBtn.MouseButton1Click:Connect(function()
+    if isActive then
+        stopBang()
+        return
+    end
+
+    local targetName = Input.Text
+    local target = nil
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Name:lower():find(targetName:lower(), 1, true) then
+            target = player
+            break
+        end
+    end
+
+    if target and target.Character then
+        startBang(target)
+    else
+        warn("Player not found: " .. targetName)
+    end
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then
+        return
+    end
+
+    local savedPos = nil
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if root then
+        savedPos = root.CFrame
+    end
+
+    local respawnConnection
+    respawnConnection = LocalPlayer.CharacterAdded:Connect(function(newChar)
+        respawnConnection:Disconnect()
+        task.wait(1.5)
+        if savedPos then
+            local newRoot = newChar:FindFirstChild("HumanoidRootPart")
+            if newRoot then
+                newRoot.CFrame = savedPos
+            end
+        end
+    end)
+
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then
+        hum.Health = 0
+    end
+end)
+
+local function stopFly()
+    flyActive = false
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+
+    local char = LocalPlayer.Character
+    if char then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            for _, obj in ipairs(root:GetChildren()) do
+                if obj.Name == "FlyBV" or obj.Name == "FlyBG" then
+                    obj:Destroy()
+                end
+            end
+        end
+
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            hum.PlatformStand = false
+        end
+    end
+
+    setButtonState(FlyBtn, false, "إيقاف الطيران", "طيران", Theme.Active, Theme.PanelSoft)
+end
+
+FlyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+    if flyActive then
+        setButtonState(FlyBtn, true, "إيقاف الطيران", "طيران", Theme.Active, Theme.PanelSoft)
+
+        local char = LocalPlayer.Character
+        if not char then
+            flyActive = false
+            return
+        end
+
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChild("Humanoid")
+        if not root or not hum then
+            flyActive = false
+            return
+        end
+
+        hum.PlatformStand = true
+
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyBV"
+        bv.Velocity = Vector3.zero
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Parent = root
+
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FlyBG"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.P = 90000
+        bg.Parent = root
+
+        local cam = workspace.CurrentCamera
+        flyConnection = RunService.Heartbeat:Connect(function()
+            if not flyActive then
+                return
+            end
+
+            local speed = tonumber(SpeedInput.Text) or 50
+            local cf = cam.CFrame
+            local velocity = Vector3.zero
+
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                velocity += cf.LookVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                velocity -= cf.LookVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                velocity -= cf.RightVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                velocity += cf.RightVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                velocity += Vector3.new(0, 1, 0)
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                velocity -= Vector3.new(0, 1, 0)
+            end
+
+            bv.Velocity = velocity * speed
+            bg.CFrame = cf
+        end)
+    else
+        stopFly()
+    end
+end)
+
+local function showSpectateWarning(message)
+    if SpectateWarningLabel then
+        SpectateWarningLabel.Text = message
+        SpectateWarningLabel.Visible = true
+        task.delay(3, function()
+            if SpectateWarningLabel then
+                SpectateWarningLabel.Visible = false
+            end
+        end)
+    else
+        warn(message)
+    end
+end
+
+SavePlaceBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then
+        warn("Cannot save location")
+        return
+    end
+
+    if SavedLocation then
+        root.CFrame = SavedLocation
+        SavedLocation = nil
+        setButtonState(SavePlaceBtn, false, "رجوع للمكان", "حفظ مكاني", Theme.Accent, Theme.PanelSoft)
+    else
+        SavedLocation = root.CFrame
+        setButtonState(SavePlaceBtn, true, "رجوع للمكان", "حفظ مكاني", Theme.Accent, Theme.PanelSoft)
+    end
+end)
+
+TeleportBtn.MouseButton1Click:Connect(function()
+    local targetName = Input.Text
+    local target = nil
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and #targetName >= 3 and player.Name:lower():find(targetName:lower(), 1, true) then
+            target = player
+            break
+        end
+    end
+
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            if not SavedLocation then
+                SavedLocation = root.CFrame
+                setButtonState(SavePlaceBtn, true, "رجوع للمكان", "حفظ مكاني", Theme.Accent, Theme.PanelSoft)
+            end
+            root.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(2, 0, 0)
+        end
+    end
+end)
+
+local function findTargetPlayer()
+    local targetName = Input.Text
+    if not targetName or #targetName < 3 then
+        return nil
+    end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Name:lower():find(targetName:lower(), 1, true) then
+            return player
+        end
+    end
+
+    return nil
+end
+
+local function restoreMyCamera()
+    local camera = workspace.CurrentCamera
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if camera then
+        camera.CameraType = OriginalCameraType or Enum.CameraType.Custom
+        camera.CameraSubject = hum or OriginalCameraSubject
+    end
+    OriginalCameraType = nil
+    OriginalCameraSubject = nil
+end
+
+local function clearSpectateLabels(keepWarning)
+    if SpectateNameLabel then
+        SpectateNameLabel:Destroy()
+        SpectateNameLabel = nil
+    end
+    if SpectateWarningLabel and not keepWarning then
+        SpectateWarningLabel:Destroy()
+        SpectateWarningLabel = nil
+    end
+end
+
+local function stopSpectate(keepWarning)
+    SpectateActive = false
+    if SpectateConnection then
+        SpectateConnection:Disconnect()
+        SpectateConnection = nil
+    end
+    if SpectatePlayerRemovingConnection then
+        SpectatePlayerRemovingConnection:Disconnect()
+        SpectatePlayerRemovingConnection = nil
+    end
+    restoreMyCamera()
+    clearSpectateLabels(keepWarning)
+    SpectateTarget = nil
+    setButtonState(SpectateBtn, false, "إلغاء المشاهدة", "مشاهدة", Theme.Active, Theme.PanelSoft)
+end
+
+local function createSpectateLabels(target)
+    clearSpectateLabels()
+
+    SpectateNameLabel = Instance.new("TextLabel")
+    SpectateNameLabel.Size = UDim2.new(0, 320, 0, 38)
+    SpectateNameLabel.Position = UDim2.new(0.5, -160, 0, 16)
+    SpectateNameLabel.BackgroundColor3 = Theme.PanelSoft
+    SpectateNameLabel.BackgroundTransparency = 0.12
+    SpectateNameLabel.TextColor3 = Theme.Text
+    SpectateNameLabel.TextScaled = true
+    SpectateNameLabel.Font = Enum.Font.GothamBold
+    SpectateNameLabel.Text = "مشاهدة: " .. target.Name
+    SpectateNameLabel.Parent = ScreenGui
+    makeCorner(SpectateNameLabel, 12)
+    makeStroke(SpectateNameLabel, Theme.Border, 1, 0.2)
+
+    SpectateWarningLabel = Instance.new("TextLabel")
+    SpectateWarningLabel.Size = UDim2.new(0, 360, 0, 42)
+    SpectateWarningLabel.Position = UDim2.new(0.5, -180, 0, 62)
+    SpectateWarningLabel.BackgroundColor3 = Theme.Danger
+    SpectateWarningLabel.BackgroundTransparency = 0.12
+    SpectateWarningLabel.TextColor3 = Theme.Text
+    SpectateWarningLabel.TextScaled = true
+    SpectateWarningLabel.Font = Enum.Font.GothamBold
+    SpectateWarningLabel.Text = ""
+    SpectateWarningLabel.Visible = false
+    SpectateWarningLabel.Parent = ScreenGui
+    makeCorner(SpectateWarningLabel, 12)
+end
+
+local function startSpectate(target)
+    if not target or not target.Character then
+        return
+    end
+
+    local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
+    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+    if not targetHumanoid or not targetRoot then
+        return
+    end
+
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return
+    end
+
+    OriginalCameraType = camera.CameraType
+    OriginalCameraSubject = camera.CameraSubject
+
+    SpectateActive = true
+    SpectateTarget = target
+    setButtonState(SpectateBtn, true, "إلغاء المشاهدة", "مشاهدة", Theme.Active, Theme.PanelSoft)
+    createSpectateLabels(target)
+
+    if SpectatePlayerRemovingConnection then
+        SpectatePlayerRemovingConnection:Disconnect()
+        SpectatePlayerRemovingConnection = nil
+    end
+
+    SpectatePlayerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
+        if player == target then
+            showSpectateWarning("اللاعب خرج من اللعبة")
+            task.delay(0.7, function()
+                if SpectateTarget == target then
+                    stopSpectate(true)
+                end
+            end)
+        end
+    end)
+
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = targetHumanoid
+
+    SpectateConnection = RunService.RenderStepped:Connect(function()
+        if not SpectateActive or not SpectateTarget then
+            stopSpectate(true)
+            return
+        end
+
+        local char = SpectateTarget.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+
+        if not Players:FindFirstChild(SpectateTarget.Name) then
+            showSpectateWarning("اللاعب خرج من اللعبة")
+            stopSpectate(true)
+            return
+        end
+
+        if not char or not hum or not root or hum.Health <= 0 then
+            showSpectateWarning("المشاهدة توقفت، اللاعب غير متاح")
+            stopSpectate()
+            return
+        end
+
+        if SpectateNameLabel then
+            SpectateNameLabel.Text = "مشاهدة: " .. SpectateTarget.Name
+        end
+
+        local currentCamera = workspace.CurrentCamera
+        if currentCamera then
+            currentCamera.CameraType = Enum.CameraType.Custom
+            currentCamera.CameraSubject = hum
+        end
+    end)
+end
+
+SpectateBtn.MouseButton1Click:Connect(function()
+    if SpectateActive then
+        stopSpectate()
+        return
+    end
+
+    local target = findTargetPlayer()
+    if target then
+        startSpectate(target)
+    else
+        warn("Player not found or name is too short")
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if SpectateActive then
+        stopSpectate()
+    else
+        restoreMyCamera()
+    end
+    if isActive then
+        stopBang()
+    end
+    if flyActive then
+        stopFly()
+    end
+end)

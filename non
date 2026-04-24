@@ -4,6 +4,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local isTouchDevice = UserInputService.TouchEnabled
+local baseFrameSize = Vector2.new(610, 570)
 
 local isActive = false
 local animTrack = nil
@@ -28,6 +29,7 @@ local characterConnections = {}
 local viewportConnection = nil
 local FrameScale = nil
 local FlyTouchFrame = nil
+local ToggleBtn = nil
 local mobileFlyInput = {
     Up = false,
     Down = false,
@@ -179,6 +181,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGuiPro"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
@@ -203,12 +206,33 @@ local function updateResponsiveLayout()
     end
 
     local viewport = camera.ViewportSize
-    local scale = math.min(viewport.X / 690, viewport.Y / 650, 1)
-    if isTouchDevice and viewport.X < 900 then
-        scale *= 0.96
+    local horizontalPadding = isTouchDevice and 24 or 72
+    local verticalPadding = isTouchDevice and 28 or 96
+    local maxWidth = math.max(viewport.X - horizontalPadding, 240)
+    local maxHeight = math.max(viewport.Y - verticalPadding, 240)
+    local scale = math.min(maxWidth / baseFrameSize.X, maxHeight / baseFrameSize.Y, 1)
+
+    if isTouchDevice then
+        scale = math.min(scale, 0.82)
     end
 
     FrameScale.Scale = math.clamp(scale, 0.42, 1)
+
+    if isTouchDevice then
+        ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
+        ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+        if FlyTouchFrame then
+            FlyTouchFrame.Size = UDim2.new(0, 170, 0, 140)
+            FlyTouchFrame.Position = UDim2.new(1, -10, 1, -10)
+        end
+    else
+        ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
+        ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+        if FlyTouchFrame then
+            FlyTouchFrame.Size = UDim2.new(0, 184, 0, 150)
+            FlyTouchFrame.Position = UDim2.new(1, -14, 1, -14)
+        end
+    end
 end
 
 local function bindViewportListener()
@@ -397,7 +421,7 @@ Input.Parent = ContentPanel
 makeCorner(Input, 12)
 makeStroke(Input, Theme.Border, 1, 0.2)
 
-local function makeButton(name, text, size, position, baseColor)
+local function makeButton(name, text, size, position, baseColor, accentColor)
     local button = Instance.new("TextButton")
     button.Name = name
     button.Size = size
@@ -447,12 +471,12 @@ local function makeInput(name, placeholder, defaultText, position)
     return box
 end
 
-local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 82), Theme.ButtonDefault)
-local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 82), Theme.ButtonOrange)
-local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 130), Theme.ButtonDefault)
-local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 178), Theme.ButtonDefault)
+local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 82), Theme.ButtonDefault, Theme.ButtonRed)
+local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 82), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 130), Theme.ButtonDefault, Theme.ButtonBlue)
+local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 178), Theme.ButtonDefault, Theme.ButtonBlue)
 local SpeedInput = makeInput("SpeedInput", "سرعة الطيران", "50", UDim2.new(0, 190, 0, 178))
-local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 226), Theme.ButtonDefault)
+local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 226), Theme.ButtonDefault, Theme.ButtonBlue)
 local WalkSpeedInput = makeInput("WalkSpeedInput", "سرعة المشي", "16", UDim2.new(0, 190, 0, 226))
 
 local SpeedLabel = Instance.new("TextLabel")
@@ -466,9 +490,9 @@ SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.TextSize = 13
 SpeedLabel.Parent = ContentPanel
 
-local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonBlue)
-local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 274), Theme.ButtonDefault)
-local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 168, 0, 38), UDim2.new(1, -172, 0, 274), Theme.ButtonDefaultAlt)
+local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonBlue, Theme.Accent)
+local SpectateBtn = makeButton("SpectateBtn", "مشاهدة", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 274), Theme.ButtonDefault, Theme.ButtonGreen)
+local SavePlaceBtn = makeButton("SavePlaceBtn", "حفظ مكاني", UDim2.new(0, 168, 0, 38), UDim2.new(1, -172, 0, 274), Theme.ButtonDefaultAlt, Theme.ButtonOrange)
 
 local Footer = Instance.new("TextLabel")
 Footer.Size = UDim2.new(1, -32, 0, 18)
@@ -481,7 +505,7 @@ Footer.Font = Enum.Font.Gotham
 Footer.TextSize = 12
 Footer.Parent = Frame
 
-local ToggleBtn = Instance.new("TextButton")
+ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "Toggle"
 ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
 ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
@@ -823,6 +847,7 @@ local function stopFly()
         local hum = char:FindFirstChild("Humanoid")
         if hum then
             hum.PlatformStand = false
+            hum.AutoRotate = true
         end
     end
 
@@ -864,7 +889,8 @@ FlyBtn.MouseButton1Click:Connect(function()
             return
         end
 
-        hum.PlatformStand = true
+        hum.PlatformStand = not isTouchDevice
+        hum.AutoRotate = false
 
         local bv = Instance.new("BodyVelocity")
         bv.Name = "FlyBV"
@@ -888,7 +914,6 @@ FlyBtn.MouseButton1Click:Connect(function()
             if not currentCamera then
                 return
             end
-
             local cf = currentCamera.CFrame
             local velocity = Vector3.zero
 

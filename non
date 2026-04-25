@@ -12,7 +12,8 @@ local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
 
 -- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
-local T18_API_BASE = "https://96f335d0-2562-4176-bd47-29990b78a733-00-37gx75qtinqqg.picard.replit.dev/api/t18"
+-- ✅ سيرفر دائم لا ينام
+local T18_API_BASE = "https://hello-world--azozxxgfxx.replit.app/api/t18"
 local HttpService_T18 = game:GetService("HttpService")
 
 local function t18_getHttpFn()

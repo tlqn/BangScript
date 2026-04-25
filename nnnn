@@ -584,7 +584,7 @@ local PlayerPage = makePage("PlayerPage")
 local TargetPage = makePage("TargetPage")
 local ImportantPage = makePage("ImportantPage")
 
-makePageTitle(MainPage, "القائمة الرئيسية", "مفتوحة بشكل افتراضي")
+makePageTitle(MainPage, "القائمة الرئيسية", "اذا عندك اي اقتراح للسكربت شاركنا اقتراحك على الدسكورد")
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
 makePageTitle(TargetPage, "استهداف", "أوامر التعامل مع اللاعبين")
 makePageTitle(ImportantPage, "مهم", "رسالة داخل السكربت")

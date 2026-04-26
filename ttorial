@@ -306,11 +306,11 @@ local function updateResponsiveLayout()
     if isTouchDevice then
         if ToggleBtn then
             ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
-            ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+            ToggleBtn.Position = UDim2.new(0, 16, 0.5, -50)
         end
         if ChatBubbleBtn then
             ChatBubbleBtn.Size = UDim2.new(0, 46, 0, 46)
-            ChatBubbleBtn.Position = UDim2.new(1, -56, 0, 68)
+            ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
         end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 170, 0, 140)
@@ -319,11 +319,11 @@ local function updateResponsiveLayout()
     else
         if ToggleBtn then
             ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
-            ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+            ToggleBtn.Position = UDim2.new(0, 16, 0.5, -58)
         end
         if ChatBubbleBtn then
             ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
-            ChatBubbleBtn.Position = UDim2.new(1, -70, 0, 78)
+            ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
         end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 184, 0, 150)
@@ -1484,7 +1484,7 @@ ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "Toggle"
 ToggleBtn.AnchorPoint = Vector2.new(0, 0)
 ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
-ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+ToggleBtn.Position = UDim2.new(0, 16, 0.5, -58)
 ToggleBtn.BackgroundColor3 = Theme.PanelSoft
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
@@ -1601,7 +1601,7 @@ ChatBubbleBtn = Instance.new("TextButton")
 ChatBubbleBtn.Name = "ChatBubble"
 ChatBubbleBtn.AnchorPoint = Vector2.new(0, 0)
 ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
-ChatBubbleBtn.Position = UDim2.new(1, -70, 0, 78)
+ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
 ChatBubbleBtn.BackgroundColor3 = Theme.PanelSoft
 ChatBubbleBtn.Text = "💬"
 ChatBubbleBtn.TextColor3 = Theme.Text

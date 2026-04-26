@@ -109,6 +109,7 @@ local viewportConnection = nil
 local FrameScale = nil
 local FlyTouchFrame = nil
 local ToggleBtn = nil
+local ChatBubbleBtn = nil
 local mobileFlyInput = {
     Up = false,
     Down = false,
@@ -303,15 +304,27 @@ local function updateResponsiveLayout()
     FrameScale.Scale = math.clamp(scale, 0.42, 1)
 
     if isTouchDevice then
-        ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
-        ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+        if ToggleBtn then
+            ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
+            ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+        end
+        if ChatBubbleBtn then
+            ChatBubbleBtn.Size = UDim2.new(0, 46, 0, 46)
+            ChatBubbleBtn.Position = UDim2.new(1, -56, 0, 68)
+        end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 170, 0, 140)
             FlyTouchFrame.Position = UDim2.new(1, -10, 1, -10)
         end
     else
-        ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
-        ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+        if ToggleBtn then
+            ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
+            ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+        end
+        if ChatBubbleBtn then
+            ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
+            ChatBubbleBtn.Position = UDim2.new(1, -70, 0, 78)
+        end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 184, 0, 150)
             FlyTouchFrame.Position = UDim2.new(1, -14, 1, -14)
@@ -664,7 +677,6 @@ local MainPage = makePage("MainPage")
 local PlayerPage = makePage("PlayerPage")
 local TargetPage = makePage("TargetPage")
 local ImportantPage = makePage("ImportantPage")
-local ChatPage = makePage("ChatPage")
 local OwnerPage = nil
 local OwnerTargetInput = nil
 local OwnerTargetHint = nil
@@ -676,7 +688,53 @@ makePageTitle(MainPage, "القائمة الرئيسية", "مفتوحة بشك�
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
 makePageTitle(TargetPage, "استهداف", "أوامر التعامل مع اللاعبين")
 makePageTitle(ImportantPage, "مهم", "رسالة داخل السكربت")
-makePageTitle(ChatPage, "شات", "تواصل بين مشغلي السكربت")
+
+-- ====== لوحة الشات العائمة (مستقلة عن القائمة الرئيسية) ======
+local ChatPanel = Instance.new("Frame")
+ChatPanel.Name = "ChatPanel"
+ChatPanel.AnchorPoint = Vector2.new(0, 0.5)
+ChatPanel.Size = UDim2.new(1, -90, 0, 420)
+ChatPanel.Position = UDim2.new(0, 80, 0.5, 0)
+ChatPanel.BackgroundColor3 = Theme.Panel
+ChatPanel.BorderSizePixel = 0
+ChatPanel.Visible = false
+ChatPanel.ZIndex = 18
+ChatPanel.Parent = ScreenGui
+makeCorner(ChatPanel, 16)
+makeStroke(ChatPanel, Theme.Border, 1, 0.15)
+
+local ChatPanelSizeConstraint = Instance.new("UISizeConstraint")
+ChatPanelSizeConstraint.MaxSize = Vector2.new(340, 460)
+ChatPanelSizeConstraint.MinSize = Vector2.new(240, 280)
+ChatPanelSizeConstraint.Parent = ChatPanel
+
+local ChatHeader = Instance.new("Frame")
+ChatHeader.Size = UDim2.new(1, -20, 0, 44)
+ChatHeader.Position = UDim2.new(0, 10, 0, 8)
+ChatHeader.BackgroundTransparency = 1
+ChatHeader.Parent = ChatPanel
+
+local ChatHeaderTitle = Instance.new("TextLabel")
+ChatHeaderTitle.Size = UDim2.new(1, -32, 0, 22)
+ChatHeaderTitle.Position = UDim2.new(0, 0, 0, 0)
+ChatHeaderTitle.BackgroundTransparency = 1
+ChatHeaderTitle.Text = "شات"
+ChatHeaderTitle.TextColor3 = Theme.Text
+ChatHeaderTitle.TextXAlignment = Enum.TextXAlignment.Right
+ChatHeaderTitle.Font = Enum.Font.GothamBold
+ChatHeaderTitle.TextSize = 18
+ChatHeaderTitle.Parent = ChatHeader
+
+local ChatHeaderSub = Instance.new("TextLabel")
+ChatHeaderSub.Size = UDim2.new(1, -32, 0, 16)
+ChatHeaderSub.Position = UDim2.new(0, 0, 0, 24)
+ChatHeaderSub.BackgroundTransparency = 1
+ChatHeaderSub.Text = "تواصل بين مشغلي السكربت"
+ChatHeaderSub.TextColor3 = Theme.Muted
+ChatHeaderSub.TextXAlignment = Enum.TextXAlignment.Right
+ChatHeaderSub.Font = Enum.Font.Gotham
+ChatHeaderSub.TextSize = 12
+ChatHeaderSub.Parent = ChatHeader
 
 local ChatList = Instance.new("ScrollingFrame")
 ChatList.Size = UDim2.new(1, -20, 1, -130)
@@ -687,7 +745,7 @@ ChatList.ScrollBarThickness = 4
 ChatList.ScrollBarImageColor3 = Theme.Active
 ChatList.CanvasSize = UDim2.new(0, 0, 0, 0)
 ChatList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ChatList.Parent = ChatPage
+ChatList.Parent = ChatPanel
 makeCorner(ChatList, 10)
 makeStroke(ChatList, Theme.Border, 1, 0.2)
 
@@ -715,7 +773,7 @@ ChatInput.Font = Enum.Font.Gotham
 ChatInput.TextSize = 14
 ChatInput.TextXAlignment = Enum.TextXAlignment.Right
 ChatInput.ClearTextOnFocus = false
-ChatInput.Parent = ChatPage
+ChatInput.Parent = ChatPanel
 makeCorner(ChatInput, 10)
 makeStroke(ChatInput, Theme.Border, 1, 0.2)
 
@@ -728,7 +786,7 @@ ChatSendBtn.TextColor3 = Theme.Text
 ChatSendBtn.Font = Enum.Font.GothamBold
 ChatSendBtn.TextSize = 14
 ChatSendBtn.AutoButtonColor = false
-ChatSendBtn.Parent = ChatPage
+ChatSendBtn.Parent = ChatPanel
 makeCorner(ChatSendBtn, 10)
 makeStroke(ChatSendBtn, Theme.Border, 1, 0.05)
 
@@ -1097,7 +1155,6 @@ task.spawn(function()
     end
 end)
 -- ====== نهاية نظام أوامر الأونر ======
-  
 
 local function findOwnerTargetPlayer()
     if not OwnerTargetInput then
@@ -1199,7 +1256,6 @@ local function sendOwnerAdminAction(actionName)
     refreshOwnerControls()
 end
 
-
 DiscordBtn.MouseButton1Click:Connect(function()
     local opened = false
 
@@ -1249,7 +1305,6 @@ Players.PlayerRemoving:Connect(function(player)
         task.defer(refreshOwnerControls)
     end
 end)
-
 
 local ImportantCard = Instance.new("Frame")
 ImportantCard.Size = UDim2.new(1, -20, 1, -72)
@@ -1351,7 +1406,6 @@ local MainMenuBtn = makeMenuButton("القائمة الرئيسية", 1)
 local PlayerMenuBtn = makeMenuButton("اللاعب", 2)
 local TargetMenuBtn = makeMenuButton("استهداف", 3)
 local ImportantMenuBtn = makeMenuButton("مهم", 4)
-local ChatMenuBtn = makeMenuButton("شات", 5)
 local OwnerMenuBtn = nil
 
 if isOwnerUser then
@@ -1363,7 +1417,6 @@ local Pages = {
     player = PlayerPage,
     target = TargetPage,
     important = ImportantPage,
-    chat = ChatPage,
 }
 
 local MenuButtons = {
@@ -1371,7 +1424,6 @@ local MenuButtons = {
     player = PlayerMenuBtn,
     target = TargetMenuBtn,
     important = ImportantMenuBtn,
-    chat = ChatMenuBtn,
 }
 
 if OwnerPage and OwnerMenuBtn then
@@ -1409,10 +1461,6 @@ ImportantMenuBtn.MouseButton1Click:Connect(function()
     setMenuState("important")
 end)
 
-ChatMenuBtn.MouseButton1Click:Connect(function()
-    setMenuState("chat")
-end)
-
 if OwnerMenuBtn then
     OwnerMenuBtn.MouseButton1Click:Connect(function()
         setMenuState("owner")
@@ -1434,6 +1482,7 @@ Footer.Parent = Frame
 
 ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "Toggle"
+ToggleBtn.AnchorPoint = Vector2.new(0, 0)
 ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
 ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
 ToggleBtn.BackgroundColor3 = Theme.PanelSoft
@@ -1547,6 +1596,57 @@ ToggleBtn.MouseButton1Click:Connect(function()
     Frame.Visible = not Frame.Visible
 end)
 
+-- ====== زر الشات الدائري (مستقل عن القائمة الرئيسية) ======
+ChatBubbleBtn = Instance.new("TextButton")
+ChatBubbleBtn.Name = "ChatBubble"
+ChatBubbleBtn.AnchorPoint = Vector2.new(0, 0)
+ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
+ChatBubbleBtn.Position = UDim2.new(1, -70, 0, 78)
+ChatBubbleBtn.BackgroundColor3 = Theme.PanelSoft
+ChatBubbleBtn.Text = "💬"
+ChatBubbleBtn.TextColor3 = Theme.Text
+ChatBubbleBtn.TextSize = 26
+ChatBubbleBtn.Font = Enum.Font.GothamBold
+ChatBubbleBtn.AutoButtonColor = false
+ChatBubbleBtn.ZIndex = 20
+ChatBubbleBtn.Parent = ScreenGui
+makeCorner(ChatBubbleBtn, 999)
+makeStroke(ChatBubbleBtn, Theme.Border, 1, 0.15)
+
+local cDragging = false
+local cDragStart = nil
+local cStartPos = nil
+local cDragMoved = false
+
+ChatBubbleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        cDragging = true
+        cDragMoved = false
+        cDragStart = input.Position
+        cStartPos = ChatBubbleBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                cDragging = false
+            end
+        end)
+    end
+end)
+
+ChatBubbleBtn.MouseButton1Click:Connect(function()
+    if cDragMoved then return end
+    ChatPanel.Visible = not ChatPanel.Visible
+    if ChatPanel.Visible then
+        ChatBubbleBtn.BackgroundColor3 = Theme.Active
+        task.defer(function()
+            ChatList.CanvasPosition = Vector2.new(0, ChatList.AbsoluteCanvasSize.Y)
+        end)
+    else
+        ChatBubbleBtn.BackgroundColor3 = Theme.PanelSoft
+    end
+end)
+-- ====== نهاية زر الشات الدائري ======
+
 local dragging = false
 local dragStart = nil
 local startPos = nil
@@ -1565,29 +1665,85 @@ Title.InputBegan:Connect(function(input)
     end
 end)
 
+-- يحسب موقع جديد مقيد داخل حدود الشاشة (يمنع الزر من الخروج)
+local function clampToScreen(button, scaleX, scaleY, offsetX, offsetY)
+    local screenSize = ScreenGui.AbsoluteSize
+    local btnSize = button.AbsoluteSize
+    if screenSize.X <= 0 or screenSize.Y <= 0 then
+        return UDim2.new(scaleX, offsetX, scaleY, offsetY)
+    end
+    local absX = scaleX * screenSize.X + offsetX
+    local absY = scaleY * screenSize.Y + offsetY
+    local maxX = math.max(0, screenSize.X - btnSize.X)
+    local maxY = math.max(0, screenSize.Y - btnSize.Y)
+    absX = math.clamp(absX, 0, maxX)
+    absY = math.clamp(absY, 0, maxY)
+    return UDim2.new(scaleX, absX - scaleX * screenSize.X, scaleY, absY - scaleY * screenSize.Y)
+end
+
 UserInputService.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch then
         if dragging then
             local delta = input.Position - dragStart
-            Frame.Position = UDim2.new(
+            Frame.Position = clampToScreen(
+                Frame,
                 startPos.X.Scale,
-                startPos.X.Offset + delta.X,
                 startPos.Y.Scale,
+                startPos.X.Offset + delta.X,
                 startPos.Y.Offset + delta.Y
             )
         end
         if tDragging then
             local delta = input.Position - tDragStart
-            ToggleBtn.Position = UDim2.new(
+            ToggleBtn.Position = clampToScreen(
+                ToggleBtn,
                 tStartPos.X.Scale,
-                tStartPos.X.Offset + delta.X,
                 tStartPos.Y.Scale,
+                tStartPos.X.Offset + delta.X,
                 tStartPos.Y.Offset + delta.Y
+            )
+        end
+        if cDragging then
+            local delta = input.Position - cDragStart
+            if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
+                cDragMoved = true
+            end
+            ChatBubbleBtn.Position = clampToScreen(
+                ChatBubbleBtn,
+                cStartPos.X.Scale,
+                cStartPos.Y.Scale,
+                cStartPos.X.Offset + delta.X,
+                cStartPos.Y.Offset + delta.Y
             )
         end
     end
 end)
+
+-- يضمن بقاء الأزرار داخل الشاشة عند تغيير حجم الشاشة (تدوير الجوال/تغيير حجم النافذة)
+local function ensureButtonsInBounds()
+    if ToggleBtn then
+        ToggleBtn.Position = clampToScreen(
+            ToggleBtn,
+            ToggleBtn.Position.X.Scale,
+            ToggleBtn.Position.Y.Scale,
+            ToggleBtn.Position.X.Offset,
+            ToggleBtn.Position.Y.Offset
+        )
+    end
+    if ChatBubbleBtn then
+        ChatBubbleBtn.Position = clampToScreen(
+            ChatBubbleBtn,
+            ChatBubbleBtn.Position.X.Scale,
+            ChatBubbleBtn.Position.Y.Scale,
+            ChatBubbleBtn.Position.X.Offset,
+            ChatBubbleBtn.Position.Y.Offset
+        )
+    end
+end
+
+ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(ensureButtonsInBounds)
+task.defer(ensureButtonsInBounds)
 
 local function setButtonState(button, enabled, onText, offText, onColor, offColor)
     if enabled then

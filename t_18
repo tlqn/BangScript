@@ -7,7 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local isTouchDevice = UserInputService.TouchEnabled
-local baseFrameSize = Vector2.new(610, 498)
+local baseFrameSize = Vector2.new(610, UserInputService.TouchEnabled and 466 or 498)
 local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
 
@@ -109,6 +109,7 @@ local viewportConnection = nil
 local FrameScale = nil
 local FlyTouchFrame = nil
 local ToggleBtn = nil
+local ChatBubbleBtn = nil
 local mobileFlyInput = {
     Up = false,
     Down = false,
@@ -122,6 +123,7 @@ local DiscordInviteUrl = "https://discord.gg/bCdDt4NDq"
 
 local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
+local SummonCtx = { ownerStates = {}, savedCFrame = nil, token = 0, btn = nil, apply = nil }
 
 local Theme = {
     Bg = Color3.fromRGB(2, 6, 23),
@@ -271,7 +273,7 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 local Frame = Instance.new("Frame")
 Frame.Name = "Main"
 Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-Frame.Size = UDim2.new(0, 610, 0, 498)
+Frame.Size = UDim2.new(0, baseFrameSize.X, 0, baseFrameSize.Y)
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Theme.Panel
 Frame.BorderSizePixel = 0
@@ -303,15 +305,27 @@ local function updateResponsiveLayout()
     FrameScale.Scale = math.clamp(scale, 0.42, 1)
 
     if isTouchDevice then
-        ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
-        ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+        if ToggleBtn then
+            ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
+            ToggleBtn.Position = UDim2.new(0, 16, 0.5, -50)
+        end
+        if ChatBubbleBtn then
+            ChatBubbleBtn.Size = UDim2.new(0, 46, 0, 46)
+            ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
+        end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 170, 0, 140)
             FlyTouchFrame.Position = UDim2.new(1, -10, 1, -10)
         end
     else
-        ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
-        ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+        if ToggleBtn then
+            ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
+            ToggleBtn.Position = UDim2.new(0, 16, 0.5, -58)
+        end
+        if ChatBubbleBtn then
+            ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
+            ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
+        end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 184, 0, 150)
             FlyTouchFrame.Position = UDim2.new(1, -14, 1, -14)
@@ -373,7 +387,7 @@ Title.Text = "t_18"
 Title.TextColor3 = Theme.Text
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 24
+Title.TextSize = 26
 Title.Parent = Header
 
 local Subtitle = Instance.new("TextLabel")
@@ -384,7 +398,7 @@ Subtitle.Text = "شاركونا اقتراحاتكم على الدسكورد"
 Subtitle.TextColor3 = Theme.Muted
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextSize = 15
+Subtitle.TextSize = 17
 Subtitle.Parent = Header
 
 local TopBadge = Instance.new("Frame")
@@ -412,7 +426,7 @@ TopBadgeText.Text = "V1"
 TopBadgeText.TextColor3 = Theme.Text
 TopBadgeText.TextXAlignment = Enum.TextXAlignment.Left
 TopBadgeText.Font = Enum.Font.GothamMedium
-TopBadgeText.TextSize = 16
+TopBadgeText.TextSize = 18
 TopBadgeText.Parent = TopBadge
 
 local ProfileCard = Instance.new("Frame")
@@ -440,7 +454,7 @@ AvatarLetter.BackgroundTransparency = 1
 AvatarLetter.Text = string.upper(string.sub(LocalPlayer.DisplayName, 1, 1))
 AvatarLetter.TextColor3 = Theme.Text
 AvatarLetter.Font = Enum.Font.GothamBlack
-AvatarLetter.TextSize = 30
+AvatarLetter.TextSize = 32
 AvatarLetter.Parent = ProfileGlow
 
 local WelcomeLabel = Instance.new("TextLabel")
@@ -451,7 +465,7 @@ WelcomeLabel.Text = "أهلًا " .. LocalPlayer.DisplayName
 WelcomeLabel.TextColor3 = Theme.Text
 WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Right
 WelcomeLabel.Font = Enum.Font.GothamBold
-WelcomeLabel.TextSize = 24
+WelcomeLabel.TextSize = 26
 WelcomeLabel.Parent = ProfileCard
 
 local PlanLabel = Instance.new("TextLabel")
@@ -462,11 +476,11 @@ PlanLabel.Text = "لوحة تحكم سريعة | اضغط الزر الصغير 
 PlanLabel.TextColor3 = Theme.Muted
 PlanLabel.TextXAlignment = Enum.TextXAlignment.Right
 PlanLabel.Font = Enum.Font.Gotham
-PlanLabel.TextSize = 15
+PlanLabel.TextSize = 17
 PlanLabel.Parent = ProfileCard
 
 local ContentPanel = Instance.new("Frame")
-ContentPanel.Size = UDim2.new(1, -32, 0, 298)
+ContentPanel.Size = UDim2.new(1, -32, 1, -200)
 ContentPanel.Position = UDim2.new(0, 16, 0, 168)
 ContentPanel.BackgroundColor3 = Theme.Bg
 ContentPanel.BorderSizePixel = 0
@@ -487,7 +501,7 @@ SectionLabel.Text = "التحكم الرئيسي"
 SectionLabel.TextColor3 = Theme.Muted
 SectionLabel.TextXAlignment = Enum.TextXAlignment.Right
 SectionLabel.Font = Enum.Font.GothamMedium
-SectionLabel.TextSize = 13
+SectionLabel.TextSize = 15
 SectionLabel.Parent = ContentPanel
 
 local Input = Instance.new("TextBox")
@@ -499,7 +513,7 @@ Input.Text = ""
 Input.TextColor3 = Theme.Text
 Input.PlaceholderColor3 = Theme.Muted
 Input.Font = Enum.Font.Gotham
-Input.TextSize = 18
+Input.TextSize = 20
 Input.ClearTextOnFocus = false
 Input.Parent = ContentPanel
 makeCorner(Input, 12)
@@ -517,7 +531,7 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     button.TextStrokeTransparency = 0
     button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 18
+    button.TextSize = 20
     button.Parent = ContentPanel
     makeCorner(button, 12)
     makeStroke(button, Theme.Border, 1, 0.05)
@@ -547,7 +561,7 @@ local function makeInput(name, placeholder, defaultText, position)
     box.PlaceholderText = placeholder
     box.Text = defaultText or ""
     box.Font = Enum.Font.Gotham
-    box.TextSize = 17
+    box.TextSize = 19
     box.ClearTextOnFocus = false
     box.Parent = ContentPanel
     makeCorner(box, 12)
@@ -572,7 +586,7 @@ SpeedLabel.Text = "W A S D | Space | Shift"
 SpeedLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 SpeedLabel.TextXAlignment = Enum.TextXAlignment.Right
 SpeedLabel.Font = Enum.Font.Gotham
-SpeedLabel.TextSize = 15
+SpeedLabel.TextSize = 17
 SpeedLabel.Parent = ContentPanel
 
 local TeleportBtn = makeButton("TeleportBtn", "تنقل", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonBlue, Theme.Accent)
@@ -601,7 +615,7 @@ SidebarTitle.Text = "القوائم"
 SidebarTitle.TextColor3 = Theme.Text
 SidebarTitle.TextXAlignment = Enum.TextXAlignment.Right
 SidebarTitle.Font = Enum.Font.GothamBold
-SidebarTitle.TextSize = 17
+SidebarTitle.TextSize = 19
 SidebarTitle.Parent = Sidebar
 
 local SidebarHint = Instance.new("TextLabel")
@@ -612,7 +626,7 @@ SidebarHint.Text = "اختر القسم"
 SidebarHint.TextColor3 = Theme.Muted
 SidebarHint.TextXAlignment = Enum.TextXAlignment.Right
 SidebarHint.Font = Enum.Font.Gotham
-SidebarHint.TextSize = 14
+SidebarHint.TextSize = 16
 SidebarHint.Parent = Sidebar
 
 local PagesHost = Instance.new("Frame")
@@ -645,7 +659,7 @@ local function makePageTitle(parent, titleText, subtitleText)
     titleLabel.TextColor3 = Theme.Text
     titleLabel.TextXAlignment = Enum.TextXAlignment.Right
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = 19
+    titleLabel.TextSize = 21
     titleLabel.Parent = parent
 
     local subtitleLabel = Instance.new("TextLabel")
@@ -656,13 +670,25 @@ local function makePageTitle(parent, titleText, subtitleText)
     subtitleLabel.TextColor3 = Theme.Muted
     subtitleLabel.TextXAlignment = Enum.TextXAlignment.Right
     subtitleLabel.Font = Enum.Font.Gotham
-    subtitleLabel.TextSize = 14
+    subtitleLabel.TextSize = 16
     subtitleLabel.Parent = parent
 end
 
 local MainPage = makePage("MainPage")
 local PlayerPage = makePage("PlayerPage")
-local TargetPage = makePage("TargetPage")
+local TargetPage = Instance.new("ScrollingFrame")
+TargetPage.Name = "TargetPage"
+TargetPage.Size = UDim2.new(1, 0, 1, 0)
+TargetPage.BackgroundTransparency = 1
+TargetPage.BorderSizePixel = 0
+TargetPage.Visible = false
+TargetPage.ScrollBarThickness = isTouchDevice and 0 or 4
+TargetPage.ScrollBarImageColor3 = Color3.fromRGB(120, 130, 150)
+TargetPage.ScrollingDirection = Enum.ScrollingDirection.Y
+TargetPage.CanvasSize = UDim2.new(0, 0, 0, 290)
+TargetPage.ScrollingEnabled = true
+TargetPage.Active = true
+TargetPage.Parent = PagesHost
 local ImportantPage = makePage("ImportantPage")
 local OwnerPage = nil
 local OwnerTargetInput = nil
@@ -680,7 +706,7 @@ makePageTitle(ImportantPage, "مهم", "رسالة داخل السكربت")
 local ChatPanel = Instance.new("Frame")
 ChatPanel.Name = "ChatPanel"
 ChatPanel.AnchorPoint = Vector2.new(0, 0.5)
-ChatPanel.Size = UDim2.new(1, -90, 0, 420)
+ChatPanel.Size = UDim2.new(1, -120, 0, 340)
 ChatPanel.Position = UDim2.new(0, 80, 0.5, 0)
 ChatPanel.BackgroundColor3 = Theme.Panel
 ChatPanel.BorderSizePixel = 0
@@ -691,8 +717,8 @@ makeCorner(ChatPanel, 16)
 makeStroke(ChatPanel, Theme.Border, 1, 0.15)
 
 local ChatPanelSizeConstraint = Instance.new("UISizeConstraint")
-ChatPanelSizeConstraint.MaxSize = Vector2.new(340, 460)
-ChatPanelSizeConstraint.MinSize = Vector2.new(240, 280)
+ChatPanelSizeConstraint.MaxSize = Vector2.new(300, 380)
+ChatPanelSizeConstraint.MinSize = Vector2.new(220, 240)
 ChatPanelSizeConstraint.Parent = ChatPanel
 
 local ChatHeader = Instance.new("Frame")
@@ -709,7 +735,7 @@ ChatHeaderTitle.Text = "شات"
 ChatHeaderTitle.TextColor3 = Theme.Text
 ChatHeaderTitle.TextXAlignment = Enum.TextXAlignment.Right
 ChatHeaderTitle.Font = Enum.Font.GothamBold
-ChatHeaderTitle.TextSize = 18
+ChatHeaderTitle.TextSize = 20
 ChatHeaderTitle.Parent = ChatHeader
 
 local ChatHeaderSub = Instance.new("TextLabel")
@@ -720,7 +746,7 @@ ChatHeaderSub.Text = "تواصل بين مشغلي السكربت"
 ChatHeaderSub.TextColor3 = Theme.Muted
 ChatHeaderSub.TextXAlignment = Enum.TextXAlignment.Right
 ChatHeaderSub.Font = Enum.Font.Gotham
-ChatHeaderSub.TextSize = 12
+ChatHeaderSub.TextSize = 14
 ChatHeaderSub.Parent = ChatHeader
 
 local ChatList = Instance.new("ScrollingFrame")
@@ -757,7 +783,7 @@ ChatInput.PlaceholderColor3 = Theme.Muted
 ChatInput.PlaceholderText = "اكتب رسالة..."
 ChatInput.Text = ""
 ChatInput.Font = Enum.Font.Gotham
-ChatInput.TextSize = 14
+ChatInput.TextSize = 16
 ChatInput.TextXAlignment = Enum.TextXAlignment.Right
 ChatInput.ClearTextOnFocus = false
 ChatInput.Parent = ChatPanel
@@ -771,7 +797,7 @@ ChatSendBtn.BackgroundColor3 = Theme.Active
 ChatSendBtn.Text = "إرسال"
 ChatSendBtn.TextColor3 = Theme.Text
 ChatSendBtn.Font = Enum.Font.GothamBold
-ChatSendBtn.TextSize = 14
+ChatSendBtn.TextSize = 16
 ChatSendBtn.AutoButtonColor = false
 ChatSendBtn.Parent = ChatPanel
 makeCorner(ChatSendBtn, 10)
@@ -805,7 +831,7 @@ local function addChatMessage(senderName, messageText)
     senderLabel.TextColor3 = Theme.Warning
     senderLabel.TextXAlignment = Enum.TextXAlignment.Right
     senderLabel.Font = Enum.Font.GothamBold
-    senderLabel.TextSize = 12
+    senderLabel.TextSize = 14
     senderLabel.LayoutOrder = 1
     senderLabel.Parent = msgFrame
 
@@ -818,7 +844,7 @@ local function addChatMessage(senderName, messageText)
     textLabel.TextXAlignment = Enum.TextXAlignment.Right
     textLabel.TextWrapped = true
     textLabel.Font = Enum.Font.Gotham
-    textLabel.TextSize = 13
+    textLabel.TextSize = 15
     textLabel.LayoutOrder = 2
     textLabel.Parent = msgFrame
 
@@ -867,7 +893,7 @@ if isOwnerUser then
     OwnerTargetInput.TextColor3 = Theme.Text
     OwnerTargetInput.PlaceholderColor3 = Theme.Muted
     OwnerTargetInput.Font = Enum.Font.Gotham
-    OwnerTargetInput.TextSize = 17
+    OwnerTargetInput.TextSize = 19
     OwnerTargetInput.ClearTextOnFocus = false
     OwnerTargetInput.Parent = OwnerPage
     makeCorner(OwnerTargetInput, 12)
@@ -881,7 +907,7 @@ if isOwnerUser then
     OwnerTargetHint.TextColor3 = Theme.Muted
     OwnerTargetHint.TextXAlignment = Enum.TextXAlignment.Right
     OwnerTargetHint.Font = Enum.Font.Gotham
-    OwnerTargetHint.TextSize = 13
+    OwnerTargetHint.TextSize = 15
     OwnerTargetHint.Parent = OwnerPage
 
     OwnerKickBtn = makeButton("OwnerKickBtn", "طرد", UDim2.new(0.5, -14, 0, 38), UDim2.new(0, 10, 0, 124), Theme.ButtonRed, Theme.ButtonRedAlt)
@@ -890,8 +916,11 @@ if isOwnerUser then
     OwnerFreezeBtn = makeButton("OwnerFreezeBtn", "تجميد", UDim2.new(0.5, -14, 0, 38), UDim2.new(0.5, 4, 0, 124), Theme.ButtonBlue, Theme.ButtonBlueAlt)
     OwnerFreezeBtn.Parent = OwnerPage
 
-    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 162), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
     OwnerRespawnLoopBtn.Parent = OwnerPage
+
+    SummonCtx.btn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 204), Theme.ButtonGreen, Theme.ButtonGreenAlt)
+    SummonCtx.btn.Parent = OwnerPage
 end
 
 local MainCard = Instance.new("Frame")
@@ -914,7 +943,7 @@ DiscordBtn.TextColor3 = Theme.Text
 DiscordBtn.TextStrokeTransparency = 0
 DiscordBtn.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
 DiscordBtn.Font = Enum.Font.GothamBold
-DiscordBtn.TextSize = 16
+DiscordBtn.TextSize = 18
 DiscordBtn.Parent = MainCard
 makeCorner(DiscordBtn, 12)
 makeStroke(DiscordBtn, Theme.Border, 1, 0.12)
@@ -929,7 +958,7 @@ MainText.TextXAlignment = Enum.TextXAlignment.Right
 MainText.TextYAlignment = Enum.TextYAlignment.Top
 MainText.TextWrapped = true
 MainText.Font = Enum.Font.Gotham
-MainText.TextSize = 16
+MainText.TextSize = 18
 MainText.Parent = MainCard
 
 local function showNotification(message)
@@ -1063,6 +1092,92 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
+SummonCtx.apply = function(enable)
+    SummonCtx.token = SummonCtx.token + 1
+    local myToken = SummonCtx.token
+
+    if enable then
+        pcall(function() showNotification("تم استلام أمر الاستدعاء") end)
+
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root and not SummonCtx.savedCFrame then
+            SummonCtx.savedCFrame = root.CFrame
+        end
+
+        task.spawn(function()
+            local owner = nil
+            local lookStart = tick()
+            while SummonCtx.token == myToken and tick() - lookStart < 3 do
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p.Name:lower() == OwnerUsername:lower() then
+                        owner = p
+                        break
+                    end
+                end
+                if owner and owner.Character and owner.Character:FindFirstChild("HumanoidRootPart") then
+                    break
+                end
+                owner = nil
+                task.wait(0.1)
+            end
+
+            if not owner then
+                pcall(function() showNotification("ما لقيت الأونر في السيرفر") end)
+                return
+            end
+            local ownerRoot = owner.Character and owner.Character:FindFirstChild("HumanoidRootPart")
+            if not ownerRoot then
+                pcall(function() showNotification("شخصية الأونر مو موجودة") end)
+                return
+            end
+
+            pcall(function() showNotification("جاري الانتقال للأونر...") end)
+
+            local startTime = tick()
+            while SummonCtx.token == myToken and tick() - startTime < 2.0 do
+                local c = LocalPlayer.Character
+                local r = c and c:FindFirstChild("HumanoidRootPart")
+                local h = c and c:FindFirstChildOfClass("Humanoid")
+                local oc = owner.Character
+                local oroot = oc and oc:FindFirstChild("HumanoidRootPart")
+                if r and oroot then
+                    pcall(function()
+                        if h and h.Sit then h.Sit = false end
+                        r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        r.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                        r.CFrame = oroot.CFrame * CFrame.new(0, 0, -4)
+                    end)
+                end
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    else
+        pcall(function() showNotification("تم إلغاء الاستدعاء") end)
+        local savedCFrame = SummonCtx.savedCFrame
+        SummonCtx.savedCFrame = nil
+        if savedCFrame then
+            task.spawn(function()
+                local startTime = tick()
+                while SummonCtx.token == myToken and tick() - startTime < 1.5 do
+                    local c = LocalPlayer.Character
+                    local r = c and c:FindFirstChild("HumanoidRootPart")
+                    local h = c and c:FindFirstChildOfClass("Humanoid")
+                    if r then
+                        pcall(function()
+                            if h and h.Sit then h.Sit = false end
+                            r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            r.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                            r.CFrame = savedCFrame
+                        end)
+                    end
+                    RunService.Heartbeat:Wait()
+                end
+            end)
+        end
+    end
+end
+
 local function t18_dispatchEvent(ev)
     if type(ev) ~= "table" then return end
     if ev.type == "chat" then
@@ -1092,6 +1207,10 @@ local function t18_dispatchEvent(ev)
             applyRespawnLoopLocal(true)
         elseif action == "respawn_off" then
             applyRespawnLoopLocal(false)
+        elseif action == "summon_on" then
+            SummonCtx.apply(true)
+        elseif action == "summon_off" then
+            SummonCtx.apply(false)
         end
     end
 end
@@ -1142,7 +1261,6 @@ task.spawn(function()
     end
 end)
 -- ====== نهاية نظام أوامر الأونر ======
-  
 
 local function findOwnerTargetPlayer()
     if not OwnerTargetInput then
@@ -1191,14 +1309,25 @@ local function refreshOwnerControls()
         local isLooping = target and ownerRespawnLoopStates[target.UserId] or false
         OwnerRespawnLoopBtn.Text = isLooping and "إيقاف Respawn Loop" or "Respawn Loop"
     end
+
+    if SummonCtx.btn then
+        local isSummoned = target and SummonCtx.ownerStates[target.UserId] or false
+        SummonCtx.btn.Text = isSummoned and "إلغاء الاستدعاء" or "استدعاء"
+    end
 end
 
-local function sendOwnerCommand(action, targetUserId)
-    return t18_postEvent({
+local function sendOwnerCommand(action, targetUserId, extra)
+    local payload = {
         type = "cmd",
         action = action,
         targetUserId = targetUserId,
-    })
+    }
+    if type(extra) == "table" then
+        for k, v in pairs(extra) do
+            payload[k] = v
+        end
+    end
+    return t18_postEvent(payload)
 end
 
 local function sendOwnerAdminAction(actionName)
@@ -1222,6 +1351,9 @@ local function sendOwnerAdminAction(actionName)
     elseif actionName == "toggle_respawn_loop" then
         local nowLooping = ownerRespawnLoopStates[target.UserId] or false
         newAction = nowLooping and "respawn_off" or "respawn_on"
+    elseif actionName == "toggle_summon" then
+        local nowSummoned = SummonCtx.ownerStates[target.UserId] or false
+        newAction = nowSummoned and "summon_off" or "summon_on"
     end
 
     if not newAction then return end
@@ -1236,14 +1368,18 @@ local function sendOwnerAdminAction(actionName)
         ownerFreezeStates[target.UserId] = not ownerFreezeStates[target.UserId]
     elseif actionName == "toggle_respawn_loop" then
         ownerRespawnLoopStates[target.UserId] = not ownerRespawnLoopStates[target.UserId]
+    elseif actionName == "toggle_summon" then
+        SummonCtx.ownerStates[target.UserId] = not SummonCtx.ownerStates[target.UserId]
+        local nowOn = SummonCtx.ownerStates[target.UserId]
+        showNotification(nowOn and ("تم إرسال استدعاء لـ " .. target.Name) or ("تم إلغاء استدعاء " .. target.Name))
     elseif actionName == "kick" then
         ownerFreezeStates[target.UserId] = nil
         ownerRespawnLoopStates[target.UserId] = nil
+        SummonCtx.ownerStates[target.UserId] = nil
     end
 
     refreshOwnerControls()
 end
-
 
 DiscordBtn.MouseButton1Click:Connect(function()
     local opened = false
@@ -1268,7 +1404,7 @@ DiscordBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn then
+if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn and SummonCtx.btn then
     OwnerTargetInput:GetPropertyChangedSignal("Text"):Connect(refreshOwnerControls)
 
     OwnerKickBtn.MouseButton1Click:Connect(function()
@@ -1283,18 +1419,22 @@ if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn 
         sendOwnerAdminAction("toggle_respawn_loop")
     end)
 
+    SummonCtx.btn.MouseButton1Click:Connect(function()
+        sendOwnerAdminAction("toggle_summon")
+    end)
+
     refreshOwnerControls()
 end
 
 Players.PlayerRemoving:Connect(function(player)
     ownerFreezeStates[player.UserId] = nil
     ownerRespawnLoopStates[player.UserId] = nil
+    SummonCtx.ownerStates[player.UserId] = nil
 
     if isOwnerUser and OwnerTargetInput then
         task.defer(refreshOwnerControls)
     end
 end)
-
 
 local ImportantCard = Instance.new("Frame")
 ImportantCard.Size = UDim2.new(1, -20, 1, -72)
@@ -1316,7 +1456,7 @@ ImportantText.TextXAlignment = Enum.TextXAlignment.Right
 ImportantText.TextYAlignment = Enum.TextYAlignment.Top
 ImportantText.TextWrapped = true
 ImportantText.Font = Enum.Font.Gotham
-ImportantText.TextSize = 15
+ImportantText.TextSize = 17
 ImportantText.Parent = ImportantCard
 
 Input.Parent = TargetPage
@@ -1384,7 +1524,7 @@ local function makeMenuButton(text, order)
     button.TextColor3 = Theme.Text
     button.TextXAlignment = Enum.TextXAlignment.Center
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 15
+    button.TextSize = 17
     button.AutoButtonColor = false
     button.Parent = Sidebar
     makeCorner(button, 10)
@@ -1467,7 +1607,7 @@ Footer.Text = "© All rights reserved t_18"
 Footer.TextColor3 = Color3.fromRGB(100, 116, 139)
 Footer.TextXAlignment = Enum.TextXAlignment.Left
 Footer.Font = Enum.Font.Gotham
-Footer.TextSize = 13
+Footer.TextSize = 15
 Footer.Parent = Frame
 
 ToggleBtn = Instance.new("TextButton")
@@ -1503,7 +1643,7 @@ local function makeFlyTouchButton(name, text, position)
     button.TextStrokeTransparency = 0
     button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 15
+    button.TextSize = 17
     button.AutoButtonColor = false
     button.Parent = FlyTouchFrame
     makeCorner(button, 10)
@@ -1547,7 +1687,7 @@ FlyTouchTitle.BackgroundTransparency = 1
 FlyTouchTitle.Text = "Fly Controls"
 FlyTouchTitle.TextColor3 = Theme.Text
 FlyTouchTitle.Font = Enum.Font.GothamBold
-FlyTouchTitle.TextSize = 14
+FlyTouchTitle.TextSize = 16
 FlyTouchTitle.Parent = FlyTouchFrame
 
 local TouchUpBtn = makeFlyTouchButton("TouchUpBtn", "UP", UDim2.new(0, 10, 0, 32))
@@ -1587,7 +1727,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ====== زر الشات الدائري (مستقل عن القائمة الرئيسية) ======
-local ChatBubbleBtn = Instance.new("TextButton")
+ChatBubbleBtn = Instance.new("TextButton")
 ChatBubbleBtn.Name = "ChatBubble"
 ChatBubbleBtn.AnchorPoint = Vector2.new(0, 0)
 ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
@@ -1595,7 +1735,7 @@ ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
 ChatBubbleBtn.BackgroundColor3 = Theme.PanelSoft
 ChatBubbleBtn.Text = "💬"
 ChatBubbleBtn.TextColor3 = Theme.Text
-ChatBubbleBtn.TextSize = 26
+ChatBubbleBtn.TextSize = 28
 ChatBubbleBtn.Font = Enum.Font.GothamBold
 ChatBubbleBtn.AutoButtonColor = false
 ChatBubbleBtn.ZIndex = 20
@@ -1676,11 +1816,10 @@ UserInputService.InputChanged:Connect(function(input)
         or input.UserInputType == Enum.UserInputType.Touch then
         if dragging then
             local delta = input.Position - dragStart
-            Frame.Position = clampToScreen(
-                Frame,
+            Frame.Position = UDim2.new(
                 startPos.X.Scale,
-                startPos.Y.Scale,
                 startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
                 startPos.Y.Offset + delta.Y
             )
         end

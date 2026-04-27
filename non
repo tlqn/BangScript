@@ -1082,53 +1082,77 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
-local function applySummonLocal(enable)
+local localSummonThread = nil
+
+local function getMyRoot()
+    local char = LocalPlayer.Character
+    if not char then return nil, nil end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    return root, hum
+end
+
+local function applySummonLocal(enable, targetCFrame)
     if enable then
-        pcall(function()
-            local char = LocalPlayer.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            if not root then return end
+        if not targetCFrame then return end
 
-            localSummonSavedCFrame = root.CFrame
-
-            local owner = nil
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p.Name:lower() == OwnerUsername:lower() then
-                    owner = p
-                    break
-                end
+        local root, _ = getMyRoot()
+        if not root then
+            -- انتظر الشخصية تجي
+            local tries = 0
+            while tries < 20 do
+                task.wait(0.1)
+                root = select(1, getMyRoot())
+                if root then break end
+                tries = tries + 1
             end
+            if not root then return end
+        end
 
-            if owner and owner.Character then
-                local ownerRoot = owner.Character:FindFirstChild("HumanoidRootPart")
-                if ownerRoot then
-                    task.spawn(function()
-                        for _ = 1, 4 do
-                            local c = LocalPlayer.Character
-                            local r = c and c:FindFirstChild("HumanoidRootPart")
-                            if r then
-                                r.AssemblyLinearVelocity = Vector3.zero
-                                r.AssemblyAngularVelocity = Vector3.zero
-                                r.CFrame = ownerRoot.CFrame * CFrame.new(0, 0, -3)
-                            end
-                            RunService.Heartbeat:Wait()
-                        end
+        if not localSummonSavedCFrame then
+            localSummonSavedCFrame = root.CFrame
+        end
+
+        if localSummonThread then
+            localSummonThread = nil
+        end
+
+        localSummonThread = task.spawn(function()
+            local myThread = {}
+            localSummonThread = myThread
+            local startTime = tick()
+            while localSummonThread == myThread and tick() - startTime < 1.2 do
+                local r, hum = getMyRoot()
+                if r then
+                    pcall(function()
+                        if hum and hum.Sit then hum.Sit = false end
+                        r.AssemblyLinearVelocity = Vector3.zero
+                        r.AssemblyAngularVelocity = Vector3.zero
+                        r.CFrame = targetCFrame
                     end)
                 end
+                RunService.Heartbeat:Wait()
+            end
+            if localSummonThread == myThread then
+                localSummonThread = nil
             end
         end)
     else
+        localSummonThread = nil
         local savedCFrame = localSummonSavedCFrame
         localSummonSavedCFrame = nil
         if savedCFrame then
             task.spawn(function()
-                for _ = 1, 4 do
-                    local char = LocalPlayer.Character
-                    local root = char and char:FindFirstChild("HumanoidRootPart")
+                local startTime = tick()
+                while tick() - startTime < 1.0 do
+                    local root, hum = getMyRoot()
                     if root then
-                        root.AssemblyLinearVelocity = Vector3.zero
-                        root.AssemblyAngularVelocity = Vector3.zero
-                        root.CFrame = savedCFrame
+                        pcall(function()
+                            if hum and hum.Sit then hum.Sit = false end
+                            root.AssemblyLinearVelocity = Vector3.zero
+                            root.AssemblyAngularVelocity = Vector3.zero
+                            root.CFrame = savedCFrame
+                        end)
                     end
                     RunService.Heartbeat:Wait()
                 end
@@ -1167,9 +1191,25 @@ local function t18_dispatchEvent(ev)
         elseif action == "respawn_off" then
             applyRespawnLoopLocal(false)
         elseif action == "summon_on" then
-            applySummonLocal(true)
+            local sx = tonumber(ev.sx)
+            local sy = tonumber(ev.sy)
+            local sz = tonumber(ev.sz)
+            local targetCFrame = nil
+            if sx and sy and sz then
+                local r00 = tonumber(ev.r00) or 1
+                local r01 = tonumber(ev.r01) or 0
+                local r02 = tonumber(ev.r02) or 0
+                local r10 = tonumber(ev.r10) or 0
+                local r11 = tonumber(ev.r11) or 1
+                local r12 = tonumber(ev.r12) or 0
+                local r20 = tonumber(ev.r20) or 0
+                local r21 = tonumber(ev.r21) or 0
+                local r22 = tonumber(ev.r22) or 1
+                targetCFrame = CFrame.new(sx, sy, sz, r00, r01, r02, r10, r11, r12, r20, r21, r22)
+            end
+            applySummonLocal(true, targetCFrame)
         elseif action == "summon_off" then
-            applySummonLocal(false)
+            applySummonLocal(false, nil)
         end
     end
 end
@@ -1275,12 +1315,18 @@ local function refreshOwnerControls()
     end
 end
 
-local function sendOwnerCommand(action, targetUserId)
-    return t18_postEvent({
+local function sendOwnerCommand(action, targetUserId, extra)
+    local payload = {
         type = "cmd",
         action = action,
         targetUserId = targetUserId,
-    })
+    }
+    if type(extra) == "table" then
+        for k, v in pairs(extra) do
+            payload[k] = v
+        end
+    end
+    return t18_postEvent(payload)
 end
 
 local function sendOwnerAdminAction(actionName)
@@ -1311,7 +1357,25 @@ local function sendOwnerAdminAction(actionName)
 
     if not newAction then return end
 
-    local sent = sendOwnerCommand(newAction, target.UserId)
+    local extra = nil
+    if newAction == "summon_on" then
+        local myChar = LocalPlayer.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if not myRoot then
+            showNotification("ما قدرت أجيب موقعك — تأكد إن شخصيتك موجودة")
+            return
+        end
+        local cf = myRoot.CFrame * CFrame.new(0, 0, -4)
+        local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = cf:GetComponents()
+        extra = {
+            sx = x, sy = y, sz = z,
+            r00 = r00, r01 = r01, r02 = r02,
+            r10 = r10, r11 = r11, r12 = r12,
+            r20 = r20, r21 = r21, r22 = r22,
+        }
+    end
+
+    local sent = sendOwnerCommand(newAction, target.UserId, extra)
     if not sent then
         showNotification("ما قدرت أرسل الأمر — تأكد إن المُشغِّل يدعم HTTP")
         return

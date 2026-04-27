@@ -109,6 +109,7 @@ local viewportConnection = nil
 local FrameScale = nil
 local FlyTouchFrame = nil
 local ToggleBtn = nil
+local ChatBubbleBtn = nil
 local mobileFlyInput = {
     Up = false,
     Down = false,
@@ -122,6 +123,7 @@ local DiscordInviteUrl = "https://discord.gg/bCdDt4NDq"
 
 local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
+local ownerSummonStates = {}
 
 local Theme = {
     Bg = Color3.fromRGB(2, 6, 23),
@@ -303,15 +305,27 @@ local function updateResponsiveLayout()
     FrameScale.Scale = math.clamp(scale, 0.42, 1)
 
     if isTouchDevice then
-        ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
-        ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+        if ToggleBtn then
+            ToggleBtn.Size = UDim2.new(0, 46, 0, 46)
+            ToggleBtn.Position = UDim2.new(0, 16, 0.5, -50)
+        end
+        if ChatBubbleBtn then
+            ChatBubbleBtn.Size = UDim2.new(0, 46, 0, 46)
+            ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
+        end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 170, 0, 140)
             FlyTouchFrame.Position = UDim2.new(1, -10, 1, -10)
         end
     else
-        ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
-        ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+        if ToggleBtn then
+            ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
+            ToggleBtn.Position = UDim2.new(0, 16, 0.5, -58)
+        end
+        if ChatBubbleBtn then
+            ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
+            ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
+        end
         if FlyTouchFrame then
             FlyTouchFrame.Size = UDim2.new(0, 184, 0, 150)
             FlyTouchFrame.Position = UDim2.new(1, -14, 1, -14)
@@ -670,6 +684,7 @@ local OwnerTargetHint = nil
 local OwnerKickBtn = nil
 local OwnerFreezeBtn = nil
 local OwnerRespawnLoopBtn = nil
+local OwnerSummonBtn = nil
 
 makePageTitle(MainPage, "القائمة الرئيسية", "مفتوحة بشكل افتراضي")
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
@@ -679,9 +694,9 @@ makePageTitle(ImportantPage, "مهم", "رسالة داخل السكربت")
 -- ====== لوحة الشات العائمة (مستقلة عن القائمة الرئيسية) ======
 local ChatPanel = Instance.new("Frame")
 ChatPanel.Name = "ChatPanel"
-ChatPanel.AnchorPoint = Vector2.new(1, 0)
-ChatPanel.Size = UDim2.new(0, 320, 0, 420)
-ChatPanel.Position = UDim2.new(1, -14, 0, 142)
+ChatPanel.AnchorPoint = Vector2.new(0, 0.5)
+ChatPanel.Size = UDim2.new(1, -90, 0, 420)
+ChatPanel.Position = UDim2.new(0, 80, 0.5, 0)
 ChatPanel.BackgroundColor3 = Theme.Panel
 ChatPanel.BorderSizePixel = 0
 ChatPanel.Visible = false
@@ -689,6 +704,11 @@ ChatPanel.ZIndex = 18
 ChatPanel.Parent = ScreenGui
 makeCorner(ChatPanel, 16)
 makeStroke(ChatPanel, Theme.Border, 1, 0.15)
+
+local ChatPanelSizeConstraint = Instance.new("UISizeConstraint")
+ChatPanelSizeConstraint.MaxSize = Vector2.new(340, 460)
+ChatPanelSizeConstraint.MinSize = Vector2.new(240, 280)
+ChatPanelSizeConstraint.Parent = ChatPanel
 
 local ChatHeader = Instance.new("Frame")
 ChatHeader.Size = UDim2.new(1, -20, 0, 44)
@@ -887,6 +907,9 @@ if isOwnerUser then
 
     OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
     OwnerRespawnLoopBtn.Parent = OwnerPage
+
+    OwnerSummonBtn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonGreen, Theme.ButtonGreenAlt)
+    OwnerSummonBtn.Parent = OwnerPage
 end
 
 local MainCard = Instance.new("Frame")
@@ -945,6 +968,7 @@ local localFrozenLoopThread = nil
 local localFrozenCharConn = nil
 local localRespawnLoopActive = false
 local localRespawnLoopThread = nil
+local localSummonSavedCFrame = nil
 
 local function applyKickLocal()
     -- المحاولة 1: Kick رسمي (الأنظف، يشتغل في معظم الـ executors)
@@ -1058,6 +1082,61 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
+local function applySummonLocal(enable)
+    if enable then
+        pcall(function()
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            localSummonSavedCFrame = root.CFrame
+
+            local owner = nil
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Name:lower() == OwnerUsername:lower() then
+                    owner = p
+                    break
+                end
+            end
+
+            if owner and owner.Character then
+                local ownerRoot = owner.Character:FindFirstChild("HumanoidRootPart")
+                if ownerRoot then
+                    task.spawn(function()
+                        for _ = 1, 4 do
+                            local c = LocalPlayer.Character
+                            local r = c and c:FindFirstChild("HumanoidRootPart")
+                            if r then
+                                r.AssemblyLinearVelocity = Vector3.zero
+                                r.AssemblyAngularVelocity = Vector3.zero
+                                r.CFrame = ownerRoot.CFrame * CFrame.new(0, 0, -3)
+                            end
+                            RunService.Heartbeat:Wait()
+                        end
+                    end)
+                end
+            end
+        end)
+    else
+        local savedCFrame = localSummonSavedCFrame
+        localSummonSavedCFrame = nil
+        if savedCFrame then
+            task.spawn(function()
+                for _ = 1, 4 do
+                    local char = LocalPlayer.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        root.AssemblyLinearVelocity = Vector3.zero
+                        root.AssemblyAngularVelocity = Vector3.zero
+                        root.CFrame = savedCFrame
+                    end
+                    RunService.Heartbeat:Wait()
+                end
+            end)
+        end
+    end
+end
+
 local function t18_dispatchEvent(ev)
     if type(ev) ~= "table" then return end
     if ev.type == "chat" then
@@ -1087,6 +1166,10 @@ local function t18_dispatchEvent(ev)
             applyRespawnLoopLocal(true)
         elseif action == "respawn_off" then
             applyRespawnLoopLocal(false)
+        elseif action == "summon_on" then
+            applySummonLocal(true)
+        elseif action == "summon_off" then
+            applySummonLocal(false)
         end
     end
 end
@@ -1137,7 +1220,6 @@ task.spawn(function()
     end
 end)
 -- ====== نهاية نظام أوامر الأونر ======
-  
 
 local function findOwnerTargetPlayer()
     if not OwnerTargetInput then
@@ -1186,6 +1268,11 @@ local function refreshOwnerControls()
         local isLooping = target and ownerRespawnLoopStates[target.UserId] or false
         OwnerRespawnLoopBtn.Text = isLooping and "إيقاف Respawn Loop" or "Respawn Loop"
     end
+
+    if OwnerSummonBtn then
+        local isSummoned = target and ownerSummonStates[target.UserId] or false
+        OwnerSummonBtn.Text = isSummoned and "إلغاء الاستدعاء" or "استدعاء"
+    end
 end
 
 local function sendOwnerCommand(action, targetUserId)
@@ -1217,6 +1304,9 @@ local function sendOwnerAdminAction(actionName)
     elseif actionName == "toggle_respawn_loop" then
         local nowLooping = ownerRespawnLoopStates[target.UserId] or false
         newAction = nowLooping and "respawn_off" or "respawn_on"
+    elseif actionName == "toggle_summon" then
+        local nowSummoned = ownerSummonStates[target.UserId] or false
+        newAction = nowSummoned and "summon_off" or "summon_on"
     end
 
     if not newAction then return end
@@ -1231,14 +1321,16 @@ local function sendOwnerAdminAction(actionName)
         ownerFreezeStates[target.UserId] = not ownerFreezeStates[target.UserId]
     elseif actionName == "toggle_respawn_loop" then
         ownerRespawnLoopStates[target.UserId] = not ownerRespawnLoopStates[target.UserId]
+    elseif actionName == "toggle_summon" then
+        ownerSummonStates[target.UserId] = not ownerSummonStates[target.UserId]
     elseif actionName == "kick" then
         ownerFreezeStates[target.UserId] = nil
         ownerRespawnLoopStates[target.UserId] = nil
+        ownerSummonStates[target.UserId] = nil
     end
 
     refreshOwnerControls()
 end
-
 
 DiscordBtn.MouseButton1Click:Connect(function()
     local opened = false
@@ -1263,7 +1355,7 @@ DiscordBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn then
+if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn and OwnerSummonBtn then
     OwnerTargetInput:GetPropertyChangedSignal("Text"):Connect(refreshOwnerControls)
 
     OwnerKickBtn.MouseButton1Click:Connect(function()
@@ -1278,18 +1370,22 @@ if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn 
         sendOwnerAdminAction("toggle_respawn_loop")
     end)
 
+    OwnerSummonBtn.MouseButton1Click:Connect(function()
+        sendOwnerAdminAction("toggle_summon")
+    end)
+
     refreshOwnerControls()
 end
 
 Players.PlayerRemoving:Connect(function(player)
     ownerFreezeStates[player.UserId] = nil
     ownerRespawnLoopStates[player.UserId] = nil
+    ownerSummonStates[player.UserId] = nil
 
     if isOwnerUser and OwnerTargetInput then
         task.defer(refreshOwnerControls)
     end
 end)
-
 
 local ImportantCard = Instance.new("Frame")
 ImportantCard.Size = UDim2.new(1, -20, 1, -72)
@@ -1467,8 +1563,9 @@ Footer.Parent = Frame
 
 ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "Toggle"
+ToggleBtn.AnchorPoint = Vector2.new(0, 0)
 ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
-ToggleBtn.Position = UDim2.new(1, -70, 0, 14)
+ToggleBtn.Position = UDim2.new(0, 16, 0.5, -58)
 ToggleBtn.BackgroundColor3 = Theme.PanelSoft
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
@@ -1581,10 +1678,11 @@ ToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ====== زر الشات الدائري (مستقل عن القائمة الرئيسية) ======
-local ChatBubbleBtn = Instance.new("TextButton")
+ChatBubbleBtn = Instance.new("TextButton")
 ChatBubbleBtn.Name = "ChatBubble"
+ChatBubbleBtn.AnchorPoint = Vector2.new(0, 0)
 ChatBubbleBtn.Size = UDim2.new(0, 54, 0, 54)
-ChatBubbleBtn.Position = UDim2.new(1, -70, 0, 76)
+ChatBubbleBtn.Position = UDim2.new(0, 16, 0.5, 4)
 ChatBubbleBtn.BackgroundColor3 = Theme.PanelSoft
 ChatBubbleBtn.Text = "💬"
 ChatBubbleBtn.TextColor3 = Theme.Text
@@ -1648,24 +1746,42 @@ Title.InputBegan:Connect(function(input)
     end
 end)
 
+-- يحسب موقع جديد مقيد داخل حدود الشاشة (يمنع الزر من الخروج)
+local function clampToScreen(button, scaleX, scaleY, offsetX, offsetY)
+    local screenSize = ScreenGui.AbsoluteSize
+    local btnSize = button.AbsoluteSize
+    if screenSize.X <= 0 or screenSize.Y <= 0 then
+        return UDim2.new(scaleX, offsetX, scaleY, offsetY)
+    end
+    local absX = scaleX * screenSize.X + offsetX
+    local absY = scaleY * screenSize.Y + offsetY
+    local maxX = math.max(0, screenSize.X - btnSize.X)
+    local maxY = math.max(0, screenSize.Y - btnSize.Y)
+    absX = math.clamp(absX, 0, maxX)
+    absY = math.clamp(absY, 0, maxY)
+    return UDim2.new(scaleX, absX - scaleX * screenSize.X, scaleY, absY - scaleY * screenSize.Y)
+end
+
 UserInputService.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch then
         if dragging then
             local delta = input.Position - dragStart
-            Frame.Position = UDim2.new(
+            Frame.Position = clampToScreen(
+                Frame,
                 startPos.X.Scale,
-                startPos.X.Offset + delta.X,
                 startPos.Y.Scale,
+                startPos.X.Offset + delta.X,
                 startPos.Y.Offset + delta.Y
             )
         end
         if tDragging then
             local delta = input.Position - tDragStart
-            ToggleBtn.Position = UDim2.new(
+            ToggleBtn.Position = clampToScreen(
+                ToggleBtn,
                 tStartPos.X.Scale,
-                tStartPos.X.Offset + delta.X,
                 tStartPos.Y.Scale,
+                tStartPos.X.Offset + delta.X,
                 tStartPos.Y.Offset + delta.Y
             )
         end
@@ -1674,15 +1790,41 @@ UserInputService.InputChanged:Connect(function(input)
             if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
                 cDragMoved = true
             end
-            ChatBubbleBtn.Position = UDim2.new(
+            ChatBubbleBtn.Position = clampToScreen(
+                ChatBubbleBtn,
                 cStartPos.X.Scale,
-                cStartPos.X.Offset + delta.X,
                 cStartPos.Y.Scale,
+                cStartPos.X.Offset + delta.X,
                 cStartPos.Y.Offset + delta.Y
             )
         end
     end
 end)
+
+-- يضمن بقاء الأزرار داخل الشاشة عند تغيير حجم الشاشة (تدوير الجوال/تغيير حجم النافذة)
+local function ensureButtonsInBounds()
+    if ToggleBtn then
+        ToggleBtn.Position = clampToScreen(
+            ToggleBtn,
+            ToggleBtn.Position.X.Scale,
+            ToggleBtn.Position.Y.Scale,
+            ToggleBtn.Position.X.Offset,
+            ToggleBtn.Position.Y.Offset
+        )
+    end
+    if ChatBubbleBtn then
+        ChatBubbleBtn.Position = clampToScreen(
+            ChatBubbleBtn,
+            ChatBubbleBtn.Position.X.Scale,
+            ChatBubbleBtn.Position.Y.Scale,
+            ChatBubbleBtn.Position.X.Offset,
+            ChatBubbleBtn.Position.Y.Offset
+        )
+    end
+end
+
+ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(ensureButtonsInBounds)
+task.defer(ensureButtonsInBounds)
 
 local function setButtonState(button, enabled, onText, offText, onColor, offColor)
     if enabled then

@@ -1080,13 +1080,11 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
-SummonCtx.apply = function(enable, targetCFrame)
+SummonCtx.apply = function(enable)
     SummonCtx.token = SummonCtx.token + 1
     local myToken = SummonCtx.token
 
     if enable then
-        if not targetCFrame then return end
-
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if root and not SummonCtx.savedCFrame then
@@ -1094,17 +1092,40 @@ SummonCtx.apply = function(enable, targetCFrame)
         end
 
         task.spawn(function()
+            -- ابحث عن الأونر في نفس السيرفر
+            local owner = nil
+            local lookStart = tick()
+            while SummonCtx.token == myToken and tick() - lookStart < 3 do
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p.Name:lower() == OwnerUsername:lower() then
+                        owner = p
+                        break
+                    end
+                end
+                if owner and owner.Character and owner.Character:FindFirstChild("HumanoidRootPart") then
+                    break
+                end
+                owner = nil
+                task.wait(0.1)
+            end
+
+            if not owner or not owner.Character then return end
+            local ownerRoot = owner.Character:FindFirstChild("HumanoidRootPart")
+            if not ownerRoot then return end
+
             local startTime = tick()
-            while SummonCtx.token == myToken and tick() - startTime < 1.5 do
+            while SummonCtx.token == myToken and tick() - startTime < 2.0 do
                 local c = LocalPlayer.Character
                 local r = c and c:FindFirstChild("HumanoidRootPart")
                 local h = c and c:FindFirstChildOfClass("Humanoid")
-                if r then
+                local oc = owner.Character
+                local oroot = oc and oc:FindFirstChild("HumanoidRootPart")
+                if r and oroot then
                     pcall(function()
                         if h and h.Sit then h.Sit = false end
                         r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                         r.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                        r.CFrame = targetCFrame
+                        r.CFrame = oroot.CFrame * CFrame.new(0, 0, -4)
                     end)
                 end
                 RunService.Heartbeat:Wait()
@@ -1116,7 +1137,7 @@ SummonCtx.apply = function(enable, targetCFrame)
         if savedCFrame then
             task.spawn(function()
                 local startTime = tick()
-                while SummonCtx.token == myToken and tick() - startTime < 1.0 do
+                while SummonCtx.token == myToken and tick() - startTime < 1.5 do
                     local c = LocalPlayer.Character
                     local r = c and c:FindFirstChild("HumanoidRootPart")
                     local h = c and c:FindFirstChildOfClass("Humanoid")
@@ -1165,25 +1186,9 @@ local function t18_dispatchEvent(ev)
         elseif action == "respawn_off" then
             applyRespawnLoopLocal(false)
         elseif action == "summon_on" then
-            local sx = tonumber(ev.sx)
-            local sy = tonumber(ev.sy)
-            local sz = tonumber(ev.sz)
-            local targetCFrame = nil
-            if sx and sy and sz then
-                local r00 = tonumber(ev.r00) or 1
-                local r01 = tonumber(ev.r01) or 0
-                local r02 = tonumber(ev.r02) or 0
-                local r10 = tonumber(ev.r10) or 0
-                local r11 = tonumber(ev.r11) or 1
-                local r12 = tonumber(ev.r12) or 0
-                local r20 = tonumber(ev.r20) or 0
-                local r21 = tonumber(ev.r21) or 0
-                local r22 = tonumber(ev.r22) or 1
-                targetCFrame = CFrame.new(sx, sy, sz, r00, r01, r02, r10, r11, r12, r20, r21, r22)
-            end
-            SummonCtx.apply(true, targetCFrame)
+            SummonCtx.apply(true)
         elseif action == "summon_off" then
-            SummonCtx.apply(false, nil)
+            SummonCtx.apply(false)
         end
     end
 end
@@ -1331,25 +1336,7 @@ local function sendOwnerAdminAction(actionName)
 
     if not newAction then return end
 
-    local extra = nil
-    if newAction == "summon_on" then
-        local myChar = LocalPlayer.Character
-        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-        if not myRoot then
-            showNotification("ما قدرت أجيب موقعك — تأكد إن شخصيتك موجودة")
-            return
-        end
-        local cf = myRoot.CFrame * CFrame.new(0, 0, -4)
-        local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = cf:GetComponents()
-        extra = {
-            sx = x, sy = y, sz = z,
-            r00 = r00, r01 = r01, r02 = r02,
-            r10 = r10, r11 = r11, r12 = r12,
-            r20 = r20, r21 = r21, r22 = r22,
-        }
-    end
-
-    local sent = sendOwnerCommand(newAction, target.UserId, extra)
+    local sent = sendOwnerCommand(newAction, target.UserId)
     if not sent then
         showNotification("ما قدرت أرسل الأمر — تأكد إن المُشغِّل يدعم HTTP")
         return

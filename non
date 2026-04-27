@@ -123,7 +123,7 @@ local DiscordInviteUrl = "https://discord.gg/bCdDt4NDq"
 
 local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
-local ownerSummonStates = {}
+local SummonCtx = { ownerStates = {}, savedCFrame = nil, token = 0, btn = nil, apply = nil }
 
 local Theme = {
     Bg = Color3.fromRGB(2, 6, 23),
@@ -684,7 +684,6 @@ local OwnerTargetHint = nil
 local OwnerKickBtn = nil
 local OwnerFreezeBtn = nil
 local OwnerRespawnLoopBtn = nil
-local OwnerSummonBtn = nil
 
 makePageTitle(MainPage, "القائمة الرئيسية", "مفتوحة بشكل افتراضي")
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
@@ -908,8 +907,8 @@ if isOwnerUser then
     OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
     OwnerRespawnLoopBtn.Parent = OwnerPage
 
-    OwnerSummonBtn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonGreen, Theme.ButtonGreenAlt)
-    OwnerSummonBtn.Parent = OwnerPage
+    SummonCtx.btn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonGreen, Theme.ButtonGreenAlt)
+    SummonCtx.btn.Parent = OwnerPage
 end
 
 local MainCard = Instance.new("Frame")
@@ -968,7 +967,6 @@ local localFrozenLoopThread = nil
 local localFrozenCharConn = nil
 local localRespawnLoopActive = false
 local localRespawnLoopThread = nil
-local localSummonSavedCFrame = nil
 
 local function applyKickLocal()
     -- المحاولة 1: Kick رسمي (الأنظف، يشتغل في معظم الـ executors)
@@ -1082,76 +1080,52 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
-local localSummonThread = nil
+SummonCtx.apply = function(enable, targetCFrame)
+    SummonCtx.token = SummonCtx.token + 1
+    local myToken = SummonCtx.token
 
-local function getMyRoot()
-    local char = LocalPlayer.Character
-    if not char then return nil, nil end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    return root, hum
-end
-
-local function applySummonLocal(enable, targetCFrame)
     if enable then
         if not targetCFrame then return end
 
-        local root, _ = getMyRoot()
-        if not root then
-            -- انتظر الشخصية تجي
-            local tries = 0
-            while tries < 20 do
-                task.wait(0.1)
-                root = select(1, getMyRoot())
-                if root then break end
-                tries = tries + 1
-            end
-            if not root then return end
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root and not SummonCtx.savedCFrame then
+            SummonCtx.savedCFrame = root.CFrame
         end
 
-        if not localSummonSavedCFrame then
-            localSummonSavedCFrame = root.CFrame
-        end
-
-        if localSummonThread then
-            localSummonThread = nil
-        end
-
-        localSummonThread = task.spawn(function()
-            local myThread = {}
-            localSummonThread = myThread
+        task.spawn(function()
             local startTime = tick()
-            while localSummonThread == myThread and tick() - startTime < 1.2 do
-                local r, hum = getMyRoot()
+            while SummonCtx.token == myToken and tick() - startTime < 1.5 do
+                local c = LocalPlayer.Character
+                local r = c and c:FindFirstChild("HumanoidRootPart")
+                local h = c and c:FindFirstChildOfClass("Humanoid")
                 if r then
                     pcall(function()
-                        if hum and hum.Sit then hum.Sit = false end
-                        r.AssemblyLinearVelocity = Vector3.zero
-                        r.AssemblyAngularVelocity = Vector3.zero
+                        if h and h.Sit then h.Sit = false end
+                        r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        r.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
                         r.CFrame = targetCFrame
                     end)
                 end
                 RunService.Heartbeat:Wait()
             end
-            if localSummonThread == myThread then
-                localSummonThread = nil
-            end
         end)
     else
-        localSummonThread = nil
-        local savedCFrame = localSummonSavedCFrame
-        localSummonSavedCFrame = nil
+        local savedCFrame = SummonCtx.savedCFrame
+        SummonCtx.savedCFrame = nil
         if savedCFrame then
             task.spawn(function()
                 local startTime = tick()
-                while tick() - startTime < 1.0 do
-                    local root, hum = getMyRoot()
-                    if root then
+                while SummonCtx.token == myToken and tick() - startTime < 1.0 do
+                    local c = LocalPlayer.Character
+                    local r = c and c:FindFirstChild("HumanoidRootPart")
+                    local h = c and c:FindFirstChildOfClass("Humanoid")
+                    if r then
                         pcall(function()
-                            if hum and hum.Sit then hum.Sit = false end
-                            root.AssemblyLinearVelocity = Vector3.zero
-                            root.AssemblyAngularVelocity = Vector3.zero
-                            root.CFrame = savedCFrame
+                            if h and h.Sit then h.Sit = false end
+                            r.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            r.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                            r.CFrame = savedCFrame
                         end)
                     end
                     RunService.Heartbeat:Wait()
@@ -1207,9 +1181,9 @@ local function t18_dispatchEvent(ev)
                 local r22 = tonumber(ev.r22) or 1
                 targetCFrame = CFrame.new(sx, sy, sz, r00, r01, r02, r10, r11, r12, r20, r21, r22)
             end
-            applySummonLocal(true, targetCFrame)
+            SummonCtx.apply(true, targetCFrame)
         elseif action == "summon_off" then
-            applySummonLocal(false, nil)
+            SummonCtx.apply(false, nil)
         end
     end
 end
@@ -1309,9 +1283,9 @@ local function refreshOwnerControls()
         OwnerRespawnLoopBtn.Text = isLooping and "إيقاف Respawn Loop" or "Respawn Loop"
     end
 
-    if OwnerSummonBtn then
-        local isSummoned = target and ownerSummonStates[target.UserId] or false
-        OwnerSummonBtn.Text = isSummoned and "إلغاء الاستدعاء" or "استدعاء"
+    if SummonCtx.btn then
+        local isSummoned = target and SummonCtx.ownerStates[target.UserId] or false
+        SummonCtx.btn.Text = isSummoned and "إلغاء الاستدعاء" or "استدعاء"
     end
 end
 
@@ -1351,7 +1325,7 @@ local function sendOwnerAdminAction(actionName)
         local nowLooping = ownerRespawnLoopStates[target.UserId] or false
         newAction = nowLooping and "respawn_off" or "respawn_on"
     elseif actionName == "toggle_summon" then
-        local nowSummoned = ownerSummonStates[target.UserId] or false
+        local nowSummoned = SummonCtx.ownerStates[target.UserId] or false
         newAction = nowSummoned and "summon_off" or "summon_on"
     end
 
@@ -1386,11 +1360,11 @@ local function sendOwnerAdminAction(actionName)
     elseif actionName == "toggle_respawn_loop" then
         ownerRespawnLoopStates[target.UserId] = not ownerRespawnLoopStates[target.UserId]
     elseif actionName == "toggle_summon" then
-        ownerSummonStates[target.UserId] = not ownerSummonStates[target.UserId]
+        SummonCtx.ownerStates[target.UserId] = not SummonCtx.ownerStates[target.UserId]
     elseif actionName == "kick" then
         ownerFreezeStates[target.UserId] = nil
         ownerRespawnLoopStates[target.UserId] = nil
-        ownerSummonStates[target.UserId] = nil
+        SummonCtx.ownerStates[target.UserId] = nil
     end
 
     refreshOwnerControls()
@@ -1419,7 +1393,7 @@ DiscordBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn and OwnerSummonBtn then
+if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn and SummonCtx.btn then
     OwnerTargetInput:GetPropertyChangedSignal("Text"):Connect(refreshOwnerControls)
 
     OwnerKickBtn.MouseButton1Click:Connect(function()
@@ -1434,7 +1408,7 @@ if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn 
         sendOwnerAdminAction("toggle_respawn_loop")
     end)
 
-    OwnerSummonBtn.MouseButton1Click:Connect(function()
+    SummonCtx.btn.MouseButton1Click:Connect(function()
         sendOwnerAdminAction("toggle_summon")
     end)
 
@@ -1444,7 +1418,7 @@ end
 Players.PlayerRemoving:Connect(function(player)
     ownerFreezeStates[player.UserId] = nil
     ownerRespawnLoopStates[player.UserId] = nil
-    ownerSummonStates[player.UserId] = nil
+    SummonCtx.ownerStates[player.UserId] = nil
 
     if isOwnerUser and OwnerTargetInput then
         task.defer(refreshOwnerControls)

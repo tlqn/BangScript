@@ -7,7 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local isTouchDevice = UserInputService.TouchEnabled
-local baseFrameSize = Vector2.new(610, UserInputService.TouchEnabled and 430 or 498)
+local baseFrameSize = Vector2.new(610, UserInputService.TouchEnabled and 466 or 498)
 local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
 
@@ -480,7 +480,7 @@ PlanLabel.TextSize = 17
 PlanLabel.Parent = ProfileCard
 
 local ContentPanel = Instance.new("Frame")
-ContentPanel.Size = UDim2.new(1, -32, 0, 298)
+ContentPanel.Size = UDim2.new(1, -32, 1, -200)
 ContentPanel.Position = UDim2.new(0, 16, 0, 168)
 ContentPanel.BackgroundColor3 = Theme.Bg
 ContentPanel.BorderSizePixel = 0
@@ -904,10 +904,10 @@ if isOwnerUser then
     OwnerFreezeBtn = makeButton("OwnerFreezeBtn", "تجميد", UDim2.new(0.5, -14, 0, 38), UDim2.new(0.5, 4, 0, 124), Theme.ButtonBlue, Theme.ButtonBlueAlt)
     OwnerFreezeBtn.Parent = OwnerPage
 
-    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 162), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
     OwnerRespawnLoopBtn.Parent = OwnerPage
 
-    SummonCtx.btn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonGreen, Theme.ButtonGreenAlt)
+    SummonCtx.btn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 204), Theme.ButtonGreen, Theme.ButtonGreenAlt)
     SummonCtx.btn.Parent = OwnerPage
 end
 

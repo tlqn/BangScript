@@ -676,7 +676,19 @@ end
 
 local MainPage = makePage("MainPage")
 local PlayerPage = makePage("PlayerPage")
-local TargetPage = makePage("TargetPage")
+local TargetPage = Instance.new("ScrollingFrame")
+TargetPage.Name = "TargetPage"
+TargetPage.Size = UDim2.new(1, 0, 1, 0)
+TargetPage.BackgroundTransparency = 1
+TargetPage.BorderSizePixel = 0
+TargetPage.Visible = false
+TargetPage.ScrollBarThickness = isTouchDevice and 0 or 4
+TargetPage.ScrollBarImageColor3 = Color3.fromRGB(120, 130, 150)
+TargetPage.ScrollingDirection = Enum.ScrollingDirection.Y
+TargetPage.CanvasSize = UDim2.new(0, 0, 0, 290)
+TargetPage.ScrollingEnabled = true
+TargetPage.Active = true
+TargetPage.Parent = PagesHost
 local ImportantPage = makePage("ImportantPage")
 local OwnerPage = nil
 local OwnerTargetInput = nil

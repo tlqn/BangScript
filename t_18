@@ -756,7 +756,7 @@ local OwnerKickBtn = nil
 local OwnerFreezeBtn = nil
 local OwnerRespawnLoopBtn = nil
 
-makePageTitle(MainPage, "القائمة الرئيسية", "مفتوحة بشكل افتراضي")
+makePageTitle(MainPage, "القائمة الرئيسية", "ملاحظة مهمة : يا اخوان حماية البانق ما تشتغل الا على سكربت VR7")
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
 makePageTitle(TargetPage, "استهداف", "أوامر التعامل مع اللاعبين")
 makePageTitle(ImportantPage, "مهم", "رسالة داخل السكربت")

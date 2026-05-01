@@ -363,14 +363,14 @@ local function updateResponsiveLayout()
     end
 
     local viewport = camera.ViewportSize
-    local horizontalPadding = isTouchDevice and 24 or 72
-    local verticalPadding = isTouchDevice and 28 or 96
+    local horizontalPadding = isTouchDevice and 56 or 72
+    local verticalPadding = isTouchDevice and 64 or 96
     local maxWidth = math.max(viewport.X - horizontalPadding, 240)
     local maxHeight = math.max(viewport.Y - verticalPadding, 240)
     local scale = math.min(maxWidth / baseFrameSize.X, maxHeight / baseFrameSize.Y, 1)
 
     if isTouchDevice then
-        scale = math.min(scale, 0.82)
+        scale = math.min(scale, 0.65)
     end
 
     FrameScale.Scale = math.clamp(scale, 0.42, 1)
@@ -774,10 +774,12 @@ ChatPanel.ZIndex = 18
 ChatPanel.Parent = ScreenGui
 makeCorner(ChatPanel, 16)
 makeStroke(ChatPanel, Theme.Border, 1, 0.15)
+ChatPanel.BackgroundTransparency = 0.72
+ChatPanel.BackgroundColor3 = Color3.fromRGB(10, 14, 26)
 
 local ChatPanelSizeConstraint = Instance.new("UISizeConstraint")
-ChatPanelSizeConstraint.MaxSize = Vector2.new(340, 460)
-ChatPanelSizeConstraint.MinSize = Vector2.new(240, 280)
+ChatPanelSizeConstraint.MaxSize = isTouchDevice and Vector2.new(240, 320) or Vector2.new(340, 460)
+ChatPanelSizeConstraint.MinSize = isTouchDevice and Vector2.new(180, 200) or Vector2.new(240, 280)
 ChatPanelSizeConstraint.Parent = ChatPanel
 
 local ChatHeader = Instance.new("Frame")
@@ -820,6 +822,7 @@ ChatList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ChatList.Parent = ChatPanel
 makeCorner(ChatList, 10)
 makeStroke(ChatList, Theme.Border, 1, 0.2)
+ChatList.BackgroundTransparency = 0.65
 
 local ChatListLayout = Instance.new("UIListLayout")
 ChatListLayout.Padding = UDim.new(0, 6)
@@ -1077,6 +1080,33 @@ if isOwnerUser then
             task.wait(3)
         end
     end)
+
+    -- تمرير تلقائي من أسفل لأعلى للكمبيوتر فقط
+    if not isTouchDevice then
+        task.spawn(function()
+            task.wait(4)
+            while true do
+                pcall(function()
+                    if UsersList and UsersList.Parent then
+                        local canvasH = UsersList.AbsoluteCanvasSize.Y
+                        local frameH = UsersList.AbsoluteSize.Y
+                        if canvasH > frameH + 10 then
+                            local currentY = UsersList.CanvasPosition.Y
+                            if currentY <= 1 then
+                                task.wait(1.5)
+                                UsersList.CanvasPosition = Vector2.new(0, canvasH - frameH)
+                            else
+                                UsersList.CanvasPosition = Vector2.new(0, math.max(0, currentY - 1))
+                                task.wait(0.03)
+                            end
+                        else
+                            task.wait(1)
+                        end
+                    end
+                end)
+            end
+        end)
+    end
 end
 
 local MainCard = Instance.new("Frame")
@@ -1535,6 +1565,23 @@ SpectateBtn.Position = UDim2.new(0.5, 4, 0, 188)
 SavePlaceBtn.Parent = TargetPage
 SavePlaceBtn.Size = UDim2.new(1, -20, 0, 38)
 SavePlaceBtn.Position = UDim2.new(0, 10, 0, 232)
+
+-- تمرير بالإصبع/الماوس في قسم الاستهداف (كل الأجهزة)
+local TargetScrollFrame = Instance.new("ScrollingFrame")
+TargetScrollFrame.Size = UDim2.new(1, 0, 1, 0)
+TargetScrollFrame.BackgroundTransparency = 1
+TargetScrollFrame.BorderSizePixel = 0
+TargetScrollFrame.ScrollBarThickness = isTouchDevice and 3 or 4
+TargetScrollFrame.ScrollBarImageColor3 = Theme.Active
+TargetScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 285)
+TargetScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+TargetScrollFrame.ElasticBehavior = Enum.ElasticBehavior.Always
+TargetScrollFrame.Parent = TargetPage
+for _, child in ipairs(TargetPage:GetChildren()) do
+    if child ~= TargetScrollFrame then
+        child.Parent = TargetScrollFrame
+    end
+end
 
 FlyBtn.Parent = PlayerPage
 FlyBtn.Size = UDim2.new(0.5, -14, 0, 38)

@@ -7,7 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local isTouchDevice = UserInputService.TouchEnabled
-local baseFrameSize = Vector2.new(610, 498)
+local baseFrameSize = Vector2.new(860, 700)
 local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
 
@@ -197,31 +197,31 @@ local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
 
 local Theme = {
-    Bg = Color3.fromRGB(2, 6, 23),
-    Panel = Color3.fromRGB(14, 18, 32),
-    PanelSoft = Color3.fromRGB(31, 35, 48),
-    Header = Color3.fromRGB(7, 10, 18),
-    Card = Color3.fromRGB(15, 23, 42),
-    Input = Color3.fromRGB(24, 31, 50),
-    Border = Color3.fromRGB(18, 18, 18),
+    Bg = Color3.fromRGB(3, 3, 3),
+    Panel = Color3.fromRGB(7, 7, 8),
+    PanelSoft = Color3.fromRGB(15, 15, 17),
+    Header = Color3.fromRGB(4, 4, 5),
+    Card = Color3.fromRGB(9, 9, 11),
+    Input = Color3.fromRGB(14, 14, 16),
+    Border = Color3.fromRGB(44, 44, 48),
     Text = Color3.fromRGB(255, 255, 255),
-    Muted = Color3.fromRGB(203, 213, 225),
-    Accent = Color3.fromRGB(31, 35, 48),
-    AccentSoft = Color3.fromRGB(30, 41, 59),
-    Active = Color3.fromRGB(55, 65, 81),
-    Warning = Color3.fromRGB(245, 158, 11),
-    Danger = Color3.fromRGB(220, 38, 38),
-    Shadow = Color3.fromRGB(2, 6, 18),
-    ButtonDefault = Color3.fromRGB(31, 35, 48),
-    ButtonDefaultAlt = Color3.fromRGB(31, 35, 48),
-    ButtonBlue = Color3.fromRGB(31, 35, 48),
-    ButtonBlueAlt = Color3.fromRGB(55, 65, 81),
-    ButtonGreen = Color3.fromRGB(31, 35, 48),
-    ButtonGreenAlt = Color3.fromRGB(55, 65, 81),
-    ButtonOrange = Color3.fromRGB(31, 35, 48),
-    ButtonOrangeAlt = Color3.fromRGB(55, 65, 81),
-    ButtonRed = Color3.fromRGB(31, 35, 48),
-    ButtonRedAlt = Color3.fromRGB(55, 65, 81),
+    Muted = Color3.fromRGB(190, 190, 196),
+    Accent = Color3.fromRGB(255, 18, 24),
+    AccentSoft = Color3.fromRGB(44, 5, 7),
+    Active = Color3.fromRGB(190, 10, 14),
+    Warning = Color3.fromRGB(255, 68, 68),
+    Danger = Color3.fromRGB(255, 16, 22),
+    Shadow = Color3.fromRGB(0, 0, 0),
+    ButtonDefault = Color3.fromRGB(14, 14, 16),
+    ButtonDefaultAlt = Color3.fromRGB(14, 14, 16),
+    ButtonBlue = Color3.fromRGB(14, 14, 16),
+    ButtonBlueAlt = Color3.fromRGB(26, 6, 8),
+    ButtonGreen = Color3.fromRGB(14, 14, 16),
+    ButtonGreenAlt = Color3.fromRGB(26, 6, 8),
+    ButtonOrange = Color3.fromRGB(14, 14, 16),
+    ButtonOrangeAlt = Color3.fromRGB(26, 6, 8),
+    ButtonRed = Color3.fromRGB(14, 14, 16),
+    ButtonRedAlt = Color3.fromRGB(38, 6, 8),
 }
 
 local function connect(list, signal, callback)
@@ -334,6 +334,90 @@ local function makeShadow(parent)
     return shadow
 end
 
+local function clearChildByName(parent, childName)
+    for _, child in ipairs(parent:GetChildren()) do
+        if child.Name == childName then
+            child:Destroy()
+        end
+    end
+end
+
+local function clearStrokes(parent)
+    for _, child in ipairs(parent:GetChildren()) do
+        if child:IsA("UIStroke") then
+            child:Destroy()
+        end
+    end
+end
+
+local function applySoftStroke(parent, color, thickness, transparency)
+    clearStrokes(parent)
+    local stroke = makeStroke(parent, color or Theme.Border, thickness or 1, transparency or 0.2)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    return stroke
+end
+
+local function ensureGradient(parent, name, colors, rotation)
+    clearChildByName(parent, name)
+    local gradient = Instance.new("UIGradient")
+    gradient.Name = name
+    gradient.Color = ColorSequence.new(colors)
+    gradient.Rotation = rotation or 0
+    gradient.Parent = parent
+    return gradient
+end
+
+local function makeAura(parent, name, color, transparency, sizePad, yOffset)
+    clearChildByName(parent, name)
+    local aura = Instance.new("ImageLabel")
+    aura.Name = name
+    aura.AnchorPoint = Vector2.new(0.5, 0.5)
+    aura.Position = UDim2.new(0.5, 0, 0.5, yOffset or 0)
+    aura.Size = UDim2.new(1, sizePad or 28, 1, sizePad or 28)
+    aura.BackgroundTransparency = 1
+    aura.Image = "rbxassetid://1316045217"
+    aura.ImageColor3 = color or Theme.Accent
+    aura.ImageTransparency = transparency or 0.72
+    aura.ScaleType = Enum.ScaleType.Slice
+    aura.SliceCenter = Rect.new(10, 10, 118, 118)
+    aura.ZIndex = math.max((parent.ZIndex or 1) - 1, 0)
+    aura.Parent = parent
+    return aura
+end
+
+local function makeNeon(parent, color)
+    local neonColor = color or Theme.Accent
+    clearChildByName(parent, "T18NeonBase")
+    clearChildByName(parent, "T18NeonGlowSoft")
+    clearChildByName(parent, "T18NeonGlowWide")
+
+    local base = Instance.new("UIStroke")
+    base.Name = "T18NeonBase"
+    base.Color = neonColor
+    base.Thickness = 1.25
+    base.Transparency = 0.08
+    base.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    base.Parent = parent
+
+    local glowSoft = Instance.new("UIStroke")
+    glowSoft.Name = "T18NeonGlowSoft"
+    glowSoft.Color = neonColor
+    glowSoft.Thickness = 4
+    glowSoft.Transparency = 0.72
+    glowSoft.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    glowSoft.Parent = parent
+
+    local glowWide = Instance.new("UIStroke")
+    glowWide.Name = "T18NeonGlowWide"
+    glowWide.Color = neonColor
+    glowWide.Thickness = 8
+    glowWide.Transparency = 0.9
+    glowWide.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    glowWide.Parent = parent
+
+    return base, glowSoft, glowWide
+end
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGuiPro"
 ScreenGui.ResetOnSpawn = false
@@ -344,14 +428,16 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 local Frame = Instance.new("Frame")
 Frame.Name = "Main"
 Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-Frame.Size = UDim2.new(0, 610, 0, 498)
+Frame.Size = UDim2.new(0, 860, 0, 700)
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Theme.Panel
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
-makeCorner(Frame, 22)
-makeStroke(Frame, Color3.fromRGB(255, 255, 255), 1, 0.2)
+makeCorner(Frame, 24)
+applySoftStroke(Frame, Theme.Border, 1, 0.12)
+makeNeon(Frame, Theme.Accent)
 makeShadow(Frame)
+makeAura(Frame, "MainAura", Theme.Accent, 0.8, 48, 4)
 
 FrameScale = Instance.new("UIScale")
 FrameScale.Parent = Frame
@@ -363,14 +449,14 @@ local function updateResponsiveLayout()
     end
 
     local viewport = camera.ViewportSize
-    local horizontalPadding = isTouchDevice and 24 or 72
-    local verticalPadding = isTouchDevice and 28 or 96
+    local horizontalPadding = isTouchDevice and 56 or 72
+    local verticalPadding = isTouchDevice and 64 or 96
     local maxWidth = math.max(viewport.X - horizontalPadding, 240)
     local maxHeight = math.max(viewport.Y - verticalPadding, 240)
     local scale = math.min(maxWidth / baseFrameSize.X, maxHeight / baseFrameSize.Y, 1)
 
     if isTouchDevice then
-        scale = math.min(scale, 0.82)
+        scale = math.min(scale, 0.65)
     end
 
     FrameScale.Scale = math.clamp(scale, 0.42, 1)
@@ -420,50 +506,51 @@ end
 
 local FrameGradient = Instance.new("UIGradient")
 FrameGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 14, 26)),
-    ColorSequenceKeypoint.new(0.55, Color3.fromRGB(18, 24, 42)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 10, 20)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 0, 0)),
+    ColorSequenceKeypoint.new(0.38, Color3.fromRGB(22, 0, 0)),
+    ColorSequenceKeypoint.new(0.72, Color3.fromRGB(9, 0, 0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0)),
 })
-FrameGradient.Rotation = 35
+FrameGradient.Rotation = 18
 FrameGradient.Parent = Frame
 
 local Header = Instance.new("Frame")
 Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 76)
+Header.Size = UDim2.new(1, 0, 0, 98)
 Header.BackgroundColor3 = Theme.Header
 Header.BorderSizePixel = 0
 Header.Parent = Frame
-makeCorner(Header, 22)
+makeCorner(Header, 24)
 
 local HeaderBottomMask = Instance.new("Frame")
-HeaderBottomMask.Size = UDim2.new(1, 0, 0, 24)
-HeaderBottomMask.Position = UDim2.new(0, 0, 1, -24)
+HeaderBottomMask.Size = UDim2.new(1, 0, 0, 28)
+HeaderBottomMask.Position = UDim2.new(0, 0, 1, -28)
 HeaderBottomMask.BackgroundColor3 = Theme.Header
 HeaderBottomMask.BorderSizePixel = 0
 HeaderBottomMask.Parent = Header
 
 local AccentLine = Instance.new("Frame")
-AccentLine.Size = UDim2.new(1, -32, 0, 3)
-AccentLine.Position = UDim2.new(0, 16, 1, -3)
-AccentLine.BackgroundColor3 = Theme.Accent
+AccentLine.Size = UDim2.new(1, -34, 0, 2)
+AccentLine.Position = UDim2.new(0, 17, 1, -2)
+AccentLine.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
 AccentLine.BorderSizePixel = 0
 AccentLine.Parent = Header
 makeCorner(AccentLine, 6)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(0.55, 0, 0, 28)
-Title.Position = UDim2.new(0, 18, 0, 12)
+Title.Size = UDim2.new(0.55, 0, 0, 34)
+Title.Position = UDim2.new(0, 24, 0, 14)
 Title.BackgroundTransparency = 1
 Title.Text = "t_18"
 Title.TextColor3 = Theme.Text
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 24
+Title.TextSize = 29
 Title.Parent = Header
 
 local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(0.58, 0, 0, 18)
-Subtitle.Position = UDim2.new(0, 18, 0, 42)
+Subtitle.Size = UDim2.new(0.58, 0, 0, 22)
+Subtitle.Position = UDim2.new(0, 24, 0, 52)
 Subtitle.BackgroundTransparency = 1
 Subtitle.Text = "شاركونا اقتراحاتكم على الدسكورد"
 Subtitle.TextColor3 = Theme.Muted
@@ -473,91 +560,102 @@ Subtitle.TextSize = 15
 Subtitle.Parent = Header
 
 local TopBadge = Instance.new("Frame")
-TopBadge.Size = UDim2.new(0, 150, 0, 34)
-TopBadge.Position = UDim2.new(1, -166, 0, 20)
+TopBadge.Size = UDim2.new(0, 210, 0, 50)
+TopBadge.Position = UDim2.new(1, -236, 0, 18)
 TopBadge.BackgroundColor3 = Theme.PanelSoft
 TopBadge.BorderSizePixel = 0
 TopBadge.Parent = Header
-makeCorner(TopBadge, 12)
-makeStroke(TopBadge, Theme.Border, 1, 0.35)
+makeCorner(TopBadge, 18)
+applySoftStroke(TopBadge, Theme.Border, 1, 0.12)
+makeNeon(TopBadge, Theme.Accent)
 
 local TopBadgeDot = Instance.new("Frame")
-TopBadgeDot.Size = UDim2.new(0, 10, 0, 10)
-TopBadgeDot.Position = UDim2.new(0, 12, 0.5, -5)
+TopBadgeDot.Size = UDim2.new(0, 1, 0, 1)
+TopBadgeDot.Position = UDim2.new(0, 0, 0, 0)
 TopBadgeDot.BackgroundColor3 = Theme.PanelSoft
 TopBadgeDot.BorderSizePixel = 0
 TopBadgeDot.Parent = TopBadge
 makeCorner(TopBadgeDot, 99)
+TopBadgeDot.Visible = false
 
 local TopBadgeText = Instance.new("TextLabel")
-TopBadgeText.Size = UDim2.new(1, -34, 1, 0)
-TopBadgeText.Position = UDim2.new(0, 28, 0, 0)
+TopBadgeText.Size = UDim2.new(1, 0, 1, 0)
+TopBadgeText.Position = UDim2.new(0, 0, 0, 0)
 TopBadgeText.BackgroundTransparency = 1
-TopBadgeText.Text = "V1"
+TopBadgeText.Text = "v1"
 TopBadgeText.TextColor3 = Theme.Text
-TopBadgeText.TextXAlignment = Enum.TextXAlignment.Left
-TopBadgeText.Font = Enum.Font.GothamMedium
-TopBadgeText.TextSize = 16
+TopBadgeText.TextXAlignment = Enum.TextXAlignment.Center
+TopBadgeText.Font = Enum.Font.GothamBold
+TopBadgeText.TextSize = 22
 TopBadgeText.Parent = TopBadge
 
 local ProfileCard = Instance.new("Frame")
-ProfileCard.Size = UDim2.new(1, -32, 0, 80)
-ProfileCard.Position = UDim2.new(0, 16, 0, 82)
+ProfileCard.Size = UDim2.new(1, -34, 0, 118)
+ProfileCard.Position = UDim2.new(0, 17, 0, 116)
 ProfileCard.BackgroundColor3 = Theme.Card
-ProfileCard.BackgroundTransparency = 0.03
+ProfileCard.BackgroundTransparency = 0.02
 ProfileCard.BorderSizePixel = 0
 ProfileCard.Parent = Frame
-makeCorner(ProfileCard, 18)
-makeStroke(ProfileCard, Theme.Border, 1, 0.28)
+makeCorner(ProfileCard, 22)
+applySoftStroke(ProfileCard, Theme.Border, 1, 0.14)
+makeNeon(ProfileCard, Theme.Accent)
+ensureGradient(ProfileCard, "ProfileGradient", {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 5, 7)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(17, 3, 5)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 7, 8)),
+}, 10)
 
 local ProfileGlow = Instance.new("Frame")
-ProfileGlow.Size = UDim2.new(0, 72, 0, 72)
-ProfileGlow.Position = UDim2.new(0, 10, 0.5, -36)
-ProfileGlow.BackgroundColor3 = Theme.AccentSoft
-ProfileGlow.BackgroundTransparency = 0.12
+ProfileGlow.Size = UDim2.new(0, 98, 0, 98)
+ProfileGlow.Position = UDim2.new(0, 14, 0.5, -49)
+ProfileGlow.BackgroundColor3 = Theme.Panel
+ProfileGlow.BackgroundTransparency = 0
 ProfileGlow.BorderSizePixel = 0
 ProfileGlow.Parent = ProfileCard
-makeCorner(ProfileGlow, 18)
+makeCorner(ProfileGlow, 22)
+applySoftStroke(ProfileGlow, Theme.Border, 1, 0.08)
+makeNeon(ProfileGlow, Theme.Accent)
+makeAura(ProfileGlow, "AvatarAura", Theme.Accent, 0.76, 18, 0)
 
 local AvatarLetter = Instance.new("TextLabel")
 AvatarLetter.Size = UDim2.new(1, 0, 1, 0)
 AvatarLetter.BackgroundTransparency = 1
-AvatarLetter.Text = string.upper(string.sub(LocalPlayer.DisplayName, 1, 1))
+AvatarLetter.Text = "T"
 AvatarLetter.TextColor3 = Theme.Text
 AvatarLetter.Font = Enum.Font.GothamBlack
-AvatarLetter.TextSize = 30
+AvatarLetter.TextSize = 44
 AvatarLetter.Parent = ProfileGlow
 
 local WelcomeLabel = Instance.new("TextLabel")
-WelcomeLabel.Size = UDim2.new(1, -110, 0, 28)
-WelcomeLabel.Position = UDim2.new(0, 98, 0, 14)
+WelcomeLabel.Size = UDim2.new(1, -138, 0, 36)
+WelcomeLabel.Position = UDim2.new(0, 118, 0, 18)
 WelcomeLabel.BackgroundTransparency = 1
 WelcomeLabel.Text = "أهلًا " .. LocalPlayer.DisplayName
 WelcomeLabel.TextColor3 = Theme.Text
 WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Right
 WelcomeLabel.Font = Enum.Font.GothamBold
-WelcomeLabel.TextSize = 24
+WelcomeLabel.TextSize = 31
 WelcomeLabel.Parent = ProfileCard
 
 local PlanLabel = Instance.new("TextLabel")
-PlanLabel.Size = UDim2.new(1, -110, 0, 18)
-PlanLabel.Position = UDim2.new(0, 98, 0, 46)
+PlanLabel.Size = UDim2.new(1, -138, 0, 22)
+PlanLabel.Position = UDim2.new(0, 118, 0, 64)
 PlanLabel.BackgroundTransparency = 1
 PlanLabel.Text = "لوحة تحكم سريعة | اضغط الزر الصغير لإخفاء النافذة"
 PlanLabel.TextColor3 = Theme.Muted
 PlanLabel.TextXAlignment = Enum.TextXAlignment.Right
 PlanLabel.Font = Enum.Font.Gotham
-PlanLabel.TextSize = 15
+PlanLabel.TextSize = 19
 PlanLabel.Parent = ProfileCard
 
 local ContentPanel = Instance.new("Frame")
-ContentPanel.Size = UDim2.new(1, -32, 0, 298)
-ContentPanel.Position = UDim2.new(0, 16, 0, 168)
+ContentPanel.Size = UDim2.new(1, -34, 0, 418)
+ContentPanel.Position = UDim2.new(0, 17, 0, 252)
 ContentPanel.BackgroundColor3 = Theme.Bg
 ContentPanel.BorderSizePixel = 0
 ContentPanel.Parent = Frame
-makeCorner(ContentPanel, 18)
-makeStroke(ContentPanel, Theme.Border, 1, 0.35)
+makeCorner(ContentPanel, 22)
+applySoftStroke(ContentPanel, Theme.Border, 1, 0.14)
 
 local PanelPadding = Instance.new("UIPadding")
 PanelPadding.PaddingTop = UDim.new(0, 16)
@@ -576,19 +674,20 @@ SectionLabel.TextSize = 13
 SectionLabel.Parent = ContentPanel
 
 local Input = Instance.new("TextBox")
-Input.Size = UDim2.new(1, 0, 0, 42)
+Input.Size = UDim2.new(1, 0, 0, 54)
 Input.Position = UDim2.new(0, 0, 0, 26)
 Input.BackgroundColor3 = Theme.Input
 Input.PlaceholderText = "اكتب اسم اللاعب هنا"
 Input.Text = ""
 Input.TextColor3 = Theme.Text
 Input.PlaceholderColor3 = Theme.Muted
-Input.Font = Enum.Font.Gotham
-Input.TextSize = 18
+Input.Font = Enum.Font.GothamMedium
+Input.TextSize = 24
 Input.ClearTextOnFocus = false
 Input.Parent = ContentPanel
-makeCorner(Input, 12)
-makeStroke(Input, Theme.Border, 1, 0.2)
+makeCorner(Input, 16)
+applySoftStroke(Input, Theme.Border, 1, 0.1)
+makeNeon(Input, Theme.Accent)
 
 local function makeButton(name, text, size, position, baseColor, accentColor)
     local button = Instance.new("TextButton")
@@ -599,24 +698,22 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     button.AutoButtonColor = false
     button.Text = text
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextStrokeTransparency = 0
-    button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
+    button.TextStrokeTransparency = 1
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 18
+    button.TextSize = 20
     button.Parent = ContentPanel
-    makeCorner(button, 12)
-    makeStroke(button, Theme.Border, 1, 0.05)
-
-    local highlight = Instance.new("Frame")
-    highlight.Name = "Highlight"
-    highlight.Size = UDim2.new(1, -2, 0, 12)
-    highlight.Position = UDim2.new(0, 1, 0, 1)
-    highlight.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    highlight.BackgroundTransparency = 0.9
-    highlight.BorderSizePixel = 0
-    highlight.ZIndex = 1
-    highlight.Parent = button
-    makeCorner(highlight, 11)
+    button:SetAttribute("OffColorR", math.floor((baseColor or Theme.ButtonDefault).R * 255 + 0.5))
+    button:SetAttribute("OffColorG", math.floor((baseColor or Theme.ButtonDefault).G * 255 + 0.5))
+    button:SetAttribute("OffColorB", math.floor((baseColor or Theme.ButtonDefault).B * 255 + 0.5))
+    button:SetAttribute("OnColorR", math.floor((accentColor or Theme.Active).R * 255 + 0.5))
+    button:SetAttribute("OnColorG", math.floor((accentColor or Theme.Active).G * 255 + 0.5))
+    button:SetAttribute("OnColorB", math.floor((accentColor or Theme.Active).B * 255 + 0.5))
+    makeCorner(button, 16)
+    applySoftStroke(button, Theme.Border, 1, 0.1)
+    ensureGradient(button, "ButtonGradient", {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 18, 20)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(11, 11, 12)),
+    }, 12)
 
     return button
 end
@@ -624,19 +721,19 @@ end
 local function makeInput(name, placeholder, defaultText, position)
     local box = Instance.new("TextBox")
     box.Name = name
-    box.Size = UDim2.new(0, 178, 0, 40)
+    box.Size = UDim2.new(0, 178, 0, 54)
     box.Position = position
     box.BackgroundColor3 = Theme.Input
     box.TextColor3 = Theme.Text
     box.PlaceholderColor3 = Theme.Muted
     box.PlaceholderText = placeholder
     box.Text = defaultText or ""
-    box.Font = Enum.Font.Gotham
-    box.TextSize = 17
+    box.Font = Enum.Font.GothamMedium
+    box.TextSize = 22
     box.ClearTextOnFocus = false
     box.Parent = ContentPanel
-    makeCorner(box, 12)
-    makeStroke(box, Theme.Border, 1, 0.2)
+    makeCorner(box, 16)
+    applySoftStroke(box, Theme.Border, 1, 0.1)
     return box
 end
 
@@ -670,46 +767,46 @@ ContentPanel.ClipsDescendants = true
 
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 132, 1, -20)
+Sidebar.Size = UDim2.new(0, 196, 1, -20)
 Sidebar.Position = UDim2.new(0, 10, 0, 10)
 Sidebar.BackgroundColor3 = Theme.Header
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = ContentPanel
-makeCorner(Sidebar, 14)
-makeStroke(Sidebar, Theme.Border, 1, 0.2)
+makeCorner(Sidebar, 18)
+applySoftStroke(Sidebar, Theme.Border, 1, 0.12)
 
 local SidebarTitle = Instance.new("TextLabel")
-SidebarTitle.Size = UDim2.new(1, -16, 0, 22)
-SidebarTitle.Position = UDim2.new(0, 8, 0, 12)
+SidebarTitle.Size = UDim2.new(1, -26, 0, 28)
+SidebarTitle.Position = UDim2.new(0, 13, 0, 16)
 SidebarTitle.BackgroundTransparency = 1
 SidebarTitle.Text = "القوائم"
 SidebarTitle.TextColor3 = Theme.Text
 SidebarTitle.TextXAlignment = Enum.TextXAlignment.Right
 SidebarTitle.Font = Enum.Font.GothamBold
-SidebarTitle.TextSize = 17
+SidebarTitle.TextSize = 22
 SidebarTitle.Parent = Sidebar
 
 local SidebarHint = Instance.new("TextLabel")
-SidebarHint.Size = UDim2.new(1, -16, 0, 28)
-SidebarHint.Position = UDim2.new(0, 8, 0, 34)
+SidebarHint.Size = UDim2.new(1, -26, 0, 24)
+SidebarHint.Position = UDim2.new(0, 13, 0, 48)
 SidebarHint.BackgroundTransparency = 1
 SidebarHint.Text = "اختر القسم"
 SidebarHint.TextColor3 = Theme.Muted
 SidebarHint.TextXAlignment = Enum.TextXAlignment.Right
 SidebarHint.Font = Enum.Font.Gotham
-SidebarHint.TextSize = 14
+SidebarHint.TextSize = 16
 SidebarHint.Parent = Sidebar
 
 local PagesHost = Instance.new("Frame")
 PagesHost.Name = "PagesHost"
-PagesHost.Size = UDim2.new(1, -162, 1, -20)
-PagesHost.Position = UDim2.new(0, 152, 0, 10)
+PagesHost.Size = UDim2.new(1, -226, 1, -20)
+PagesHost.Position = UDim2.new(0, 216, 0, 10)
 PagesHost.BackgroundColor3 = Theme.Card
-PagesHost.BackgroundTransparency = 0.08
+PagesHost.BackgroundTransparency = 0.02
 PagesHost.BorderSizePixel = 0
 PagesHost.Parent = ContentPanel
-makeCorner(PagesHost, 14)
-makeStroke(PagesHost, Theme.Border, 1, 0.2)
+makeCorner(PagesHost, 18)
+applySoftStroke(PagesHost, Theme.Border, 1, 0.12)
 
 local function makePage(name)
     local page = Instance.new("Frame")
@@ -723,25 +820,25 @@ end
 
 local function makePageTitle(parent, titleText, subtitleText)
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 22)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.Size = UDim2.new(1, -28, 0, 30)
+    titleLabel.Position = UDim2.new(0, 14, 0, 14)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = titleText
     titleLabel.TextColor3 = Theme.Text
     titleLabel.TextXAlignment = Enum.TextXAlignment.Right
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = 19
+    titleLabel.TextSize = 25
     titleLabel.Parent = parent
 
     local subtitleLabel = Instance.new("TextLabel")
-    subtitleLabel.Size = UDim2.new(1, -20, 0, 18)
-    subtitleLabel.Position = UDim2.new(0, 10, 0, 34)
+    subtitleLabel.Size = UDim2.new(1, -28, 0, 20)
+    subtitleLabel.Position = UDim2.new(0, 14, 0, 46)
     subtitleLabel.BackgroundTransparency = 1
     subtitleLabel.Text = subtitleText
     subtitleLabel.TextColor3 = Theme.Muted
     subtitleLabel.TextXAlignment = Enum.TextXAlignment.Right
     subtitleLabel.Font = Enum.Font.Gotham
-    subtitleLabel.TextSize = 14
+    subtitleLabel.TextSize = 17
     subtitleLabel.Parent = parent
 end
 
@@ -774,10 +871,12 @@ ChatPanel.ZIndex = 18
 ChatPanel.Parent = ScreenGui
 makeCorner(ChatPanel, 16)
 makeStroke(ChatPanel, Theme.Border, 1, 0.15)
+ChatPanel.BackgroundTransparency = 0.72
+ChatPanel.BackgroundColor3 = Color3.fromRGB(10, 14, 26)
 
 local ChatPanelSizeConstraint = Instance.new("UISizeConstraint")
-ChatPanelSizeConstraint.MaxSize = Vector2.new(340, 460)
-ChatPanelSizeConstraint.MinSize = Vector2.new(240, 280)
+ChatPanelSizeConstraint.MaxSize = isTouchDevice and Vector2.new(240, 320) or Vector2.new(340, 460)
+ChatPanelSizeConstraint.MinSize = isTouchDevice and Vector2.new(180, 200) or Vector2.new(240, 280)
 ChatPanelSizeConstraint.Parent = ChatPanel
 
 local ChatHeader = Instance.new("Frame")
@@ -820,6 +919,7 @@ ChatList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ChatList.Parent = ChatPanel
 makeCorner(ChatList, 10)
 makeStroke(ChatList, Theme.Border, 1, 0.2)
+ChatList.BackgroundTransparency = 0.65
 
 local ChatListLayout = Instance.new("UIListLayout")
 ChatListLayout.Padding = UDim.new(0, 6)
@@ -969,13 +1069,13 @@ if isOwnerUser then
     OwnerTargetHint.TextSize = 13
     OwnerTargetHint.Parent = OwnerPage
 
-    OwnerKickBtn = makeButton("OwnerKickBtn", "طرد", UDim2.new(0.5, -14, 0, 38), UDim2.new(0, 10, 0, 124), Theme.ButtonRed, Theme.ButtonRedAlt)
+    OwnerKickBtn = makeButton("OwnerKickBtn", "طرد", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 124), Theme.ButtonRed, Theme.ButtonRedAlt)
     OwnerKickBtn.Parent = OwnerPage
 
-    OwnerFreezeBtn = makeButton("OwnerFreezeBtn", "تجميد", UDim2.new(0.5, -14, 0, 38), UDim2.new(0.5, 4, 0, 124), Theme.ButtonBlue, Theme.ButtonBlueAlt)
+    OwnerFreezeBtn = makeButton("OwnerFreezeBtn", "تجميد", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonBlue, Theme.ButtonBlueAlt)
     OwnerFreezeBtn.Parent = OwnerPage
 
-    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
     OwnerRespawnLoopBtn.Parent = OwnerPage
 end
 
@@ -1505,75 +1605,75 @@ ImportantText.TextSize = 15
 ImportantText.Parent = ImportantCard
 
 Input.Parent = TargetPage
-Input.Size = UDim2.new(1, -20, 0, 40)
-Input.Position = UDim2.new(0, 10, 0, 54)
+Input.Size = UDim2.new(1, -28, 0, 54)
+Input.Position = UDim2.new(0, 14, 0, 82)
 
 BangBtn.Parent = TargetPage
-BangBtn.Size = UDim2.new(0.5, -14, 0, 38)
-BangBtn.Position = UDim2.new(0, 10, 0, 100)
+BangBtn.Size = UDim2.new(0.5, -18, 0, 56)
+BangBtn.Position = UDim2.new(0, 14, 0, 146)
 
 ResetBtn.Parent = TargetPage
-ResetBtn.Size = UDim2.new(0.5, -14, 0, 38)
-ResetBtn.Position = UDim2.new(0.5, 4, 0, 100)
+ResetBtn.Size = UDim2.new(0.5, -18, 0, 56)
+ResetBtn.Position = UDim2.new(0.5, 4, 0, 146)
 
 FlingBtn.Parent = TargetPage
-FlingBtn.Size = UDim2.new(0.5, -14, 0, 38)
-FlingBtn.Position = UDim2.new(0, 10, 0, 144)
+FlingBtn.Size = UDim2.new(0.5, -18, 0, 56)
+FlingBtn.Position = UDim2.new(0, 14, 0, 210)
 
 TargetFlingBtn.Parent = TargetPage
-TargetFlingBtn.Size = UDim2.new(0.5, -14, 0, 38)
-TargetFlingBtn.Position = UDim2.new(0.5, 4, 0, 144)
+TargetFlingBtn.Size = UDim2.new(0.5, -18, 0, 56)
+TargetFlingBtn.Position = UDim2.new(0.5, 4, 0, 210)
 
 TeleportBtn.Parent = TargetPage
-TeleportBtn.Size = UDim2.new(0.5, -14, 0, 38)
-TeleportBtn.Position = UDim2.new(0, 10, 0, 188)
+TeleportBtn.Size = UDim2.new(0.5, -18, 0, 56)
+TeleportBtn.Position = UDim2.new(0, 14, 0, 274)
 
 SpectateBtn.Parent = TargetPage
-SpectateBtn.Size = UDim2.new(0.5, -14, 0, 38)
-SpectateBtn.Position = UDim2.new(0.5, 4, 0, 188)
+SpectateBtn.Size = UDim2.new(0.5, -18, 0, 56)
+SpectateBtn.Position = UDim2.new(0.5, 4, 0, 274)
 
 SavePlaceBtn.Parent = TargetPage
-SavePlaceBtn.Size = UDim2.new(1, -20, 0, 38)
-SavePlaceBtn.Position = UDim2.new(0, 10, 0, 232)
+SavePlaceBtn.Size = UDim2.new(1, -28, 0, 56)
+SavePlaceBtn.Position = UDim2.new(0, 14, 0, 338)
 
 FlyBtn.Parent = PlayerPage
-FlyBtn.Size = UDim2.new(0.5, -14, 0, 38)
-FlyBtn.Position = UDim2.new(0, 10, 0, 54)
+FlyBtn.Size = UDim2.new(0.5, -18, 0, 56)
+FlyBtn.Position = UDim2.new(0, 14, 0, 86)
 
 SpeedInput.Parent = PlayerPage
-SpeedInput.Size = UDim2.new(0.5, -14, 0, 38)
-SpeedInput.Position = UDim2.new(0.5, 4, 0, 54)
+SpeedInput.Size = UDim2.new(0.5, -18, 0, 56)
+SpeedInput.Position = UDim2.new(0.5, 4, 0, 86)
 
 WalkSpeedBtn.Parent = PlayerPage
-WalkSpeedBtn.Size = UDim2.new(0.5, -14, 0, 38)
-WalkSpeedBtn.Position = UDim2.new(0, 10, 0, 98)
+WalkSpeedBtn.Size = UDim2.new(0.5, -18, 0, 56)
+WalkSpeedBtn.Position = UDim2.new(0, 14, 0, 150)
 
 WalkSpeedInput.Parent = PlayerPage
-WalkSpeedInput.Size = UDim2.new(0.5, -14, 0, 38)
-WalkSpeedInput.Position = UDim2.new(0.5, 4, 0, 98)
+WalkSpeedInput.Size = UDim2.new(0.5, -18, 0, 56)
+WalkSpeedInput.Position = UDim2.new(0.5, 4, 0, 150)
 
 SpeedLabel.Parent = PlayerPage
-SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 144)
+SpeedLabel.Size = UDim2.new(1, -28, 0, 24)
+SpeedLabel.Position = UDim2.new(0, 14, 0, 218)
 
-local menuButtonHeight = isOwnerUser and 30 or 34
-local menuButtonStart = 70
-local menuButtonStep = isOwnerUser and 34 or 38
+local menuButtonHeight = isOwnerUser and 46 or 50
+local menuButtonStart = 98
+local menuButtonStep = isOwnerUser and 54 or 58
 
 local function makeMenuButton(text, order)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -16, 0, menuButtonHeight)
-    button.Position = UDim2.new(0, 8, 0, menuButtonStart + ((order - 1) * menuButtonStep))
+    button.Size = UDim2.new(1, -22, 0, menuButtonHeight)
+    button.Position = UDim2.new(0, 11, 0, menuButtonStart + ((order - 1) * menuButtonStep))
     button.BackgroundColor3 = Theme.PanelSoft
     button.Text = text
     button.TextColor3 = Theme.Text
     button.TextXAlignment = Enum.TextXAlignment.Center
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 15
+    button.TextSize = 18
     button.AutoButtonColor = false
     button.Parent = Sidebar
-    makeCorner(button, 10)
-    makeStroke(button, Theme.Border, 1, 0.15)
+    makeCorner(button, 16)
+    applySoftStroke(button, Theme.Border, 1, 0.12)
     return button
 end
 
@@ -1655,17 +1755,17 @@ if OwnerMenuBtn then
     end)
 end
 
-setMenuState("main")
+setMenuState("target")
 
 local Footer = Instance.new("TextLabel")
-Footer.Size = UDim2.new(1, -32, 0, 18)
-Footer.Position = UDim2.new(0, 16, 1, -24)
+Footer.Size = UDim2.new(1, -34, 0, 22)
+Footer.Position = UDim2.new(0, 17, 1, -30)
 Footer.BackgroundTransparency = 1
 Footer.Text = "© All rights reserved t_18"
-Footer.TextColor3 = Color3.fromRGB(100, 116, 139)
+Footer.TextColor3 = Theme.Accent
 Footer.TextXAlignment = Enum.TextXAlignment.Left
 Footer.Font = Enum.Font.Gotham
-Footer.TextSize = 13
+Footer.TextSize = 15
 Footer.Parent = Frame
 
 ToggleBtn = Instance.new("TextButton")
@@ -1933,13 +2033,290 @@ end
 ScreenGui:GetPropertyChangedSignal("AbsoluteSize"):Connect(ensureButtonsInBounds)
 task.defer(ensureButtonsInBounds)
 
+local function colorFromButtonAttributes(button, prefix, fallback)
+    return Color3.fromRGB(
+        button:GetAttribute(prefix .. "R") or math.floor((fallback.R * 255) + 0.5),
+        button:GetAttribute(prefix .. "G") or math.floor((fallback.G * 255) + 0.5),
+        button:GetAttribute(prefix .. "B") or math.floor((fallback.B * 255) + 0.5)
+    )
+end
+
+local function tuneNeon(strokeParent, active)
+    local base, soft, wide = makeNeon(strokeParent, Theme.Accent)
+    if active then
+        base.Transparency = 0.05
+        soft.Transparency = 0.68
+        wide.Transparency = 0.88
+    else
+        base.Transparency = 0.38
+        soft.Transparency = 0.86
+        wide.Transparency = 0.95
+    end
+end
+
+local function applyActionButtonChrome(button, icon, active)
+    if not button then
+        return
+    end
+
+    local offColor = colorFromButtonAttributes(button, "OffColor", Theme.ButtonDefault)
+    local onColor = colorFromButtonAttributes(button, "OnColor", Theme.Active)
+    button.BackgroundColor3 = active and onColor or offColor
+    button.TextColor3 = Theme.Text
+    button.TextStrokeTransparency = 1
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 20
+    clearChildByName(button, "Highlight")
+    ensureGradient(button, "ButtonGradient", active and {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(186, 10, 14)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(118, 4, 7)),
+    } or {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 22)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 12)),
+    }, 10)
+    applySoftStroke(button, active and Color3.fromRGB(255, 78, 82) or Theme.Border, 1, active and 0.02 or 0.08)
+    tuneNeon(button, active)
+
+    local iconLabel = button:FindFirstChild("ButtonIcon")
+    if not iconLabel then
+        iconLabel = Instance.new("TextLabel")
+        iconLabel.Name = "ButtonIcon"
+        iconLabel.Size = UDim2.new(0, 34, 1, 0)
+        iconLabel.Position = UDim2.new(1, -42, 0, 0)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Font = Enum.Font.SourceSansBold
+        iconLabel.TextScaled = false
+        iconLabel.TextWrapped = false
+        iconLabel.TextXAlignment = Enum.TextXAlignment.Center
+        iconLabel.TextYAlignment = Enum.TextYAlignment.Center
+        iconLabel.ZIndex = button.ZIndex + 1
+        iconLabel.Parent = button
+    end
+
+    iconLabel.Text = icon or ""
+    iconLabel.TextColor3 = Theme.Accent
+    iconLabel.TextSize = button == SavePlaceBtn and 30 or 28
+end
+
+local function applyMenuButtonChrome(button, active)
+    if not button then
+        return
+    end
+
+    button.BackgroundColor3 = active and Theme.Active or Theme.PanelSoft
+    button.TextColor3 = Theme.Text
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 18
+    ensureGradient(button, "ButtonGradient", active and {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 12, 16)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(115, 5, 8)),
+    } or {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 18, 20)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 12)),
+    }, 8)
+    applySoftStroke(button, active and Color3.fromRGB(255, 74, 78) or Theme.Border, 1, active and 0.02 or 0.12)
+    tuneNeon(button, active)
+end
+
+local function setPageHeader(page, titleText, subtitleText)
+    local labels = {}
+    for _, child in ipairs(page:GetChildren()) do
+        if child:IsA("TextLabel") then
+            table.insert(labels, child)
+        end
+    end
+
+    table.sort(labels, function(a, b)
+        return a.Position.Y.Offset < b.Position.Y.Offset
+    end)
+
+    if labels[1] then
+        labels[1].Text = titleText
+    end
+
+    if labels[2] then
+        labels[2].Text = subtitleText
+    end
+end
+
+local function applyReferenceVisuals()
+    Subtitle.Text = "شاركونا اقتراحاتكم على الديسكورد"
+    WelcomeLabel.Text = "أهلاً t_18"
+    PlanLabel.Text = "لوحة تحكم سريعة | اضغط الزر الصغير لإخفاء النافذة"
+    SidebarTitle.Text = "القوائم"
+    SidebarHint.Text = "اختر القسم"
+    Footer.Text = "© All rights reserved t_18"
+    TopBadgeText.Text = "v1"
+    Input.PlaceholderText = "اكتب اسم اللاعب هنا"
+    Input.TextXAlignment = Enum.TextXAlignment.Center
+    Input.PlaceholderColor3 = Color3.fromRGB(180, 180, 185)
+
+    BangBtn.Text = "بانق"
+    ResetBtn.Text = "ريست"
+    FlingBtn.Text = "حماية بانق"
+    TargetFlingBtn.Text = "فلق"
+    TeleportBtn.Text = "تنقل"
+    SpectateBtn.Text = "مشاهدة"
+    SavePlaceBtn.Text = "حفظ مكاني"
+    FlyBtn.Text = "طيران"
+    WalkSpeedBtn.Text = "سرعة اللاعب"
+    if OwnerKickBtn then
+        OwnerKickBtn.Text = "طرد"
+    end
+    if OwnerFreezeBtn then
+        OwnerFreezeBtn.Text = "تجميد"
+    end
+    if OwnerRespawnLoopBtn then
+        OwnerRespawnLoopBtn.Text = "Respawn Loop"
+    end
+
+    MainMenuBtn.Text = "القائمة الرئيسية"
+    PlayerMenuBtn.Text = "اللاعب"
+    TargetMenuBtn.Text = "استهداف"
+    ImportantMenuBtn.Text = "مهم"
+    if UsersMenuBtn then
+        UsersMenuBtn.Text = "مستخدمين السكربت"
+    end
+    if OwnerMenuBtn then
+        OwnerMenuBtn.Text = "اوامر"
+    end
+
+    setPageHeader(MainPage, "القائمة الرئيسية", "مفتوحة بشكل افتراضي")
+    setPageHeader(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
+    setPageHeader(TargetPage, "استهداف", "أوامر التعامل مع اللاعبين")
+    setPageHeader(ImportantPage, "مهم", "رسالة داخل السكربت")
+    if OwnerPage then
+        setPageHeader(OwnerPage, "اوامر", "أوامر الإدارة الخاصة")
+    end
+    if UsersPage then
+        setPageHeader(UsersPage, "مستخدمين السكربت", "اللاعبون الذين يشغلون السكربت في سيرفرك الحالي")
+    end
+
+    SpeedLabel.TextColor3 = Theme.Muted
+    SpeedLabel.TextSize = 16
+    MainText.TextColor3 = Theme.Muted
+    ImportantText.TextColor3 = Theme.Muted
+
+    MainCard.BackgroundColor3 = Theme.Card
+    MainCard.BackgroundTransparency = 0.02
+    applySoftStroke(MainCard, Theme.Border, 1, 0.12)
+    ImportantCard.BackgroundColor3 = Theme.Card
+    ImportantCard.BackgroundTransparency = 0.02
+    applySoftStroke(ImportantCard, Theme.Border, 1, 0.12)
+    applyActionButtonChrome(DiscordBtn, "↗", false)
+
+    ChatPanel.BackgroundColor3 = Theme.Panel
+    ChatPanel.BackgroundTransparency = 0.06
+    applySoftStroke(ChatPanel, Theme.Border, 1, 0.12)
+    ChatList.BackgroundColor3 = Theme.Bg
+    ChatList.BackgroundTransparency = 0.18
+    applySoftStroke(ChatList, Theme.Border, 1, 0.14)
+    ChatInput.BackgroundColor3 = Theme.Input
+    applySoftStroke(ChatInput, Theme.Border, 1, 0.12)
+    applyActionButtonChrome(ChatSendBtn, "", false)
+    ChatSendBtn.Text = "إرسال"
+
+    if OwnerTargetInput then
+        OwnerTargetInput.BackgroundColor3 = Theme.Input
+        applySoftStroke(OwnerTargetInput, Theme.Border, 1, 0.12)
+    end
+    if UsersList then
+        UsersList.BackgroundColor3 = Theme.Card
+        applySoftStroke(UsersList, Theme.Border, 1, 0.12)
+    end
+
+    applyActionButtonChrome(BangBtn, "◎", false)
+    applyActionButtonChrome(ResetBtn, "↺", false)
+    applyActionButtonChrome(FlingBtn, "◈", false)
+    applyActionButtonChrome(TargetFlingBtn, "⌗", false)
+    applyActionButtonChrome(TeleportBtn, "➤", false)
+    applyActionButtonChrome(SpectateBtn, "◉", false)
+    applyActionButtonChrome(SavePlaceBtn, "⌂", false)
+    applyActionButtonChrome(FlyBtn, "✦", false)
+    applyActionButtonChrome(WalkSpeedBtn, "⇄", false)
+    if OwnerKickBtn then
+        applyActionButtonChrome(OwnerKickBtn, "✕", false)
+    end
+    if OwnerFreezeBtn then
+        applyActionButtonChrome(OwnerFreezeBtn, "◌", false)
+    end
+    if OwnerRespawnLoopBtn then
+        applyActionButtonChrome(OwnerRespawnLoopBtn, "↻", false)
+    end
+
+    applyMenuButtonChrome(MainMenuBtn, false)
+    applyMenuButtonChrome(PlayerMenuBtn, false)
+    applyMenuButtonChrome(TargetMenuBtn, true)
+    applyMenuButtonChrome(ImportantMenuBtn, false)
+    if UsersMenuBtn then
+        applyMenuButtonChrome(UsersMenuBtn, false)
+    end
+    if OwnerMenuBtn then
+        applyMenuButtonChrome(OwnerMenuBtn, false)
+    end
+
+    ToggleBtn.BackgroundColor3 = Theme.Panel
+    applySoftStroke(ToggleBtn, Theme.Border, 1, 0.08)
+    tuneNeon(ToggleBtn, false)
+    ChatBubbleBtn.BackgroundColor3 = Theme.Panel
+    ChatBubbleBtn.Text = "..."
+    ChatBubbleBtn.TextSize = 22
+    applySoftStroke(ChatBubbleBtn, Theme.Border, 1, 0.08)
+    tuneNeon(ChatBubbleBtn, false)
+
+    FlyTouchFrame.BackgroundColor3 = Theme.Panel
+    FlyTouchFrame.BackgroundTransparency = 0.04
+    applySoftStroke(FlyTouchFrame, Theme.Border, 1, 0.12)
+end
+
+setMenuState = function(activeKey)
+    for key, page in pairs(Pages) do
+        page.Visible = key == activeKey
+    end
+
+    for key, button in pairs(MenuButtons) do
+        applyMenuButtonChrome(button, key == activeKey)
+    end
+end
+
+applyReferenceVisuals()
+setMenuState("target")
+
 local function setButtonState(button, enabled, onText, offText, onColor, offColor)
     if enabled then
-        button.BackgroundColor3 = onColor or Theme.Active
         button.Text = onText
     else
-        button.BackgroundColor3 = offColor or Theme.PanelSoft
         button.Text = offText
+    end
+
+    if button == BangBtn then
+        applyActionButtonChrome(button, "◎", enabled)
+    elseif button == ResetBtn then
+        applyActionButtonChrome(button, "↺", enabled)
+    elseif button == FlingBtn then
+        applyActionButtonChrome(button, "◈", enabled)
+    elseif button == TargetFlingBtn then
+        applyActionButtonChrome(button, "⌗", enabled)
+    elseif button == TeleportBtn then
+        applyActionButtonChrome(button, "➤", enabled)
+    elseif button == SpectateBtn then
+        applyActionButtonChrome(button, "◉", enabled)
+    elseif button == SavePlaceBtn then
+        applyActionButtonChrome(button, "⌂", enabled)
+    elseif button == FlyBtn then
+        applyActionButtonChrome(button, "✦", enabled)
+    elseif button == WalkSpeedBtn then
+        applyActionButtonChrome(button, "⇄", enabled)
+    elseif button == ChatSendBtn then
+        applyActionButtonChrome(button, "", enabled)
+    elseif button == OwnerKickBtn then
+        applyActionButtonChrome(button, "✕", enabled)
+    elseif button == OwnerFreezeBtn then
+        applyActionButtonChrome(button, "◌", enabled)
+    elseif button == OwnerRespawnLoopBtn then
+        applyActionButtonChrome(button, "↻", enabled)
+    else
+        button.BackgroundColor3 = enabled and (onColor or Theme.Active) or (offColor or Theme.PanelSoft)
     end
 end
 

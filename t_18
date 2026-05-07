@@ -1143,6 +1143,81 @@ local function addChatMessage(senderName, messageText)
     end)
 end
 
+function ShowChatBubbleAboveHead(fromUserId, fromName, messageText)
+    pcall(function()
+        local cleanText = tostring(messageText or "")
+        cleanText = cleanText:gsub("[\r\n]", " ")
+        cleanText = cleanText:gsub("%s+", " ")
+        cleanText = cleanText:gsub("^%s+", "")
+        cleanText = cleanText:gsub("%s+$", "")
+        if #cleanText == 0 then
+            return
+        end
+        if #cleanText > 160 then
+            cleanText = cleanText:sub(1, 160)
+        end
+
+        local speaker = nil
+        local numericUserId = tonumber(fromUserId)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if (numericUserId and numericUserId > 0 and player.UserId == numericUserId) or player.Name == fromName then
+                speaker = player
+                break
+            end
+        end
+
+        local character = speaker and speaker.Character
+        local head = character and character:FindFirstChild("Head")
+        if not head then
+            return
+        end
+
+        local bubbleGui = Instance.new("BillboardGui")
+        bubbleGui.Name = "T18HeadChatBubble"
+        bubbleGui.Adornee = head
+        bubbleGui.AlwaysOnTop = true
+        bubbleGui.Size = UDim2.new(0, 210, 0, 50)
+        bubbleGui.StudsOffset = Vector3.new(0, 3.2, 0)
+        bubbleGui.Parent = ScreenGui
+
+        if #cleanText > 60 then
+            bubbleGui.Size = UDim2.new(0, 210, 0, 68)
+        end
+        if #cleanText > 120 then
+            bubbleGui.Size = UDim2.new(0, 210, 0, 84)
+        end
+
+        local bubbleFrame = Instance.new("Frame")
+        bubbleFrame.Size = UDim2.new(1, 0, 1, 0)
+        bubbleFrame.BackgroundColor3 = Theme.Panel
+        bubbleFrame.BackgroundTransparency = 0.12
+        bubbleFrame.BorderSizePixel = 0
+        bubbleFrame.Parent = bubbleGui
+        makeCorner(bubbleFrame, 12)
+        makeStroke(bubbleFrame, Theme.Border, 1, 0.18)
+
+        local bubbleText = Instance.new("TextLabel")
+        bubbleText.Size = UDim2.new(1, -16, 1, -12)
+        bubbleText.Position = UDim2.new(0, 8, 0, 6)
+        bubbleText.BackgroundTransparency = 1
+        bubbleText.Text = cleanText
+        bubbleText.TextColor3 = Theme.Text
+        bubbleText.TextWrapped = true
+        bubbleText.TextXAlignment = Enum.TextXAlignment.Center
+        bubbleText.TextYAlignment = Enum.TextYAlignment.Center
+        bubbleText.Font = Enum.Font.GothamMedium
+        bubbleText.TextSize = 15
+        bubbleText.Parent = bubbleFrame
+
+        task.spawn(function()
+            task.wait(5)
+            pcall(function()
+                bubbleGui:Destroy()
+            end)
+        end)
+    end)
+end
+
 local function sendChatToAll(messageText)
     if type(messageText) ~= "string" or #messageText == 0 then return false end
     if #messageText > 200 then messageText = messageText:sub(1, 200) end
@@ -1155,6 +1230,7 @@ local function trySendChatFromInput()
     if not txt or #txt == 0 then return end
     local sent = sendChatToAll(txt)
     if sent then
+        ShowChatBubbleAboveHead(LocalPlayer.UserId, LocalPlayer.Name, txt)
         ChatInput.Text = ""
     else
         addChatMessage("النظام", "ما قدرت أرسل الرسالة — تأكد إن المُشغِّل يدعم HTTP")
@@ -1558,6 +1634,7 @@ local function t18_dispatchEvent(ev)
             displayName = displayName .. " (أنت)"
         end
         addChatMessage(displayName, text)
+        ShowChatBubbleAboveHead(fromUserId, fromName, text)
     elseif ev.type == "cmd" then
         local fromName = tostring(ev.fromName or "")
         local action = tostring(ev.action or "")

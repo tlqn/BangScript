@@ -197,31 +197,31 @@ local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
 
 local Theme = {
-    Bg = Color3.fromRGB(2, 6, 23),
-    Panel = Color3.fromRGB(14, 18, 32),
-    PanelSoft = Color3.fromRGB(31, 35, 48),
-    Header = Color3.fromRGB(7, 10, 18),
-    Card = Color3.fromRGB(15, 23, 42),
-    Input = Color3.fromRGB(24, 31, 50),
-    Border = Color3.fromRGB(18, 18, 18),
+    Bg = Color3.fromRGB(5, 8, 20),
+    Panel = Color3.fromRGB(8, 10, 25),
+    PanelSoft = Color3.fromRGB(15, 20, 40),
+    Header = Color3.fromRGB(10, 14, 30),
+    Card = Color3.fromRGB(14, 18, 36),
+    Input = Color3.fromRGB(19, 24, 46),
+    Border = Color3.fromRGB(28, 36, 68),
     Text = Color3.fromRGB(255, 255, 255),
-    Muted = Color3.fromRGB(203, 213, 225),
-    Accent = Color3.fromRGB(31, 35, 48),
-    AccentSoft = Color3.fromRGB(30, 41, 59),
-    Active = Color3.fromRGB(55, 65, 81),
+    Muted = Color3.fromRGB(180, 194, 230),
+    Accent = Color3.fromRGB(70, 120, 255),
+    AccentSoft = Color3.fromRGB(35, 52, 110),
+    Active = Color3.fromRGB(34, 47, 84),
     Warning = Color3.fromRGB(245, 158, 11),
-    Danger = Color3.fromRGB(220, 38, 38),
+    Danger = Color3.fromRGB(190, 52, 78),
     Shadow = Color3.fromRGB(2, 6, 18),
-    ButtonDefault = Color3.fromRGB(31, 35, 48),
-    ButtonDefaultAlt = Color3.fromRGB(31, 35, 48),
-    ButtonBlue = Color3.fromRGB(31, 35, 48),
-    ButtonBlueAlt = Color3.fromRGB(55, 65, 81),
-    ButtonGreen = Color3.fromRGB(31, 35, 48),
-    ButtonGreenAlt = Color3.fromRGB(55, 65, 81),
-    ButtonOrange = Color3.fromRGB(31, 35, 48),
-    ButtonOrangeAlt = Color3.fromRGB(55, 65, 81),
-    ButtonRed = Color3.fromRGB(31, 35, 48),
-    ButtonRedAlt = Color3.fromRGB(55, 65, 81),
+    ButtonDefault = Color3.fromRGB(25, 30, 55),
+    ButtonDefaultAlt = Color3.fromRGB(30, 35, 60),
+    ButtonBlue = Color3.fromRGB(34, 47, 84),
+    ButtonBlueAlt = Color3.fromRGB(55, 88, 168),
+    ButtonGreen = Color3.fromRGB(24, 58, 70),
+    ButtonGreenAlt = Color3.fromRGB(38, 88, 102),
+    ButtonOrange = Color3.fromRGB(68, 50, 24),
+    ButtonOrangeAlt = Color3.fromRGB(108, 72, 28),
+    ButtonRed = Color3.fromRGB(78, 28, 40),
+    ButtonRedAlt = Color3.fromRGB(150, 42, 68),
 }
 
 local function connect(list, signal, callback)
@@ -334,6 +334,168 @@ local function makeShadow(parent)
     return shadow
 end
 
+local UiFx = {}
+
+function UiFx.makeGradient(parent, colors, rotation)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new(colors)
+    gradient.Rotation = rotation or 0
+    gradient.Parent = parent
+    return gradient
+end
+
+function UiFx.makeAccentGlow(parent, color, transparency, sizeOffset, yOffset)
+    local glow = Instance.new("ImageLabel")
+    glow.Name = "AccentGlow"
+    glow.AnchorPoint = Vector2.new(0.5, 0.5)
+    glow.Position = UDim2.new(0.5, 0, 0.5, yOffset or 0)
+    glow.Size = UDim2.new(1, sizeOffset or 52, 1, sizeOffset or 52)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://1316045217"
+    glow.ImageColor3 = color or Theme.Accent
+    glow.ImageTransparency = transparency or 0.92
+    glow.ScaleType = Enum.ScaleType.Slice
+    glow.SliceCenter = Rect.new(10, 10, 118, 118)
+    glow.ZIndex = math.max(parent.ZIndex - 1, 0)
+    glow.Parent = parent
+    return glow
+end
+
+UiFx._starFields = {}
+UiFx._starFieldConnection = nil
+
+local function resetAnimatedStar(fieldData, starData, respawnAtTop)
+    local randomizer = fieldData.randomizer
+    starData.x = randomizer:NextNumber(-0.02, 1.02)
+    if respawnAtTop then
+        starData.y = randomizer:NextNumber(-0.2, -0.02)
+    else
+        starData.y = randomizer:NextNumber(-0.02, 1.02)
+    end
+    starData.speed = randomizer:NextNumber(0.012, 0.05)
+    starData.drift = randomizer:NextNumber(-0.01, 0.01)
+    starData.baseTransparency = randomizer:NextNumber(0.72, 0.9)
+    starData.twinkleAmplitude = randomizer:NextNumber(0.03, 0.12)
+    starData.twinkleSpeed = randomizer:NextNumber(0.8, 2.2)
+    starData.twinkleOffset = randomizer:NextNumber(0, math.pi * 2)
+end
+
+local function ensureStarFieldAnimator()
+    if UiFx._starFieldConnection then
+        return
+    end
+
+    UiFx._starFieldConnection = RunService.RenderStepped:Connect(function(deltaTime)
+        for index = #UiFx._starFields, 1, -1 do
+            local fieldData = UiFx._starFields[index]
+            local starField = fieldData.field
+
+            if not starField or not starField.Parent then
+                table.remove(UiFx._starFields, index)
+            else
+                fieldData.elapsed += deltaTime
+
+                for _, starData in ipairs(fieldData.stars) do
+                    local star = starData.instance
+                    if star and star.Parent then
+                        starData.x += starData.drift * deltaTime
+                        starData.y += starData.speed * deltaTime
+
+                        if starData.x > 1.04 then
+                            starData.x = -0.04
+                        elseif starData.x < -0.04 then
+                            starData.x = 1.04
+                        end
+
+                        if starData.y > 1.08 then
+                            resetAnimatedStar(fieldData, starData, true)
+                        end
+
+                        local twinkle = math.sin((fieldData.elapsed * starData.twinkleSpeed) + starData.twinkleOffset) * starData.twinkleAmplitude
+                        star.Position = UDim2.new(starData.x, 0, starData.y, 0)
+                        star.BackgroundTransparency = math.clamp(starData.baseTransparency + twinkle, 0.48, 0.94)
+                    end
+                end
+            end
+        end
+
+        if #UiFx._starFields == 0 and UiFx._starFieldConnection then
+            UiFx._starFieldConnection:Disconnect()
+            UiFx._starFieldConnection = nil
+        end
+    end)
+end
+
+function UiFx.makeStarField(parent, count)
+    local starField = Instance.new("Frame")
+    starField.Name = "StarField"
+    starField.Size = UDim2.new(1, 0, 1, 0)
+    starField.BackgroundTransparency = 1
+    starField.BorderSizePixel = 0
+    starField.ClipsDescendants = true
+    starField.ZIndex = 0
+    starField.Parent = parent
+
+    local fieldData = {
+        field = starField,
+        stars = {},
+        randomizer = Random.new(),
+        elapsed = 0,
+    }
+
+    for index = 1, count do
+        local star = Instance.new("Frame")
+        local size = fieldData.randomizer:NextInteger(2, 4)
+        star.Size = UDim2.new(0, size, 0, size)
+        star.Position = UDim2.new(0, 0, 0, 0)
+        star.BackgroundColor3 = index % 9 == 0 and Color3.fromRGB(140, 170, 255) or Color3.fromRGB(80, 120, 255)
+        star.BackgroundTransparency = 0.82
+        star.BorderSizePixel = 0
+        star.ZIndex = 0
+        star.Parent = starField
+        makeCorner(star, 999)
+
+        local starData = {
+            instance = star,
+        }
+        resetAnimatedStar(fieldData, starData, false)
+        star.Position = UDim2.new(starData.x, 0, starData.y, 0)
+        star.BackgroundTransparency = starData.baseTransparency
+        table.insert(fieldData.stars, starData)
+    end
+
+    table.insert(UiFx._starFields, fieldData)
+    ensureStarFieldAnimator()
+
+    return starField
+end
+
+function UiFx.attachButtonTextOverlay(button, textSize, font, textColor, strokeColor, strokeTransparency)
+    local overlay = Instance.new("TextLabel")
+    overlay.Name = "ButtonTextOverlay"
+    overlay.Size = UDim2.new(1, -10, 1, 0)
+    overlay.Position = UDim2.new(0, 5, 0, 0)
+    overlay.BackgroundTransparency = 1
+    overlay.Text = button.Text
+    overlay.TextColor3 = textColor or Color3.fromRGB(255, 255, 255)
+    overlay.TextStrokeColor3 = strokeColor or Color3.fromRGB(72, 118, 255)
+    overlay.TextStrokeTransparency = strokeTransparency or 1
+    overlay.Font = font or button.Font
+    overlay.TextSize = textSize or button.TextSize
+    overlay.TextWrapped = true
+    overlay.ZIndex = button.ZIndex + 2
+    overlay.Parent = button
+
+    button.TextTransparency = 1
+    button.TextStrokeTransparency = 1
+
+    button:GetPropertyChangedSignal("Text"):Connect(function()
+        overlay.Text = button.Text
+    end)
+
+    return overlay
+end
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGuiPro"
 ScreenGui.ResetOnSpawn = false
@@ -350,11 +512,25 @@ Frame.BackgroundColor3 = Theme.Panel
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 makeCorner(Frame, 22)
-makeStroke(Frame, Color3.fromRGB(255, 255, 255), 1, 0.2)
+makeStroke(Frame, Theme.Accent, 2, 0.35)
 makeShadow(Frame)
+UiFx.makeAccentGlow(Frame, Theme.Accent, 0.94, 72, 0)
 
 FrameScale = Instance.new("UIScale")
 FrameScale.Parent = Frame
+
+do
+    local frameDecor = Instance.new("Frame")
+    frameDecor.Name = "FrameDecor"
+    frameDecor.Size = UDim2.new(1, 0, 1, 0)
+    frameDecor.BackgroundTransparency = 1
+    frameDecor.BorderSizePixel = 0
+    frameDecor.ZIndex = 0
+    frameDecor.ClipsDescendants = true
+    frameDecor.Parent = Frame
+    makeCorner(frameDecor, 22)
+    UiFx.makeStarField(frameDecor, 80)
+end
 
 local function updateResponsiveLayout()
     local camera = workspace.CurrentCamera
@@ -418,14 +594,11 @@ local function bindViewportListener()
     updateResponsiveLayout()
 end
 
-local FrameGradient = Instance.new("UIGradient")
-FrameGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 14, 26)),
-    ColorSequenceKeypoint.new(0.55, Color3.fromRGB(18, 24, 42)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 10, 20)),
-})
-FrameGradient.Rotation = 35
-FrameGradient.Parent = Frame
+UiFx.makeGradient(Frame, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 15, 35)),
+    ColorSequenceKeypoint.new(0.55, Color3.fromRGB(9, 12, 28)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 8, 20)),
+}, 35)
 
 local Header = Instance.new("Frame")
 Header.Name = "Header"
@@ -434,6 +607,10 @@ Header.BackgroundColor3 = Theme.Header
 Header.BorderSizePixel = 0
 Header.Parent = Frame
 makeCorner(Header, 22)
+UiFx.makeGradient(Header, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(14, 18, 38)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 10, 24)),
+}, 15)
 
 local HeaderBottomMask = Instance.new("Frame")
 HeaderBottomMask.Size = UDim2.new(1, 0, 0, 24)
@@ -449,6 +626,7 @@ AccentLine.BackgroundColor3 = Theme.Accent
 AccentLine.BorderSizePixel = 0
 AccentLine.Parent = Header
 makeCorner(AccentLine, 6)
+AccentLine.Visible = false
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0.55, 0, 0, 28)
@@ -476,15 +654,18 @@ local TopBadge = Instance.new("Frame")
 TopBadge.Size = UDim2.new(0, 150, 0, 34)
 TopBadge.Position = UDim2.new(1, -166, 0, 20)
 TopBadge.BackgroundColor3 = Theme.PanelSoft
+TopBadge.BackgroundTransparency = 0.16
 TopBadge.BorderSizePixel = 0
 TopBadge.Parent = Header
 makeCorner(TopBadge, 12)
 makeStroke(TopBadge, Theme.Border, 1, 0.35)
+UiFx.makeStarField(TopBadge, 6)
 
 local TopBadgeDot = Instance.new("Frame")
 TopBadgeDot.Size = UDim2.new(0, 10, 0, 10)
 TopBadgeDot.Position = UDim2.new(0, 12, 0.5, -5)
 TopBadgeDot.BackgroundColor3 = Theme.PanelSoft
+TopBadgeDot.BackgroundTransparency = 0.08
 TopBadgeDot.BorderSizePixel = 0
 TopBadgeDot.Parent = TopBadge
 makeCorner(TopBadgeDot, 99)
@@ -504,17 +685,18 @@ local ProfileCard = Instance.new("Frame")
 ProfileCard.Size = UDim2.new(1, -32, 0, 80)
 ProfileCard.Position = UDim2.new(0, 16, 0, 82)
 ProfileCard.BackgroundColor3 = Theme.Card
-ProfileCard.BackgroundTransparency = 0.03
+ProfileCard.BackgroundTransparency = 0.16
 ProfileCard.BorderSizePixel = 0
 ProfileCard.Parent = Frame
 makeCorner(ProfileCard, 18)
 makeStroke(ProfileCard, Theme.Border, 1, 0.28)
+UiFx.makeStarField(ProfileCard, 12)
 
 local ProfileGlow = Instance.new("Frame")
 ProfileGlow.Size = UDim2.new(0, 72, 0, 72)
 ProfileGlow.Position = UDim2.new(0, 10, 0.5, -36)
 ProfileGlow.BackgroundColor3 = Theme.AccentSoft
-ProfileGlow.BackgroundTransparency = 0.12
+ProfileGlow.BackgroundTransparency = 0.22
 ProfileGlow.BorderSizePixel = 0
 ProfileGlow.Parent = ProfileCard
 makeCorner(ProfileGlow, 18)
@@ -554,10 +736,16 @@ local ContentPanel = Instance.new("Frame")
 ContentPanel.Size = UDim2.new(1, -32, 0, 298)
 ContentPanel.Position = UDim2.new(0, 16, 0, 168)
 ContentPanel.BackgroundColor3 = Theme.Bg
+ContentPanel.BackgroundTransparency = 0.24
 ContentPanel.BorderSizePixel = 0
 ContentPanel.Parent = Frame
 makeCorner(ContentPanel, 18)
 makeStroke(ContentPanel, Theme.Border, 1, 0.35)
+UiFx.makeGradient(ContentPanel, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 10, 24)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 16, 34)),
+}, 90)
+UiFx.makeStarField(ContentPanel, 14)
 
 local PanelPadding = Instance.new("UIPadding")
 PanelPadding.PaddingTop = UDim.new(0, 16)
@@ -579,6 +767,7 @@ local Input = Instance.new("TextBox")
 Input.Size = UDim2.new(1, 0, 0, 42)
 Input.Position = UDim2.new(0, 0, 0, 26)
 Input.BackgroundColor3 = Theme.Input
+Input.BackgroundTransparency = 0.22
 Input.PlaceholderText = "اكتب اسم اللاعب هنا"
 Input.Text = ""
 Input.TextColor3 = Theme.Text
@@ -592,20 +781,27 @@ makeStroke(Input, Theme.Border, 1, 0.2)
 
 local function makeButton(name, text, size, position, baseColor, accentColor)
     local button = Instance.new("TextButton")
+    local resolvedBase = baseColor or Theme.ButtonDefault
+    local resolvedAccent = accentColor or Theme.ButtonDefaultAlt
     button.Name = name
     button.Size = size
     button.Position = position
-    button.BackgroundColor3 = baseColor or Theme.ButtonDefault
+    button.BackgroundColor3 = resolvedBase
+    button.BackgroundTransparency = 0.08
     button.AutoButtonColor = false
     button.Text = text
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextStrokeTransparency = 0
-    button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
+    button.TextStrokeTransparency = 0.55
+    button.TextStrokeColor3 = Color3.fromRGB(72, 118, 255)
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 18
+    button.TextSize = 19
     button.Parent = ContentPanel
     makeCorner(button, 12)
     makeStroke(button, Theme.Border, 1, 0.05)
+    UiFx.makeGradient(button, {
+        ColorSequenceKeypoint.new(0, resolvedBase),
+        ColorSequenceKeypoint.new(1, resolvedAccent),
+    }, 90)
 
     local highlight = Instance.new("Frame")
     highlight.Name = "Highlight"
@@ -618,6 +814,15 @@ local function makeButton(name, text, size, position, baseColor, accentColor)
     highlight.Parent = button
     makeCorner(highlight, 11)
 
+    UiFx.attachButtonTextOverlay(
+        button,
+        19,
+        Enum.Font.GothamBold,
+        Color3.fromRGB(255, 255, 255),
+        Color3.fromRGB(72, 118, 255),
+        1
+    )
+
     return button
 end
 
@@ -627,6 +832,7 @@ local function makeInput(name, placeholder, defaultText, position)
     box.Size = UDim2.new(0, 178, 0, 40)
     box.Position = position
     box.BackgroundColor3 = Theme.Input
+    box.BackgroundTransparency = 0.2
     box.TextColor3 = Theme.Text
     box.PlaceholderColor3 = Theme.Muted
     box.PlaceholderText = placeholder
@@ -641,7 +847,7 @@ local function makeInput(name, placeholder, defaultText, position)
 end
 
 local BangBtn = makeButton("BangBtn", "بانق", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 82), Theme.ButtonDefault, Theme.ButtonRed)
-local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 82), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+local ResetBtn = makeButton("ResetBtn", "ريسيت", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 82), Theme.PanelSoft, Theme.PanelSoft)
 local FlingBtn = makeButton("FlingBtn", "حماية بانق", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 130), Theme.ButtonDefault, Theme.ButtonBlue)
 local TargetFlingBtn = makeButton("TargetFlingBtn", "فلنق", UDim2.new(0, 168, 0, 38), UDim2.new(0, 190, 0, 130), Theme.ButtonDefault, Theme.ButtonRed)
 local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 178), Theme.ButtonDefault, Theme.ButtonBlue)
@@ -673,10 +879,16 @@ Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, 132, 1, -20)
 Sidebar.Position = UDim2.new(0, 10, 0, 10)
 Sidebar.BackgroundColor3 = Theme.Header
+Sidebar.BackgroundTransparency = 0.22
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = ContentPanel
 makeCorner(Sidebar, 14)
 makeStroke(Sidebar, Theme.Border, 1, 0.2)
+UiFx.makeGradient(Sidebar, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(16, 20, 42)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 14, 30)),
+}, 90)
+UiFx.makeStarField(Sidebar, 10)
 
 local SidebarTitle = Instance.new("TextLabel")
 SidebarTitle.Size = UDim2.new(1, -16, 0, 22)
@@ -705,11 +917,16 @@ PagesHost.Name = "PagesHost"
 PagesHost.Size = UDim2.new(1, -162, 1, -20)
 PagesHost.Position = UDim2.new(0, 152, 0, 10)
 PagesHost.BackgroundColor3 = Theme.Card
-PagesHost.BackgroundTransparency = 0.08
+PagesHost.BackgroundTransparency = 0.24
 PagesHost.BorderSizePixel = 0
 PagesHost.Parent = ContentPanel
 makeCorner(PagesHost, 14)
 makeStroke(PagesHost, Theme.Border, 1, 0.2)
+UiFx.makeGradient(PagesHost, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(16, 22, 44)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 14, 28)),
+}, 115)
+UiFx.makeStarField(PagesHost, 16)
 
 local function makePage(name)
     local page = Instance.new("Frame")
@@ -755,6 +972,7 @@ local OwnerTargetHint = nil
 local OwnerKickBtn = nil
 local OwnerFreezeBtn = nil
 local OwnerRespawnLoopBtn = nil
+local OwnerSummonBtn = nil
 
 makePageTitle(MainPage, "القائمة الرئيسية", "ملاحظة مهمة : يا اخوان حماية البانق ما تشتغل الا على سكربت V.R.7")
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
@@ -776,6 +994,13 @@ makeCorner(ChatPanel, 16)
 makeStroke(ChatPanel, Theme.Border, 1, 0.15)
 ChatPanel.BackgroundTransparency = 0.72
 ChatPanel.BackgroundColor3 = Color3.fromRGB(10, 14, 26)
+makeShadow(ChatPanel)
+UiFx.makeAccentGlow(ChatPanel, Theme.Accent, 0.95, 48, 0)
+UiFx.makeGradient(ChatPanel, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 16, 34)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 10, 22)),
+}, 90)
+UiFx.makeStarField(ChatPanel, 12)
 
 local ChatPanelSizeConstraint = Instance.new("UISizeConstraint")
 ChatPanelSizeConstraint.MaxSize = isTouchDevice and Vector2.new(240, 320) or Vector2.new(340, 460)
@@ -822,7 +1047,7 @@ ChatList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ChatList.Parent = ChatPanel
 makeCorner(ChatList, 10)
 makeStroke(ChatList, Theme.Border, 1, 0.2)
-ChatList.BackgroundTransparency = 0.65
+ChatList.BackgroundTransparency = 0.78
 
 local ChatListLayout = Instance.new("UIListLayout")
 ChatListLayout.Padding = UDim.new(0, 6)
@@ -840,6 +1065,7 @@ local ChatInput = Instance.new("TextBox")
 ChatInput.Size = UDim2.new(1, -110, 0, 40)
 ChatInput.Position = UDim2.new(0, 10, 1, -50)
 ChatInput.BackgroundColor3 = Theme.Input
+ChatInput.BackgroundTransparency = 0.2
 ChatInput.TextColor3 = Theme.Text
 ChatInput.PlaceholderColor3 = Theme.Muted
 ChatInput.PlaceholderText = "اكتب رسالة..."
@@ -856,6 +1082,7 @@ local ChatSendBtn = Instance.new("TextButton")
 ChatSendBtn.Size = UDim2.new(0, 90, 0, 40)
 ChatSendBtn.Position = UDim2.new(1, -100, 1, -50)
 ChatSendBtn.BackgroundColor3 = Theme.Active
+ChatSendBtn.BackgroundTransparency = 0.18
 ChatSendBtn.Text = "إرسال"
 ChatSendBtn.TextColor3 = Theme.Text
 ChatSendBtn.Font = Enum.Font.GothamBold
@@ -870,6 +1097,7 @@ local function addChatMessage(senderName, messageText)
     msgFrame.Size = UDim2.new(1, 0, 0, 0)
     msgFrame.AutomaticSize = Enum.AutomaticSize.Y
     msgFrame.BackgroundColor3 = Theme.PanelSoft
+    msgFrame.BackgroundTransparency = 0.18
     msgFrame.BorderSizePixel = 0
     msgFrame.Parent = ChatList
     makeCorner(msgFrame, 8)
@@ -950,6 +1178,7 @@ if isOwnerUser then
     OwnerTargetInput.Size = UDim2.new(1, -20, 0, 40)
     OwnerTargetInput.Position = UDim2.new(0, 10, 0, 54)
     OwnerTargetInput.BackgroundColor3 = Theme.Input
+    OwnerTargetInput.BackgroundTransparency = 0.2
     OwnerTargetInput.PlaceholderText = "اكتب 4 أحرف من يوزر اللاعب"
     OwnerTargetInput.Text = ""
     OwnerTargetInput.TextColor3 = Theme.Text
@@ -980,6 +1209,9 @@ if isOwnerUser then
 
     OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
     OwnerRespawnLoopBtn.Parent = OwnerPage
+
+    OwnerSummonBtn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 262), Theme.ButtonGreen, Theme.ButtonGreenAlt)
+    OwnerSummonBtn.Parent = OwnerPage
 end
 
 UsersPage = nil
@@ -1004,7 +1236,7 @@ if isOwnerUser then
     UsersList.Size = UDim2.new(1, -20, 1, -100)
     UsersList.Position = UDim2.new(0, 10, 0, 86)
     UsersList.BackgroundColor3 = Theme.Card
-    UsersList.BackgroundTransparency = 0.1
+    UsersList.BackgroundTransparency = 0.2
     UsersList.BorderSizePixel = 0
     UsersList.ScrollBarThickness = 4
     UsersList.ScrollBarImageColor3 = Theme.Accent
@@ -1043,6 +1275,7 @@ if isOwnerUser then
             local row = Instance.new("Frame")
             row.Size = UDim2.new(1, -16, 0, 44)
             row.BackgroundColor3 = Theme.PanelSoft
+            row.BackgroundTransparency = 0.18
             row.BorderSizePixel = 0
             row.LayoutOrder = i
             row.Parent = UsersList
@@ -1113,23 +1346,25 @@ local MainCard = Instance.new("Frame")
 MainCard.Size = UDim2.new(1, -20, 1, -72)
 MainCard.Position = UDim2.new(0, 10, 0, 58)
 MainCard.BackgroundColor3 = Theme.Panel
-MainCard.BackgroundTransparency = 0.05
+MainCard.BackgroundTransparency = 0.16
 MainCard.BorderSizePixel = 0
 MainCard.Parent = MainPage
 makeCorner(MainCard, 12)
 makeStroke(MainCard, Theme.Border, 1, 0.2)
+UiFx.makeStarField(MainCard, 12)
 
 local DiscordBtn = Instance.new("TextButton")
 DiscordBtn.Size = UDim2.new(1, -24, 0, 40)
 DiscordBtn.Position = UDim2.new(0, 12, 0, 12)
 DiscordBtn.BackgroundColor3 = Theme.PanelSoft
+DiscordBtn.BackgroundTransparency = 0.08
 DiscordBtn.AutoButtonColor = false
 DiscordBtn.Text = "نسخ رابط الدسكورد"
 DiscordBtn.TextColor3 = Theme.Text
-DiscordBtn.TextStrokeTransparency = 0
-DiscordBtn.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
+DiscordBtn.TextStrokeTransparency = 1
+DiscordBtn.TextStrokeColor3 = Color3.fromRGB(72, 118, 255)
 DiscordBtn.Font = Enum.Font.GothamBold
-DiscordBtn.TextSize = 16
+DiscordBtn.TextSize = 17
 DiscordBtn.Parent = MainCard
 makeCorner(DiscordBtn, 12)
 makeStroke(DiscordBtn, Theme.Border, 1, 0.12)
@@ -1165,6 +1400,7 @@ local localFrozenLoopThread = nil
 local localFrozenCharConn = nil
 local localRespawnLoopActive = false
 local localRespawnLoopThread = nil
+local localSummonState = {active=false, thread=nil}
 
 local function applyKickLocal()
     -- المحاولة 1: Kick رسمي (الأنظف، يشتغل في معظم الـ executors)
@@ -1278,6 +1514,37 @@ local function applyRespawnLoopLocal(enable)
     end
 end
 
+-- الاستدعاء: نفس هيكل applyFreezeLocal بالضبط
+-- loop واحد فقط يشتغل، الإحداثيات تُحفظ في الجدول وتُحدَّث كل مرة
+localSummonState.apply = function(enable, ox, oy, oz)
+    localSummonState.active = enable
+    if not enable then return end
+    -- حفظ موقع الأونر + Y+2 عشان ما ينزل داخل الأرض
+    localSummonState.x = ox + 3
+    localSummonState.y = oy + 2
+    localSummonState.z = oz
+    -- نفس أسلوب التجميد: ما نشغّل loop ثاني لو واحد شغّال
+    if not localSummonState.thread then
+        localSummonState.thread = task.spawn(function()
+            while localSummonState.active do
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    local sRoot = char and char:FindFirstChild("HumanoidRootPart")
+                    if sRoot then
+                        sRoot.CFrame = CFrame.new(
+                            localSummonState.x,
+                            localSummonState.y,
+                            localSummonState.z
+                        )
+                    end
+                end)
+                task.wait(0.15)
+            end
+            localSummonState.thread = nil
+        end)
+    end
+end
+
 local function t18_dispatchEvent(ev)
     if type(ev) ~= "table" then return end
     if ev.type == "chat" then
@@ -1307,6 +1574,20 @@ local function t18_dispatchEvent(ev)
             applyRespawnLoopLocal(true)
         elseif action == "respawn_off" then
             applyRespawnLoopLocal(false)
+        elseif action == "summon_on" then
+            -- الأونر والهدف في نفس السيرفر
+            -- نجيب موقع الأونر مباشرة من Players بدون ما نحتاج نرسله عبر الـ relay
+            local ownerPlr = Players:FindFirstChild(OwnerUsername)
+            local ownerChr = ownerPlr and ownerPlr.Character
+            local ownerRt = ownerChr and ownerChr:FindFirstChild("HumanoidRootPart")
+            if ownerRt then
+                local op = ownerRt.Position
+                showNotification("تم استدعاؤك بواسطة الأونر")
+                localSummonState.apply(true, op.X, op.Y, op.Z)
+            end
+        elseif action == "summon_off" then
+            localSummonState.apply(false, 0, 0, 0)
+            showNotification("انتهى الاستدعاء")
         end
     end
 end
@@ -1483,6 +1764,8 @@ DiscordBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+local ownerSummonState = {active=false, target=nil, httpTimer=0}
+
 if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn then
     OwnerTargetInput:GetPropertyChangedSignal("Text"):Connect(refreshOwnerControls)
 
@@ -1497,6 +1780,64 @@ if OwnerTargetInput and OwnerKickBtn and OwnerFreezeBtn and OwnerRespawnLoopBtn 
     OwnerRespawnLoopBtn.MouseButton1Click:Connect(function()
         sendOwnerAdminAction("toggle_respawn_loop")
     end)
+
+    if OwnerSummonBtn then
+        OwnerSummonBtn.MouseButton1Click:Connect(function()
+            if not isOwnerUser then return end
+
+            -- إيقاف الاستدعاء
+            if ownerSummonState.active then
+                ownerSummonState.active = false
+                if ownerSummonState.target then
+                    sendOwnerCommand("summon_off", ownerSummonState.target.UserId)
+                end
+                ownerSummonState.target = nil
+                OwnerSummonBtn.Text = "استدعاء"
+                OwnerSummonBtn.BackgroundColor3 = Theme.ButtonGreen
+                showNotification("تم إيقاف الاستدعاء")
+                return
+            end
+
+            local sTarget = findOwnerTargetPlayer()
+            if not sTarget then
+                showNotification("اكتب 4 أحرف من يوزر اللاعب أو أكثر")
+                return
+            end
+
+            ownerSummonState.active = true
+            ownerSummonState.target = sTarget
+            OwnerSummonBtn.Text = "إيقاف الاستدعاء"
+            OwnerSummonBtn.BackgroundColor3 = Theme.Danger
+            showNotification("تم تفعيل الاستدعاء لـ " .. sTarget.Name)
+
+            -- نفس التجميد بالضبط: summon_on بدون إحداثيات
+            -- الهدف يجيب موقع الأونر مباشرة من Players في اللعبة
+            local function doSendSummon()
+                if not ownerSummonState.target then return end
+                sendOwnerCommand("summon_on", ownerSummonState.target.UserId)
+            end
+
+            task.spawn(function()
+                local tName = sTarget.Name
+                while ownerSummonState.active do
+                    if not Players:FindFirstChild(tName) then
+                        ownerSummonState.active = false
+                        ownerSummonState.target = nil
+                        OwnerSummonBtn.Text = "استدعاء"
+                        OwnerSummonBtn.BackgroundColor3 = Theme.ButtonGreen
+                        showNotification("اللاعب خرج من السيرفر")
+                        break
+                    end
+                    pcall(doSendSummon)
+                    task.wait(2)
+                end
+                if ownerSummonState.active == false and ownerSummonState.target then
+                    pcall(function() sendOwnerCommand("summon_off", ownerSummonState.target.UserId) end)
+                    ownerSummonState.target = nil
+                end
+            end)
+        end)
+    end
 
     refreshOwnerControls()
 end
@@ -1515,11 +1856,12 @@ local ImportantCard = Instance.new("Frame")
 ImportantCard.Size = UDim2.new(1, -20, 1, -72)
 ImportantCard.Position = UDim2.new(0, 10, 0, 58)
 ImportantCard.BackgroundColor3 = Theme.Panel
-ImportantCard.BackgroundTransparency = 0.05
+ImportantCard.BackgroundTransparency = 0.16
 ImportantCard.BorderSizePixel = 0
 ImportantCard.Parent = ImportantPage
 makeCorner(ImportantCard, 12)
 makeStroke(ImportantCard, Theme.Border, 1, 0.2)
+UiFx.makeStarField(ImportantCard, 12)
 
 local ImportantText = Instance.new("TextLabel")
 ImportantText.Size = UDim2.new(1, -24, 1, -24)
@@ -1612,11 +1954,14 @@ local function makeMenuButton(text, order)
     button.Size = UDim2.new(1, -16, 0, menuButtonHeight)
     button.Position = UDim2.new(0, 8, 0, menuButtonStart + ((order - 1) * menuButtonStep))
     button.BackgroundColor3 = Theme.PanelSoft
+    button.BackgroundTransparency = 0.08
     button.Text = text
     button.TextColor3 = Theme.Text
+    button.TextStrokeTransparency = 1
+    button.TextStrokeColor3 = Color3.fromRGB(72, 118, 255)
     button.TextXAlignment = Enum.TextXAlignment.Center
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 15
+    button.TextSize = 16
     button.AutoButtonColor = false
     button.Parent = Sidebar
     makeCorner(button, 10)
@@ -1704,8 +2049,9 @@ end
 
 setMenuState("main")
 
-local Footer = Instance.new("TextLabel")
-Footer.Size = UDim2.new(1, -32, 0, 18)
+do
+    local Footer = Instance.new("TextLabel")
+    Footer.Size = UDim2.new(1, -32, 0, 18)
 Footer.Position = UDim2.new(0, 16, 1, -24)
 Footer.BackgroundTransparency = 1
 Footer.Text = "© All rights reserved t_18"
@@ -1714,6 +2060,7 @@ Footer.TextXAlignment = Enum.TextXAlignment.Left
 Footer.Font = Enum.Font.Gotham
 Footer.TextSize = 13
 Footer.Parent = Frame
+end
 
 ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "Toggle"
@@ -1727,6 +2074,10 @@ ToggleBtn.ZIndex = 20
 ToggleBtn.Parent = ScreenGui
 makeCorner(ToggleBtn, 999)
 makeStroke(ToggleBtn, Theme.Border, 1, 0.15)
+UiFx.makeGradient(ToggleBtn, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 30, 58)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 18, 38)),
+}, 45)
 
 local ToggleImg = Instance.new("ImageLabel")
 ToggleImg.Size = UDim2.new(1, -12, 1, -12)
@@ -1743,12 +2094,13 @@ local function makeFlyTouchButton(name, text, position)
     button.Size = UDim2.new(0, 52, 0, 38)
     button.Position = position
     button.BackgroundColor3 = Theme.ButtonDefault
+    button.BackgroundTransparency = 0.08
     button.Text = text
     button.TextColor3 = Theme.Text
-    button.TextStrokeTransparency = 0
-    button.TextStrokeColor3 = Color3.fromRGB(6, 10, 18)
+    button.TextStrokeTransparency = 1
+    button.TextStrokeColor3 = Color3.fromRGB(72, 118, 255)
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 15
+    button.TextSize = 16
     button.AutoButtonColor = false
     button.Parent = FlyTouchFrame
     makeCorner(button, 10)
@@ -1784,6 +2136,12 @@ FlyTouchFrame.Visible = false
 FlyTouchFrame.Parent = ScreenGui
 makeCorner(FlyTouchFrame, 16)
 makeStroke(FlyTouchFrame, Theme.Border, 1, 0.15)
+makeShadow(FlyTouchFrame)
+UiFx.makeGradient(FlyTouchFrame, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 16, 34)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 10, 24)),
+}, 90)
+UiFx.makeStarField(FlyTouchFrame, 8)
 
 local FlyTouchTitle = Instance.new("TextLabel")
 FlyTouchTitle.Size = UDim2.new(1, 0, 0, 24)
@@ -1809,19 +2167,17 @@ bindFlyTouchButton(TouchBackBtn, "Backward")
 bindFlyTouchButton(TouchLeftBtn, "Left")
 bindFlyTouchButton(TouchRightBtn, "Right")
 
-local tDragging = false
-local tDragStart = nil
-local tStartPos = nil
+local tDrag = {dragging=false, start=nil, startPos=nil}
 
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-        tDragging = true
-        tDragStart = input.Position
-        tStartPos = ToggleBtn.Position
+        tDrag.dragging = true
+        tDrag.start = input.Position
+        tDrag.startPos = ToggleBtn.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                tDragging = false
+                tDrag.dragging = false
             end
         end)
     end
@@ -1847,6 +2203,18 @@ ChatBubbleBtn.ZIndex = 20
 ChatBubbleBtn.Parent = ScreenGui
 makeCorner(ChatBubbleBtn, 999)
 makeStroke(ChatBubbleBtn, Theme.Border, 1, 0.15)
+UiFx.makeGradient(ChatBubbleBtn, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 30, 58)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 18, 38)),
+}, 45)
+UiFx.attachButtonTextOverlay(
+    ChatBubbleBtn,
+    28,
+    Enum.Font.GothamBold,
+    Color3.fromRGB(255, 255, 255),
+    Color3.fromRGB(72, 118, 255),
+    1
+)
 
 local cDragging = false
 local cDragStart = nil
@@ -1921,22 +2289,21 @@ UserInputService.InputChanged:Connect(function(input)
         or input.UserInputType == Enum.UserInputType.Touch then
         if dragging then
             local delta = input.Position - dragStart
-            Frame.Position = clampToScreen(
-                Frame,
+            Frame.Position = UDim2.new(
                 startPos.X.Scale,
-                startPos.Y.Scale,
                 startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
                 startPos.Y.Offset + delta.Y
             )
         end
-        if tDragging then
-            local delta = input.Position - tDragStart
+        if tDrag.dragging then
+            local delta = input.Position - tDrag.start
             ToggleBtn.Position = clampToScreen(
                 ToggleBtn,
-                tStartPos.X.Scale,
-                tStartPos.Y.Scale,
-                tStartPos.X.Offset + delta.X,
-                tStartPos.Y.Offset + delta.Y
+                tDrag.startPos.X.Scale,
+                tDrag.startPos.Y.Scale,
+                tDrag.startPos.X.Offset + delta.X,
+                tDrag.startPos.Y.Offset + delta.Y
             )
         end
         if cDragging then

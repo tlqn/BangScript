@@ -10,6 +10,27 @@ local isTouchDevice = UserInputService.TouchEnabled
 local baseFrameSize = Vector2.new(610, 498)
 local OwnerUsername = "azoz11211"
 local isOwnerUser = LocalPlayer.Name:lower() == OwnerUsername:lower()
+ChatNameColorData = nil
+T18RuntimeToken = tostring(math.floor(tick() * 1000)) .. tostring(math.random(1000, 9999))
+
+if getgenv then
+    if getgenv().T18RuntimeShutdown then
+        pcall(getgenv().T18RuntimeShutdown)
+    end
+    getgenv().T18RuntimeToken = T18RuntimeToken
+else
+    if _G.T18RuntimeShutdown then
+        pcall(_G.T18RuntimeShutdown)
+    end
+    _G.T18RuntimeToken = T18RuntimeToken
+end
+
+function T18RuntimeAlive()
+    if getgenv then
+        return getgenv().T18RuntimeToken == T18RuntimeToken
+    end
+    return _G.T18RuntimeToken == T18RuntimeToken
+end
 
 -- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
 -- ✅ سيرفر دائم لا ينام
@@ -137,6 +158,9 @@ end
 
 task.spawn(function()
     while true do
+        if not T18RuntimeAlive() then
+            break
+        end
         pcall(t18_sendHeartbeat)
         task.wait(5)
     end
@@ -496,12 +520,45 @@ function UiFx.attachButtonTextOverlay(button, textSize, font, textColor, strokeC
     return overlay
 end
 
+pcall(function()
+    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+    for _, child in ipairs(playerGui:GetChildren()) do
+        if child.Name == "BangGuiPro" then
+            child:Destroy()
+        end
+    end
+end)
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BangGuiPro"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+function T18RuntimeShutdown()
+    pcall(function()
+        if ScreenGui then
+            ScreenGui:Destroy()
+        end
+    end)
+    pcall(function()
+        local playerGui = LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            for _, child in ipairs(playerGui:GetChildren()) do
+                if child.Name == "BangGuiPro" then
+                    child:Destroy()
+                end
+            end
+        end
+    end)
+end
+
+if getgenv then
+    getgenv().T18RuntimeShutdown = T18RuntimeShutdown
+else
+    _G.T18RuntimeShutdown = T18RuntimeShutdown
+end
 
 local Frame = Instance.new("Frame")
 Frame.Name = "Main"
@@ -1092,7 +1149,7 @@ ChatSendBtn.Parent = ChatPanel
 makeCorner(ChatSendBtn, 10)
 makeStroke(ChatSendBtn, Theme.Border, 1, 0.05)
 
-local function addChatMessage(senderName, messageText)
+local function addChatMessage(senderName, messageText, senderColor)
     local msgFrame = Instance.new("Frame")
     msgFrame.Size = UDim2.new(1, 0, 0, 0)
     msgFrame.AutomaticSize = Enum.AutomaticSize.Y
@@ -1118,7 +1175,7 @@ local function addChatMessage(senderName, messageText)
     senderLabel.Size = UDim2.new(1, 0, 0, 16)
     senderLabel.BackgroundTransparency = 1
     senderLabel.Text = senderName
-    senderLabel.TextColor3 = Theme.Warning
+    senderLabel.TextColor3 = senderColor or Theme.Warning
     senderLabel.TextXAlignment = Enum.TextXAlignment.Right
     senderLabel.Font = Enum.Font.GothamBold
     senderLabel.TextSize = 12
@@ -1143,18 +1200,140 @@ local function addChatMessage(senderName, messageText)
     end)
 end
 
+function GetMyChatNameColorData()
+    if ChatNameColorData then
+        return ChatNameColorData
+    end
+
+    local generatedColor = Color3.fromHSV(
+        Random.new():NextNumber(),
+        0.72,
+        1
+    )
+
+    ChatNameColorData = {
+        r = math.floor(generatedColor.R * 255 + 0.5),
+        g = math.floor(generatedColor.G * 255 + 0.5),
+        b = math.floor(generatedColor.B * 255 + 0.5),
+    }
+
+    return ChatNameColorData
+end
+
+HeadChatBubbleState = HeadChatBubbleState or {}
+HeadChatBubbleMessageId = HeadChatBubbleMessageId or 0
+
+function GetHeadChatBubbleSpeakerKey(fromUserId, fromName)
+    local numericUserId = tonumber(fromUserId)
+    if numericUserId and numericUserId > 0 then
+        return "uid:" .. tostring(numericUserId)
+    end
+    return "name:" .. tostring(fromName or "?"):lower()
+end
+
+function DestroyHeadChatBubbleStack(speakerKey)
+    local state = HeadChatBubbleState[speakerKey]
+    if not state then
+        return
+    end
+
+    if state.guis then
+        for _, gui in ipairs(state.guis) do
+            pcall(function()
+                gui:Destroy()
+            end)
+        end
+    end
+
+    state.guis = {}
+end
+
+function RenderHeadChatBubbleStack(speakerKey)
+    local state = HeadChatBubbleState[speakerKey]
+    if not state or not state.head then
+        return
+    end
+
+    DestroyHeadChatBubbleStack(speakerKey)
+
+    if not state.messages or #state.messages == 0 then
+        HeadChatBubbleState[speakerKey] = nil
+        return
+    end
+
+    state.guis = {}
+
+    for index, messageData in ipairs(state.messages) do
+        local bubbleHeight = 38
+        if #messageData.text > 26 then
+            bubbleHeight = 50
+        end
+        if #messageData.text > 52 then
+            bubbleHeight = 62
+        end
+
+        local bubbleGui = Instance.new("BillboardGui")
+        bubbleGui.Name = "T18HeadChatBubble"
+        bubbleGui.Adornee = state.head
+        bubbleGui.AlwaysOnTop = true
+        bubbleGui.Size = UDim2.new(0, 170, 0, bubbleHeight)
+        bubbleGui.StudsOffset = Vector3.new(0, 3.25 + ((#state.messages - index) * 0.82), 0)
+        bubbleGui.Parent = ScreenGui
+
+        local bubbleFrame = Instance.new("Frame")
+        bubbleFrame.Size = UDim2.new(1, 0, 1, -5)
+        bubbleFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        bubbleFrame.BackgroundTransparency = 0.02
+        bubbleFrame.BorderSizePixel = 0
+        bubbleFrame.Parent = bubbleGui
+        makeCorner(bubbleFrame, 14)
+        makeStroke(bubbleFrame, Color3.fromRGB(218, 218, 218), 1, 0.18)
+
+        local tail = Instance.new("Frame")
+        tail.AnchorPoint = Vector2.new(0.5, 0.5)
+        tail.Size = UDim2.new(0, 12, 0, 12)
+        tail.Position = UDim2.new(0.5, 0, 1, -1)
+        tail.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        tail.BackgroundTransparency = 0.02
+        tail.BorderSizePixel = 0
+        tail.Rotation = 45
+        tail.ZIndex = bubbleFrame.ZIndex
+        tail.Parent = bubbleFrame
+
+        local bubbleText = Instance.new("TextLabel")
+        bubbleText.Size = UDim2.new(1, -16, 1, -12)
+        bubbleText.Position = UDim2.new(0, 8, 0, 2)
+        bubbleText.BackgroundTransparency = 1
+        bubbleText.Text = messageData.text
+        bubbleText.TextColor3 = Color3.fromRGB(95, 95, 95)
+        bubbleText.TextWrapped = true
+        bubbleText.TextXAlignment = Enum.TextXAlignment.Center
+        bubbleText.TextYAlignment = Enum.TextYAlignment.Center
+        bubbleText.Font = Enum.Font.GothamMedium
+        bubbleText.TextSize = 14
+        bubbleText.ZIndex = bubbleFrame.ZIndex + 1
+        bubbleText.Parent = bubbleFrame
+
+        table.insert(state.guis, bubbleGui)
+    end
+end
+
 function ShowChatBubbleAboveHead(fromUserId, fromName, messageText)
     pcall(function()
+        if not T18RuntimeAlive() then
+            return
+        end
         local cleanText = tostring(messageText or "")
         cleanText = cleanText:gsub("[\r\n]", " ")
         cleanText = cleanText:gsub("%s+", " ")
         cleanText = cleanText:gsub("^%s+", "")
         cleanText = cleanText:gsub("%s+$", "")
+        cleanText = cleanText:gsub("^%[%[T18CLR:%d+,%d+,%d+%]%]", "")
         if #cleanText == 0 then
             return
         end
-        if #cleanText > 160 then
-            cleanText = cleanText:sub(1, 160)
+        if #cleanText > 120 then
+            cleanText = cleanText:sub(1, 120)
         end
 
         local speaker = nil
@@ -1172,48 +1351,41 @@ function ShowChatBubbleAboveHead(fromUserId, fromName, messageText)
             return
         end
 
-        local bubbleGui = Instance.new("BillboardGui")
-        bubbleGui.Name = "T18HeadChatBubble"
-        bubbleGui.Adornee = head
-        bubbleGui.AlwaysOnTop = true
-        bubbleGui.Size = UDim2.new(0, 210, 0, 50)
-        bubbleGui.StudsOffset = Vector3.new(0, 3.2, 0)
-        bubbleGui.Parent = ScreenGui
-
-        if #cleanText > 60 then
-            bubbleGui.Size = UDim2.new(0, 210, 0, 68)
-        end
-        if #cleanText > 120 then
-            bubbleGui.Size = UDim2.new(0, 210, 0, 84)
+        local speakerKey = GetHeadChatBubbleSpeakerKey(numericUserId or 0, fromName)
+        if not HeadChatBubbleState[speakerKey] then
+            HeadChatBubbleState[speakerKey] = {
+                head = head,
+                messages = {},
+                guis = {},
+            }
         end
 
-        local bubbleFrame = Instance.new("Frame")
-        bubbleFrame.Size = UDim2.new(1, 0, 1, 0)
-        bubbleFrame.BackgroundColor3 = Theme.Panel
-        bubbleFrame.BackgroundTransparency = 0.12
-        bubbleFrame.BorderSizePixel = 0
-        bubbleFrame.Parent = bubbleGui
-        makeCorner(bubbleFrame, 12)
-        makeStroke(bubbleFrame, Theme.Border, 1, 0.18)
+        HeadChatBubbleState[speakerKey].head = head
+        HeadChatBubbleMessageId = HeadChatBubbleMessageId + 1
+        local queuedMessageId = HeadChatBubbleMessageId
+        table.insert(HeadChatBubbleState[speakerKey].messages, { text = cleanText, id = queuedMessageId })
 
-        local bubbleText = Instance.new("TextLabel")
-        bubbleText.Size = UDim2.new(1, -16, 1, -12)
-        bubbleText.Position = UDim2.new(0, 8, 0, 6)
-        bubbleText.BackgroundTransparency = 1
-        bubbleText.Text = cleanText
-        bubbleText.TextColor3 = Theme.Text
-        bubbleText.TextWrapped = true
-        bubbleText.TextXAlignment = Enum.TextXAlignment.Center
-        bubbleText.TextYAlignment = Enum.TextYAlignment.Center
-        bubbleText.Font = Enum.Font.GothamMedium
-        bubbleText.TextSize = 15
-        bubbleText.Parent = bubbleFrame
+        if #HeadChatBubbleState[speakerKey].messages > 3 then
+            table.remove(HeadChatBubbleState[speakerKey].messages, 1)
+        end
+
+        RenderHeadChatBubbleStack(speakerKey)
 
         task.spawn(function()
-            task.wait(5)
-            pcall(function()
-                bubbleGui:Destroy()
-            end)
+            local targetId = queuedMessageId
+            task.wait(4)
+            if not HeadChatBubbleState[speakerKey] or not HeadChatBubbleState[speakerKey].messages then
+                return
+            end
+
+            for messageIndex, messageData in ipairs(HeadChatBubbleState[speakerKey].messages) do
+                if messageData.id == targetId then
+                    table.remove(HeadChatBubbleState[speakerKey].messages, messageIndex)
+                    break
+                end
+            end
+
+            RenderHeadChatBubbleStack(speakerKey)
         end)
     end)
 end
@@ -1222,7 +1394,13 @@ local function sendChatToAll(messageText)
     if type(messageText) ~= "string" or #messageText == 0 then return false end
     if #messageText > 200 then messageText = messageText:sub(1, 200) end
     local cleanMsg = messageText:gsub("[\r\n]", " ")
-    return t18_postEvent({ type = "chat", text = cleanMsg })
+    local colorData = GetMyChatNameColorData()
+    cleanMsg = string.format("[[T18CLR:%d,%d,%d]]%s", colorData.r, colorData.g, colorData.b, cleanMsg)
+    return t18_postEvent({
+        type = "chat",
+        text = cleanMsg,
+        nameColor = GetMyChatNameColorData(),
+    })
 end
 
 local function trySendChatFromInput()
@@ -1230,7 +1408,6 @@ local function trySendChatFromInput()
     if not txt or #txt == 0 then return end
     local sent = sendChatToAll(txt)
     if sent then
-        ShowChatBubbleAboveHead(LocalPlayer.UserId, LocalPlayer.Name, txt)
         ChatInput.Text = ""
     else
         addChatMessage("النظام", "ما قدرت أرسل الرسالة — تأكد إن المُشغِّل يدعم HTTP")
@@ -1623,17 +1800,35 @@ end
 
 local function t18_dispatchEvent(ev)
     if type(ev) ~= "table" then return end
+    if not T18RuntimeAlive() then return end
     if ev.type == "chat" then
         local fromName = tostring(ev.fromName or "?")
         local fromUserId = tonumber(ev.fromUserId) or 0
         local text = tostring(ev.text or "")
         if #text == 0 then return end
         if #text > 250 then text = text:sub(1, 250) end
+        local senderColor = Theme.Warning
+        local cr, cg, cb, strippedText = text:match("^%[%[T18CLR:(%d+),(%d+),(%d+)%]%](.*)$")
+        if cr and cg and cb then
+            senderColor = Color3.fromRGB(
+                math.clamp(tonumber(cr) or 245, 0, 255),
+                math.clamp(tonumber(cg) or 158, 0, 255),
+                math.clamp(tonumber(cb) or 11, 0, 255)
+            )
+            text = strippedText or ""
+        elseif type(ev.nameColor) == "table" then
+            senderColor = Color3.fromRGB(
+                math.clamp(tonumber(ev.nameColor.r) or 245, 0, 255),
+                math.clamp(tonumber(ev.nameColor.g) or 158, 0, 255),
+                math.clamp(tonumber(ev.nameColor.b) or 11, 0, 255)
+            )
+        end
+        if #text == 0 then return end
         local displayName = fromName
         if fromUserId == LocalPlayer.UserId then
             displayName = displayName .. " (أنت)"
         end
-        addChatMessage(displayName, text)
+        addChatMessage(displayName, text, senderColor)
         ShowChatBubbleAboveHead(fromUserId, fromName, text)
     elseif ev.type == "cmd" then
         local fromName = tostring(ev.fromName or "")
@@ -1675,6 +1870,9 @@ task.spawn(function()
     -- ⚠️ مهم: نتجاهل كل الأحداث القديمة الموجودة قبل تشغيل السكربت
     -- هذا يمنع إعادة تطبيق الطرد على اللاعب لما يدخل اللعبة من جديد
     while not t18_initialized do
+        if not T18RuntimeAlive() then
+            return
+        end
         pcall(function()
             local healthUrl = T18_API_BASE .. "/health"
             local res = t18_httpRequest({ Url = healthUrl, Method = "GET" })
@@ -1692,6 +1890,9 @@ task.spawn(function()
     end
 
     while true do
+        if not T18RuntimeAlive() then
+            break
+        end
         pcall(function()
             local url = string.format(
                 "%s/poll?serverKey=%s&since=%d",

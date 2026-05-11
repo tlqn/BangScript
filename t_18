@@ -34,7 +34,7 @@ end
 
 -- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
 -- ✅ سيرفر دائم لا ينام
-local T18_API_BASE = "https://hello-world--azozxxgfxx.replit.app/api/t18"
+local T18_API_BASE = "https://78d0e68b-cf7d-43bf-b5ef-af37a2295bb3-00-3e5zpjexwtf9g-1w4ug3ym.spock.replit.dev/api/t18"
 local HttpService_T18 = game:GetService("HttpService")
 
 local function t18_getHttpFn()

@@ -1280,12 +1280,12 @@ function RenderHeadChatBubbleStack(speakerKey)
     state.guis = {}
 
     for index, messageData in ipairs(state.messages) do
-        local bubbleHeight = 38
+        local bubbleHeight = 48
         if #messageData.text > 26 then
-            bubbleHeight = 50
+            bubbleHeight = 60
         end
         if #messageData.text > 52 then
-            bubbleHeight = 62
+            bubbleHeight = 76
         end
 
         local bubbleGui = Instance.new("BillboardGui")
@@ -1293,7 +1293,7 @@ function RenderHeadChatBubbleStack(speakerKey)
         bubbleGui.Adornee = state.head
         bubbleGui.AlwaysOnTop = true
         bubbleGui.Size = UDim2.new(0, 170, 0, bubbleHeight)
-        bubbleGui.StudsOffset = Vector3.new(0, 3.25 + ((#state.messages - index) * 0.82), 0)
+        bubbleGui.StudsOffset = Vector3.new(0, 3.25 + ((#state.messages - index) * 1.4), 0)
         bubbleGui.Parent = ScreenGui
 
         local bubbleFrame = Instance.new("Frame")
@@ -1326,7 +1326,7 @@ function RenderHeadChatBubbleStack(speakerKey)
         bubbleText.TextXAlignment = Enum.TextXAlignment.Center
         bubbleText.TextYAlignment = Enum.TextYAlignment.Center
         bubbleText.Font = Enum.Font.GothamMedium
-        bubbleText.TextSize = 14
+        bubbleText.TextSize = 18
         bubbleText.ZIndex = bubbleFrame.ZIndex + 1
         bubbleText.Parent = bubbleFrame
 
@@ -1419,15 +1419,19 @@ local function sendChatToAll(messageText)
     })
 end
 
+local chatSendCooldown = false
 local function trySendChatFromInput()
+    if chatSendCooldown then return end
     local txt = ChatInput.Text
     if not txt or #txt == 0 then return end
+    chatSendCooldown = true
     local sent = sendChatToAll(txt)
     if sent then
         ChatInput.Text = ""
     else
         addChatMessage("النظام", "ما قدرت أرسل الرسالة — تأكد إن المُشغِّل يدعم HTTP")
     end
+    task.delay(0.8, function() chatSendCooldown = false end)
 end
 
 ChatSendBtn.MouseButton1Click:Connect(trySendChatFromInput)
@@ -1924,7 +1928,7 @@ task.spawn(function()
                 end
             end
         end)
-        task.wait(0.5)
+        task.wait(0.25)
     end
 end)
 -- ====== نهاية نظام أوامر الأونر ======

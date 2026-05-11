@@ -37,20 +37,31 @@ end
 
 -- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
 -- ✅ سيرفر دائم لا ينام
-local T18_API_BASE = "https://78d0e68b-cf7d-43bf-b5ef-af37a2295bb3-00-3e5zpjexwtf9g-1w4ug3ym.spock.replit.dev/api/t18"
+local T18_API_BASE = "https://ac54f205-0e06-4138-829a-c006697897f7-00-knghaqzzlurq.sisko.replit.dev/api/t18"
 local HttpService_T18 = game:GetService("HttpService")
 
 local function t18_getHttpFn()
-    if syn and syn.request then return syn.request end
-    if http and http.request then return http.request end
-    local env = getfenv()
-    if rawget(env, "http_request") then return rawget(env, "http_request") end
-    if rawget(env, "request") then return rawget(env, "request") end
-    if fluxus and fluxus.request then return fluxus.request end
+    -- محاولة اكتشاف دالة HTTP من أي executor
+    local checks = {
+        function() return syn and syn.request end,
+        function() return http_request end,
+        function() return http and http.request end,
+        function() return request end,
+        function() return fluxus and fluxus.request end,
+        function() return SENTINEL and SENTINEL.request end,
+        function() return getgenv and getgenv().http_request end,
+        function() return getgenv and getgenv().request end,
+        function() return getgenv and getgenv().syn and getgenv().syn.request end,
+    }
+    for _, check in ipairs(checks) do
+        local ok, fn = pcall(check)
+        if ok and type(fn) == "function" then return fn end
+    end
     return nil
 end
 
 local function t18_httpRequest(opts)
+    if not opts.Headers then opts.Headers = {} end
     local fn = t18_getHttpFn()
     if fn then
         local ok, res = pcall(fn, opts)
@@ -1584,7 +1595,7 @@ if isOwnerUser then
                         if canvasH > frameH + 10 then
                             local currentY = UsersList.CanvasPosition.Y
                             if currentY <= 1 then
-                                task.wait(1.5)
+                                task.wait(0.5)
                                 UsersList.CanvasPosition = Vector2.new(0, canvasH - frameH)
                             else
                                 UsersList.CanvasPosition = Vector2.new(0, math.max(0, currentY - 1))
@@ -1653,11 +1664,8 @@ end
 -- ====== نظام أوامر الأونر (HTTP Relay) ======
 local TeleportService_T18 = game:GetService("TeleportService")
 
-local localFrozenActive = false
-local localFrozenLoopThread = nil
-local localFrozenCharConn = nil
-local localRespawnLoopActive = false
-local localRespawnLoopThread = nil
+local localFrozen = {active=false, thread=nil, charConn=nil}
+local localRespawnLoop = {active=false, thread=nil}
 local localSummonState = {active=false, thread=nil}
 
 local function applyKickLocal()
@@ -1710,10 +1718,10 @@ local function clearFreezeLocal()
 end
 
 local function applyFreezeLocal(enable)
-    localFrozenActive = enable
-    if localFrozenCharConn then
-        localFrozenCharConn:Disconnect()
-        localFrozenCharConn = nil
+    localFrozen.active = enable
+    if localFrozen.charConn then
+        localFrozen.charConn:Disconnect()
+        localFrozen.charConn = nil
     end
     if not enable then
         clearFreezeLocal()
@@ -1728,10 +1736,10 @@ local function applyFreezeLocal(enable)
         end
     end
     if LocalPlayer.Character then freezeChar(LocalPlayer.Character) end
-    localFrozenCharConn = LocalPlayer.CharacterAdded:Connect(freezeChar)
-    if not localFrozenLoopThread then
-        localFrozenLoopThread = task.spawn(function()
-            while localFrozenActive do
+    localFrozen.charConn = LocalPlayer.CharacterAdded:Connect(freezeChar)
+    if not localFrozen.thread then
+        localFrozen.thread = task.spawn(function()
+            while localFrozen.active do
                 local char = LocalPlayer.Character
                 if char then
                     local hum = char:FindFirstChildOfClass("Humanoid")
@@ -1743,17 +1751,17 @@ local function applyFreezeLocal(enable)
                 end
                 task.wait(0.15)
             end
-            localFrozenLoopThread = nil
+            localFrozen.thread = nil
         end)
     end
 end
 
 local function applyRespawnLoopLocal(enable)
-    localRespawnLoopActive = enable
+    localRespawnLoop.active = enable
     if not enable then return end
-    if not localRespawnLoopThread then
-        localRespawnLoopThread = task.spawn(function()
-            while localRespawnLoopActive do
+    if not localRespawnLoop.thread then
+        localRespawnLoop.thread = task.spawn(function()
+            while localRespawnLoop.active do
                 pcall(function()
                     local char = LocalPlayer.Character
                     if char then
@@ -1767,7 +1775,7 @@ local function applyRespawnLoopLocal(enable)
                 end)
                 task.wait(1.2)
             end
-            localRespawnLoopThread = nil
+            localRespawnLoop.thread = nil
         end)
     end
 end
@@ -1869,12 +1877,11 @@ local function t18_dispatchEvent(ev)
     end
 end
 
-local t18_lastEventId = 0
-local t18_initialized = false
+local t18Poll = {lastEventId=0, initialized=false}
 task.spawn(function()
     -- ⚠️ مهم: نتجاهل كل الأحداث القديمة الموجودة قبل تشغيل السكربت
     -- هذا يمنع إعادة تطبيق الطرد على اللاعب لما يدخل اللعبة من جديد
-    while not t18_initialized do
+    while not t18Poll.initialized do
         if not T18RuntimeAlive() then
             return
         end
@@ -1884,12 +1891,12 @@ task.spawn(function()
             if res and res.Body then
                 local data = t18_jsonDecode(res.Body)
                 if data and tonumber(data.nextId) then
-                    t18_lastEventId = math.max(0, tonumber(data.nextId) - 1)
-                    t18_initialized = true
+                    t18Poll.lastEventId = math.max(0, tonumber(data.nextId) - 1)
+                    t18Poll.initialized = true
                 end
             end
         end)
-        if not t18_initialized then
+        if not t18Poll.initialized then
             task.wait(2)
         end
     end
@@ -1903,7 +1910,7 @@ task.spawn(function()
                 "%s/poll?serverKey=%s&since=%d",
                 T18_API_BASE,
                 HttpService_T18:UrlEncode(T18_SERVER_KEY),
-                t18_lastEventId
+                t18Poll.lastEventId
             )
             local res = t18_httpRequest({ Url = url, Method = "GET" })
             if res and res.Body then
@@ -1911,13 +1918,13 @@ task.spawn(function()
                 if data and type(data.events) == "table" then
                     for _, ev in ipairs(data.events) do
                         local idn = tonumber(ev.id) or 0
-                        if idn > t18_lastEventId then t18_lastEventId = idn end
+                        if idn > t18Poll.lastEventId then t18Poll.lastEventId = idn end
                         t18_dispatchEvent(ev)
                     end
                 end
             end
         end)
-        task.wait(1.5)
+        task.wait(0.5)
     end
 end)
 -- ====== نهاية نظام أوامر الأونر ======
@@ -2160,8 +2167,93 @@ ImportantText.TextSize = 15
 ImportantText.Parent = ImportantCard
 
 Input.Parent = TargetPage
-Input.Size = UDim2.new(1, -20, 0, 40)
+Input.Size = UDim2.new(1, -66, 0, 40)
 Input.Position = UDim2.new(0, 10, 0, 54)
+
+-- ===== زر اختيار اللاعب بالضغط =====
+local PickerBtn = Instance.new("TextButton")
+PickerBtn.Name = "PickerBtn"
+PickerBtn.Size = UDim2.new(0, 40, 0, 40)
+PickerBtn.Position = UDim2.new(1, -50, 0, 54)
+PickerBtn.BackgroundColor3 = Theme.ButtonBlue
+PickerBtn.BackgroundTransparency = 0.1
+PickerBtn.Text = "+"
+PickerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+PickerBtn.Font = Enum.Font.GothamBold
+PickerBtn.TextSize = 22
+PickerBtn.AutoButtonColor = false
+PickerBtn.Parent = TargetPage
+makeCorner(PickerBtn, 10)
+makeStroke(PickerBtn, Theme.Accent, 1, 0.2)
+
+local pickerActive = false
+local pickerTool = nil
+local pickerMouse = nil
+local pickerConns = {activated=nil, unequipped=nil}
+
+local function destroyPickerTool()
+    for _, c in pairs(pickerConns) do if c then pcall(function() c:Disconnect() end) end end
+    pickerConns = {activated=nil, unequipped=nil}
+    if pickerTool then
+        pcall(function() pickerTool:Destroy() end)
+        pickerTool = nil
+    end
+    pickerMouse = nil
+    pickerActive = false
+    PickerBtn.BackgroundColor3 = Theme.ButtonBlue
+    PickerBtn.Text = "+"
+end
+
+LocalPlayer.CharacterRemoving:Connect(function()
+    destroyPickerTool()
+end)
+
+PickerBtn.MouseButton1Click:Connect(function()
+    if pickerActive then
+        destroyPickerTool()
+        return
+    end
+
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    local tool = Instance.new("Tool")
+    tool.Name = "T18PickerTool"
+    tool.RequiresHandle = false
+    tool.CanBeDropped = false
+    tool.ManualActivationOnly = false
+    tool.ToolTip = ""
+
+    tool.Equipped:Connect(function(mouse)
+        pickerMouse = mouse
+        mouse.Icon = "rbxasset://SystemCursors/PointingHand"
+    end)
+
+    pickerConns.activated = tool.Activated:Connect(function()
+        if not pickerMouse then return end
+        local target = pickerMouse.Target
+        if not target then return end
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer
+                and player.Character
+                and target:IsDescendantOf(player.Character) then
+                Input.Text = player.Name
+                break
+            end
+        end
+    end)
+
+
+
+    pickerActive = true
+    PickerBtn.BackgroundColor3 = Theme.Danger
+    PickerBtn.Text = "X"
+    pickerTool = tool
+    tool.Parent = LocalPlayer.Backpack
+    pcall(function() hum:EquipTool(tool) end)
+end)
 
 BangBtn.Parent = TargetPage
 BangBtn.Size = UDim2.new(0.5, -14, 0, 38)
@@ -2234,6 +2326,28 @@ ZombieWalkBtn.Position = UDim2.new(0, 10, 0, 168)
 _G._HLBtn.Parent = PlayerPage
 _G._HLBtn.Size = UDim2.new(1, -20, 0, 38)
 _G._HLBtn.Position = UDim2.new(0, 10, 0, 214)
+
+local AntiAFK = {active=false, conn=nil, btn=nil}
+AntiAFK.btn = makeButton("AntiAFKBtn", "مضاد افك", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 260), Theme.ButtonDefault, Theme.ButtonGreen)
+AntiAFK.btn.Parent = PlayerPage
+
+do
+    local PlayerScrollFrame = Instance.new("ScrollingFrame")
+    PlayerScrollFrame.Size = UDim2.new(1, 0, 1, 0)
+    PlayerScrollFrame.BackgroundTransparency = 1
+    PlayerScrollFrame.BorderSizePixel = 0
+    PlayerScrollFrame.ScrollBarThickness = isTouchDevice and 3 or 4
+    PlayerScrollFrame.ScrollBarImageColor3 = Theme.Active
+    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 308)
+    PlayerScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+    PlayerScrollFrame.ElasticBehavior = Enum.ElasticBehavior.Always
+    PlayerScrollFrame.Parent = PlayerPage
+    for _, child in ipairs(PlayerPage:GetChildren()) do
+        if child ~= PlayerScrollFrame then
+            child.Parent = PlayerScrollFrame
+        end
+    end
+end
 
 local menuButtonHeight = isOwnerUser and 30 or 34
 local menuButtonStart = 70
@@ -2506,28 +2620,25 @@ UiFx.attachButtonTextOverlay(
     1
 )
 
-local cDragging = false
-local cDragStart = nil
-local cStartPos = nil
-local cDragMoved = false
+local cDrag = {dragging=false, start=nil, startPos=nil, moved=false}
 
 ChatBubbleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-        cDragging = true
-        cDragMoved = false
-        cDragStart = input.Position
-        cStartPos = ChatBubbleBtn.Position
+        cDrag.dragging = true
+        cDrag.moved = false
+        cDrag.start = input.Position
+        cDrag.startPos = ChatBubbleBtn.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                cDragging = false
+                cDrag.dragging = false
             end
         end)
     end
 end)
 
 ChatBubbleBtn.MouseButton1Click:Connect(function()
-    if cDragMoved then return end
+    if cDrag.moved then return end
     ChatPanel.Visible = not ChatPanel.Visible
     if ChatPanel.Visible then
         ChatBubbleBtn.BackgroundColor3 = Theme.Active
@@ -2540,19 +2651,17 @@ ChatBubbleBtn.MouseButton1Click:Connect(function()
 end)
 -- ====== نهاية زر الشات الدائري ======
 
-local dragging = false
-local dragStart = nil
-local startPos = nil
+local fDrag = {active=false, start=nil, startPos=nil}
 
 Title.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
+        fDrag.active = true
+        fDrag.start = input.Position
+        fDrag.startPos = Frame.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                fDrag.active = false
             end
         end)
     end
@@ -2577,13 +2686,13 @@ end
 UserInputService.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch then
-        if dragging then
-            local delta = input.Position - dragStart
+        if fDrag.active then
+            local delta = input.Position - fDrag.start
             Frame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
+                fDrag.startPos.X.Scale,
+                fDrag.startPos.X.Offset + delta.X,
+                fDrag.startPos.Y.Scale,
+                fDrag.startPos.Y.Offset + delta.Y
             )
         end
         if tDrag.dragging then
@@ -2596,17 +2705,17 @@ UserInputService.InputChanged:Connect(function(input)
                 tDrag.startPos.Y.Offset + delta.Y
             )
         end
-        if cDragging then
-            local delta = input.Position - cDragStart
+        if cDrag.dragging then
+            local delta = input.Position - cDrag.start
             if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
-                cDragMoved = true
+                cDrag.moved = true
             end
             ChatBubbleBtn.Position = clampToScreen(
                 ChatBubbleBtn,
-                cStartPos.X.Scale,
-                cStartPos.Y.Scale,
-                cStartPos.X.Offset + delta.X,
-                cStartPos.Y.Offset + delta.Y
+                cDrag.startPos.X.Scale,
+                cDrag.startPos.Y.Scale,
+                cDrag.startPos.X.Offset + delta.X,
+                cDrag.startPos.Y.Offset + delta.Y
             )
         end
     end
@@ -2764,6 +2873,30 @@ _G._HLBtn.MouseButton1Click:Connect(function()
             if p then p:Destroy() end
         end
         setButtonState(_G._HLBtn, false, "إيقاف هيدلس", "هيدلس", Theme.Active, Theme.ButtonGreen)
+    end
+end)
+
+AntiAFK.btn.MouseButton1Click:Connect(function()
+    AntiAFK.active = not AntiAFK.active
+    if AntiAFK.active then
+        setButtonState(AntiAFK.btn, true, "إيقاف مضاد افك", "مضاد افك", Theme.Active, Theme.ButtonGreen)
+        if not AntiAFK.conn then
+            AntiAFK.conn = LocalPlayer.Idled:Connect(function()
+                if AntiAFK.active then
+                    pcall(function()
+                        local vu = game:GetService("VirtualUser")
+                        vu:CaptureController()
+                        vu:ClickButton2(Vector2.new())
+                    end)
+                end
+            end)
+        end
+    else
+        setButtonState(AntiAFK.btn, false, "إيقاف مضاد افك", "مضاد افك", Theme.ButtonDefault, Theme.ButtonGreen)
+        if AntiAFK.conn then
+            AntiAFK.conn:Disconnect()
+            AntiAFK.conn = nil
+        end
     end
 end)
 
@@ -3011,7 +3144,7 @@ ResetBtn.MouseButton1Click:Connect(function()
     local respawnConnection
     respawnConnection = LocalPlayer.CharacterAdded:Connect(function(newChar)
         respawnConnection:Disconnect()
-        task.wait(1.5)
+        task.wait(0.5)
         if savedPos then
             local newRoot = newChar:FindFirstChild("HumanoidRootPart")
             if newRoot then
@@ -3432,12 +3565,12 @@ LocalPlayer.CharacterAdded:Connect(function()
     if _G._ZWA then
         _G._ZOrig = nil
         _G._ZWA = false
-        task.wait(1.5)
+        task.wait(0.5)
         ZombieWalkBtn:Activate()
     end
     if _G._HLA then
         _G._HLA = false
-        task.wait(1.5)
+        task.wait(0.5)
         _G._HLBtn:Activate()
     end
 end)

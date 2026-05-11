@@ -37,7 +37,7 @@ end
 
 -- ====== T18 HTTP Relay (لا يمر بشات روبلوكس) ======
 -- ✅ سيرفر دائم لا ينام
-local T18_API_BASE = "https://ac54f205-0e06-4138-829a-c006697897f7-00-knghaqzzlurq.sisko.replit.dev/api/t18"
+local T18_API_BASE = "https://investment-robertson-approximately-rated.trycloudflare.com/api/t18"
 local HttpService_T18 = game:GetService("HttpService")
 
 local function t18_getHttpFn()

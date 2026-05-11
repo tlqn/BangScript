@@ -229,7 +229,6 @@ local mobileFlyInput = {
     Right = false,
 }
 
-local DiscordInviteUrl = "https://discord.gg/bCdDt4NDq"
 
 local ownerFreezeStates = {}
 local ownerRespawnLoopStates = {}
@@ -2039,14 +2038,14 @@ DiscordBtn.MouseButton1Click:Connect(function()
     local opened = false
 
     pcall(function()
-        GuiService:OpenBrowserWindow(DiscordInviteUrl)
+        GuiService:OpenBrowserWindow("https://discord.gg/bCdDt4NDq")
         opened = true
     end)
 
     if not opened then
         pcall(function()
             if setclipboard then
-                setclipboard(DiscordInviteUrl)
+                setclipboard("https://discord.gg/bCdDt4NDq")
                 opened = true
                 showNotification("تم نسخ رابط الدسكورد")
             end
@@ -2054,7 +2053,7 @@ DiscordBtn.MouseButton1Click:Connect(function()
     end
 
     if not opened then
-        showNotification(DiscordInviteUrl)
+        showNotification("https://discord.gg/bCdDt4NDq")
     end
 end)
 
@@ -2335,6 +2334,9 @@ local AntiAFK = {active=false, conn=nil, btn=nil}
 AntiAFK.btn = makeButton("AntiAFKBtn", "مضاد افك", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 260), Theme.ButtonDefault, Theme.ButtonGreen)
 AntiAFK.btn.Parent = PlayerPage
 
+_G.CuffProtectBtn = makeButton("CuffProtectBtn", "حماية كلبشة", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 306), Theme.ButtonDefault, Theme.ButtonOrange)
+_G.CuffProtectBtn.Parent = PlayerPage
+
 do
     local PlayerScrollFrame = Instance.new("ScrollingFrame")
     PlayerScrollFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2342,7 +2344,7 @@ do
     PlayerScrollFrame.BorderSizePixel = 0
     PlayerScrollFrame.ScrollBarThickness = isTouchDevice and 3 or 4
     PlayerScrollFrame.ScrollBarImageColor3 = Theme.Active
-    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 308)
+    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 354)
     PlayerScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
     PlayerScrollFrame.ElasticBehavior = Enum.ElasticBehavior.Always
     PlayerScrollFrame.Parent = PlayerPage
@@ -2901,6 +2903,144 @@ AntiAFK.btn.MouseButton1Click:Connect(function()
             AntiAFK.conn:Disconnect()
             AntiAFK.conn = nil
         end
+    end
+end)
+
+_G.CuffProtectBtn.MouseButton1Click:Connect(function()
+    _G.CuffProtectActive = not _G.CuffProtectActive
+    if _G.CuffProtectActive then
+        setButtonState(_G.CuffProtectBtn, true, "إيقاف الحماية", "حماية كلبشة", Theme.Active, Theme.ButtonOrange)
+
+        pcall(function()
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local animator = hum and hum:FindFirstChildOfClass("Animator")
+            local animS = char and char:FindFirstChild("Animate")
+            if not animator or not animS then return end
+
+            local idleFolder = animS:FindFirstChild("idle")
+            local idleAnim = idleFolder and idleFolder:FindFirstChildOfClass("Animation")
+            local walkFolder = animS:FindFirstChild("walk")
+            local walkAnim = walkFolder and walkFolder:FindFirstChildOfClass("Animation")
+
+            -- نوقف سكربت الأنيميشن عشان Sit=true ما يشغّل أنيميشن الجلسة
+            animS.Disabled = true
+            -- نعطّل حالة الجلوس من المحرك مباشرة عشان ما تظهر أنيميشن الجلسة لأحد
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            -- نرجّع الحالة للوقوف مرة وحدة بس عند التفعيل
+            hum:ChangeState(Enum.HumanoidStateType.Running)
+
+            if idleAnim then
+                local anim = Instance.new("Animation")
+                anim.AnimationId = idleAnim.AnimationId
+                _G.CuffProtectIdleTrack = animator:LoadAnimation(anim)
+                _G.CuffProtectIdleTrack.Priority = Enum.AnimationPriority.Action4
+                _G.CuffProtectIdleTrack.Looped = true
+                _G.CuffProtectIdleTrack:Play()
+            end
+
+            if walkAnim then
+                local anim = Instance.new("Animation")
+                anim.AnimationId = walkAnim.AnimationId
+                _G.CuffProtectWalkTrack = animator:LoadAnimation(anim)
+                _G.CuffProtectWalkTrack.Priority = Enum.AnimationPriority.Action4
+                _G.CuffProtectWalkTrack.Looped = true
+            end
+        end)
+
+        _G.CuffProtectMoveConn = RunService.Heartbeat:Connect(function()
+            if not _G.CuffProtectActive then return end
+            pcall(function()
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root or not hum then return end
+
+                -- نحفظ السرعة قبل Sit لأن Sit تصفّرها
+                if not _G.CuffProtectSavedSpeed or _G.CuffProtectSavedSpeed == 0 then
+                    if hum.WalkSpeed > 0 then
+                        _G.CuffProtectSavedSpeed = hum.WalkSpeed
+                    end
+                end
+                hum.Sit = true
+
+                local bv = root:FindFirstChild("CuffProtectBV")
+                if not bv then
+                    bv = Instance.new("BodyVelocity")
+                    bv.Name = "CuffProtectBV"
+                    bv.Velocity = Vector3.zero
+                    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+                    bv.Parent = root
+                end
+
+                local speed = (_G.CuffProtectSavedSpeed or 16)
+                local cf = workspace.CurrentCamera.CFrame
+                local fwd = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z)
+                local rgt = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z)
+                if fwd.Magnitude > 0 then fwd = fwd.Unit end
+                if rgt.Magnitude > 0 then rgt = rgt.Unit end
+
+                local vel = Vector3.zero
+                -- ما نطبّق WASD إذا اللاعب كاتب بالشات أو أي TextBox
+                local focusedBox = UserInputService:GetFocusedTextBox()
+                if not focusedBox then
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then vel += fwd end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then vel -= fwd end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then vel -= rgt end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then vel += rgt end
+                end
+                if isTouchDevice and hum.MoveDirection.Magnitude > 0 then
+                    local md = hum.MoveDirection
+                    vel += Vector3.new(md.X, 0, md.Z)
+                end
+
+                local isMoving = vel.Magnitude > 0
+                if isMoving then
+                    bv.Velocity = vel.Unit * speed
+                    if _G.CuffProtectWalkTrack and not _G.CuffProtectWalkTrack.IsPlaying then
+                        if _G.CuffProtectIdleTrack and _G.CuffProtectIdleTrack.IsPlaying then
+                            _G.CuffProtectIdleTrack:Stop(0.15)
+                        end
+                        _G.CuffProtectWalkTrack:Play(0.15)
+                    end
+                else
+                    bv.Velocity = Vector3.zero
+                    if _G.CuffProtectIdleTrack and not _G.CuffProtectIdleTrack.IsPlaying then
+                        if _G.CuffProtectWalkTrack and _G.CuffProtectWalkTrack.IsPlaying then
+                            _G.CuffProtectWalkTrack:Stop(0.15)
+                        end
+                        _G.CuffProtectIdleTrack:Play(0.15)
+                    end
+                end
+            end)
+        end)
+    else
+        setButtonState(_G.CuffProtectBtn, false, "إيقاف الحماية", "حماية كلبشة", Theme.ButtonDefault, Theme.ButtonOrange)
+
+        if _G.CuffProtectMoveConn then
+            _G.CuffProtectMoveConn:Disconnect()
+            _G.CuffProtectMoveConn = nil
+        end
+        pcall(function()
+            if _G.CuffProtectIdleTrack then _G.CuffProtectIdleTrack:Stop() _G.CuffProtectIdleTrack = nil end
+            if _G.CuffProtectWalkTrack then _G.CuffProtectWalkTrack:Stop() _G.CuffProtectWalkTrack = nil end
+        end)
+        pcall(function()
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                local bv = root:FindFirstChild("CuffProtectBV")
+                if bv then bv:Destroy() end
+            end
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.Sit = false
+                hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+            end
+            local animS = char and char:FindFirstChild("Animate")
+            if animS then animS.Disabled = false end
+        end)
+        _G.CuffProtectSavedSpeed = nil
     end
 end)
 

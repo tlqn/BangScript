@@ -6,6 +6,9 @@ local GuiService = game:GetService("GuiService")
 local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
+_G._ZWA = false
+_G._ZOrig = nil
+_G._HLA = false
 local isTouchDevice = UserInputService.TouchEnabled
 local baseFrameSize = Vector2.new(610, 498)
 local OwnerUsername = "azoz11211"
@@ -911,6 +914,8 @@ local FlyBtn = makeButton("FlyBtn", "طيران", UDim2.new(0, 168, 0, 38), UDim
 local SpeedInput = makeInput("SpeedInput", "سرعة الطيران", "50", UDim2.new(0, 190, 0, 178))
 local WalkSpeedBtn = makeButton("WalkSpeedBtn", "سرعة اللاعب", UDim2.new(0, 168, 0, 38), UDim2.new(0, 4, 0, 226), Theme.ButtonDefault, Theme.ButtonBlue)
 local WalkSpeedInput = makeInput("WalkSpeedInput", "سرعة المشي", "16", UDim2.new(0, 190, 0, 226))
+local ZombieWalkBtn = makeButton("ZombieWalkBtn", "مشية زومبي", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonDefault, Theme.ButtonGreen)
+_G._HLBtn = makeButton("HeadlessBtn", "هيدلس", UDim2.new(1, -8, 0, 38), UDim2.new(0, 4, 0, 274), Theme.ButtonDefault, Theme.ButtonGreen)
 
 local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Size = UDim2.new(0, 178, 0, 40)
@@ -2223,6 +2228,13 @@ SpeedLabel.Parent = PlayerPage
 SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
 SpeedLabel.Position = UDim2.new(0, 10, 0, 144)
 
+ZombieWalkBtn.Parent = PlayerPage
+ZombieWalkBtn.Size = UDim2.new(1, -20, 0, 38)
+ZombieWalkBtn.Position = UDim2.new(0, 10, 0, 168)
+_G._HLBtn.Parent = PlayerPage
+_G._HLBtn.Size = UDim2.new(1, -20, 0, 38)
+_G._HLBtn.Position = UDim2.new(0, 10, 0, 214)
+
 local menuButtonHeight = isOwnerUser and 30 or 34
 local menuButtonStart = 70
 local menuButtonStep = isOwnerUser and 34 or 38
@@ -2652,6 +2664,106 @@ WalkSpeedBtn.MouseButton1Click:Connect(function()
         if hum then
             hum.WalkSpeed = 16
         end
+    end
+end)
+
+ZombieWalkBtn.MouseButton1Click:Connect(function()
+    _G._ZWA = not _G._ZWA
+    local char = LocalPlayer.Character
+    if _G._ZWA then
+        -- Turn ON: save originals then apply zombie anims
+        local animS = char and char:FindFirstChild("Animate")
+        if animS then
+            _G._ZOrig = {}
+            local folders = {
+                {"idle",  "Animation1", "rbxassetid://616158929"},
+                {"idle",  "Animation2", "rbxassetid://616158929"},
+                {"walk",  "WalkAnim",   "rbxassetid://616163682"},
+                {"run",   "RunAnim",    "rbxassetid://616163682"},
+                {"jump",  "JumpAnim",   "rbxassetid://616161997"},
+                {"fall",  "FallAnim",   "rbxassetid://616157476"},
+                {"climb", "ClimbAnim",  "rbxassetid://616163682"},
+            }
+            for _, v in ipairs(folders) do
+                local f = animS:FindFirstChild(v[1])
+                local a = f and f:FindFirstChild(v[2])
+                if a and a:IsA("Animation") then
+                    _G._ZOrig[v[1]..v[2]] = a.AnimationId
+                    a.AnimationId = v[3]
+                end
+            end
+            animS.Disabled = true
+            task.wait(0.05)
+            animS.Disabled = false
+        end
+    else
+        -- Turn OFF: restore originals
+        local animS = char and char:FindFirstChild("Animate")
+        if animS and _G._ZOrig then
+            local folders = {
+                {"idle",  "Animation1"},
+                {"idle",  "Animation2"},
+                {"walk",  "WalkAnim"},
+                {"run",   "RunAnim"},
+                {"jump",  "JumpAnim"},
+                {"fall",  "FallAnim"},
+                {"climb", "ClimbAnim"},
+            }
+            for _, v in ipairs(folders) do
+                local f = animS:FindFirstChild(v[1])
+                local a = f and f:FindFirstChild(v[2])
+                local orig = _G._ZOrig[v[1]..v[2]]
+                if a and a:IsA("Animation") and orig then
+                    a.AnimationId = orig
+                end
+            end
+            animS.Disabled = true
+            task.wait(0.05)
+            animS.Disabled = false
+        end
+        _G._ZOrig = nil
+    end
+    setButtonState(ZombieWalkBtn, _G._ZWA, "إيقاف مشية زومبي", "مشية زومبي", Theme.Active, Theme.ButtonGreen)
+end)
+
+_G._HLBtn.MouseButton1Click:Connect(function()
+    _G._HLA = not _G._HLA
+    local char = LocalPlayer.Character
+    local head = char and char:FindFirstChild("Head")
+    if _G._HLA then
+        -- Hide head
+        if head then
+            head.Transparency = 1
+            local face = head:FindFirstChildOfClass("Decal")
+            if face then face.Transparency = 1 end
+            for _, m in ipairs(head:GetChildren()) do
+                if m:IsA("SpecialMesh") then m.Scale = Vector3.new(0,0,0) end
+            end
+        end
+        -- Try insert pumpkin head
+        pcall(function()
+            local mdl = game:GetService("InsertService"):LoadAsset(93321676196265)
+            local acc = mdl:FindFirstChildWhichIsA("Accessory", true)
+            if acc then acc.Name = "_PumpkinHead" acc.Parent = char end
+            mdl:Destroy()
+        end)
+        setButtonState(_G._HLBtn, true, "إيقاف هيدلس", "هيدلس", Theme.Active, Theme.ButtonGreen)
+    else
+        -- Restore head
+        if head then
+            head.Transparency = 0
+            local face = head:FindFirstChildOfClass("Decal")
+            if face then face.Transparency = 0 end
+            for _, m in ipairs(head:GetChildren()) do
+                if m:IsA("SpecialMesh") then m.Scale = Vector3.new(1,1,1) end
+            end
+        end
+        -- Remove pumpkin
+        if char then
+            local p = char:FindFirstChild("_PumpkinHead")
+            if p then p:Destroy() end
+        end
+        setButtonState(_G._HLBtn, false, "إيقاف هيدلس", "هيدلس", Theme.Active, Theme.ButtonGreen)
     end
 end)
 
@@ -3316,5 +3428,16 @@ LocalPlayer.CharacterAdded:Connect(function()
     end
     if flyActive then
         stopFly()
+    end
+    if _G._ZWA then
+        _G._ZOrig = nil
+        _G._ZWA = false
+        task.wait(1.5)
+        ZombieWalkBtn:Activate()
+    end
+    if _G._HLA then
+        _G._HLA = false
+        task.wait(1.5)
+        _G._HLBtn:Activate()
     end
 end)

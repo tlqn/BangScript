@@ -2317,7 +2317,7 @@ local HdPrefixLabel = Instance.new("TextLabel")
 HdPrefixLabel.Size = UDim2.new(1, -20, 0, 18)
 HdPrefixLabel.Position = UDim2.new(0, 10, 0, 278)
 HdPrefixLabel.BackgroundTransparency = 1
-HdPrefixLabel.Text = "اكتب امر النسخ في الخانه مثال ; ( لازم يكون عندك مود عشان يشتغل النسخ )"
+HdPrefixLabel.Text = "Prefix الـ HD (تلقائي أو يدوي)"
 HdPrefixLabel.TextColor3 = Theme.Muted
 HdPrefixLabel.TextXAlignment = Enum.TextXAlignment.Right
 HdPrefixLabel.Font = Enum.Font.Gotham
@@ -2362,6 +2362,7 @@ end)
 local HdCopyBtn = makeButton("HdCopyBtn", "نسخ HD", UDim2.new(0.6, -14, 0, 38), UDim2.new(0.4, 4, 0, 298), Theme.ButtonDefault, Theme.ButtonGreen)
 HdCopyBtn.Parent = TargetPage
 
+
 -- تمرير بالإصبع/الماوس في قسم الاستهداف (كل الأجهزة)
 local TargetScrollFrame = Instance.new("ScrollingFrame")
 TargetScrollFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2369,7 +2370,7 @@ TargetScrollFrame.BackgroundTransparency = 1
 TargetScrollFrame.BorderSizePixel = 0
 TargetScrollFrame.ScrollBarThickness = isTouchDevice and 3 or 4
 TargetScrollFrame.ScrollBarImageColor3 = Theme.Active
-TargetScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 350)
+TargetScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 394)
 TargetScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 TargetScrollFrame.ElasticBehavior = Enum.ElasticBehavior.Always
 TargetScrollFrame.Parent = TargetPage
@@ -3071,6 +3072,9 @@ HdCopyBtn.MouseButton1Click:Connect(function()
 end)
 -- ─────────────────────────────────────────────────────────────
 
+
+-- ─────────────────────────────────────────────────────────────
+
 _G.CuffProtectBtn.MouseButton1Click:Connect(function()
     _G.CuffProtectActive = not _G.CuffProtectActive
     if _G.CuffProtectActive then
@@ -3368,6 +3372,22 @@ local function stopBang()
         animTrack:Stop()
         animTrack = nil
     end
+    -- تنظيف حماية الكلبشة
+    pcall(function()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root then
+            local bv = root:FindFirstChild("BangProtectBV")
+            if bv then bv:Destroy() end
+        end
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.Sit = false
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        end
+        local animS = char and char:FindFirstChild("Animate")
+        if animS then animS.Disabled = false end
+    end)
     setButtonState(BangBtn, false, "إيقاف", "بانق", Theme.Danger, Theme.PanelSoft)
 end
 
@@ -3378,12 +3398,22 @@ local function startBang(target)
     local myChar = LocalPlayer.Character
     local hum = myChar and myChar:FindFirstChild("Humanoid")
     if hum then
+        -- تهيئة حماية الكلبشة
+        pcall(function()
+            local animS = myChar:FindFirstChild("Animate")
+            if animS then animS.Disabled = true end
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            hum:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+
+        -- تشغيل الرقصة بأعلى أولوية عشان تتغلب على حالة Sit
         local success = pcall(function()
             local bundle = game:GetObjects("rbxassetid://5938365243")
             for _, obj in ipairs(bundle) do
                 if obj:IsA("Animation") then
                     animTrack = hum:LoadAnimation(obj)
                     animTrack.Looped = true
+                    animTrack.Priority = Enum.AnimationPriority.Action4
                     animTrack:Play(0.1, 1, 5)
                     return
                 end
@@ -3395,15 +3425,62 @@ local function startBang(target)
             anim.AnimationId = "rbxassetid://5938365243"
             animTrack = hum:LoadAnimation(anim)
             animTrack.Looped = true
+            animTrack.Priority = Enum.AnimationPriority.Action4
             animTrack:Play(0.1, 1, 5)
         end
     end
 
-    followConnection = RunService.Heartbeat:Connect(function()
-        if not isActive then
-            return
-        end
+    local bangProtectSavedSpeed = nil
 
+    followConnection = RunService.Heartbeat:Connect(function()
+        if not isActive then return end
+
+        -- حماية الكلبشة: Sit + BodyVelocity
+        pcall(function()
+            local myCharacter = LocalPlayer.Character
+            local bangHum = myCharacter and myCharacter:FindFirstChildOfClass("Humanoid")
+            local root = myCharacter and myCharacter:FindFirstChild("HumanoidRootPart")
+            if not root or not bangHum then return end
+
+            if not bangProtectSavedSpeed or bangProtectSavedSpeed == 0 then
+                if bangHum.WalkSpeed > 0 then
+                    bangProtectSavedSpeed = bangHum.WalkSpeed
+                end
+            end
+            bangHum.Sit = true
+
+            local bv = root:FindFirstChild("BangProtectBV")
+            if not bv then
+                bv = Instance.new("BodyVelocity")
+                bv.Name = "BangProtectBV"
+                bv.Velocity = Vector3.zero
+                bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+                bv.Parent = root
+            end
+
+            local speed = (bangProtectSavedSpeed or 16)
+            local cf = workspace.CurrentCamera.CFrame
+            local fwd = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z)
+            local rgt = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z)
+            if fwd.Magnitude > 0 then fwd = fwd.Unit end
+            if rgt.Magnitude > 0 then rgt = rgt.Unit end
+
+            local vel = Vector3.zero
+            local focusedBox = UserInputService:GetFocusedTextBox()
+            if not focusedBox then
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then vel += fwd end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then vel -= fwd end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then vel -= rgt end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then vel += rgt end
+            end
+            if isTouchDevice and bangHum.MoveDirection.Magnitude > 0 then
+                local md = bangHum.MoveDirection
+                vel += Vector3.new(md.X, 0, md.Z)
+            end
+            bv.Velocity = vel.Magnitude > 0 and vel.Unit * speed or Vector3.zero
+        end)
+
+        -- التتبع الأصلي
         local myCharacter = LocalPlayer.Character
         local targetCharacter = target.Character
         if myCharacter and targetCharacter then

@@ -682,21 +682,23 @@ UiFx.makeGradient(Header, {
     ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 10, 24)),
 }, 15)
 
-local HeaderBottomMask = Instance.new("Frame")
-HeaderBottomMask.Size = UDim2.new(1, 0, 0, 24)
-HeaderBottomMask.Position = UDim2.new(0, 0, 1, -24)
-HeaderBottomMask.BackgroundColor3 = Theme.Header
-HeaderBottomMask.BorderSizePixel = 0
-HeaderBottomMask.Parent = Header
+do
+    local HeaderBottomMask = Instance.new("Frame")
+    HeaderBottomMask.Size = UDim2.new(1, 0, 0, 24)
+    HeaderBottomMask.Position = UDim2.new(0, 0, 1, -24)
+    HeaderBottomMask.BackgroundColor3 = Theme.Header
+    HeaderBottomMask.BorderSizePixel = 0
+    HeaderBottomMask.Parent = Header
 
-local AccentLine = Instance.new("Frame")
-AccentLine.Size = UDim2.new(1, -32, 0, 3)
-AccentLine.Position = UDim2.new(0, 16, 1, -3)
-AccentLine.BackgroundColor3 = Theme.Accent
-AccentLine.BorderSizePixel = 0
-AccentLine.Parent = Header
-makeCorner(AccentLine, 6)
-AccentLine.Visible = false
+    local AccentLine = Instance.new("Frame")
+    AccentLine.Size = UDim2.new(1, -32, 0, 3)
+    AccentLine.Position = UDim2.new(0, 16, 1, -3)
+    AccentLine.BackgroundColor3 = Theme.Accent
+    AccentLine.BorderSizePixel = 0
+    AccentLine.Parent = Header
+    makeCorner(AccentLine, 6)
+    AccentLine.Visible = false
+end
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0.55, 0, 0, 28)
@@ -709,98 +711,100 @@ Title.Font = Enum.Font.GothamBlack
 Title.TextSize = 24
 Title.Parent = Header
 
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(0.58, 0, 0, 18)
-Subtitle.Position = UDim2.new(0, 18, 0, 42)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "شاركونا اقتراحاتكم على الدسكورد"
-Subtitle.TextColor3 = Theme.Muted
-Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextSize = 15
-Subtitle.Parent = Header
+do
+    local Subtitle = Instance.new("TextLabel")
+    Subtitle.Size = UDim2.new(0.58, 0, 0, 18)
+    Subtitle.Position = UDim2.new(0, 18, 0, 42)
+    Subtitle.BackgroundTransparency = 1
+    Subtitle.Text = "شاركونا اقتراحاتكم على الدسكورد"
+    Subtitle.TextColor3 = Theme.Muted
+    Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    Subtitle.Font = Enum.Font.Gotham
+    Subtitle.TextSize = 15
+    Subtitle.Parent = Header
 
-local TopBadge = Instance.new("Frame")
-TopBadge.Size = UDim2.new(0, 150, 0, 34)
-TopBadge.Position = UDim2.new(1, -166, 0, 20)
-TopBadge.BackgroundColor3 = Theme.PanelSoft
-TopBadge.BackgroundTransparency = 0.16
-TopBadge.BorderSizePixel = 0
-TopBadge.Parent = Header
-makeCorner(TopBadge, 12)
-makeStroke(TopBadge, Theme.Border, 1, 0.35)
-UiFx.makeStarField(TopBadge, 6)
+    local TopBadge = Instance.new("Frame")
+    TopBadge.Size = UDim2.new(0, 150, 0, 34)
+    TopBadge.Position = UDim2.new(1, -166, 0, 20)
+    TopBadge.BackgroundColor3 = Theme.PanelSoft
+    TopBadge.BackgroundTransparency = 0.16
+    TopBadge.BorderSizePixel = 0
+    TopBadge.Parent = Header
+    makeCorner(TopBadge, 12)
+    makeStroke(TopBadge, Theme.Border, 1, 0.35)
+    UiFx.makeStarField(TopBadge, 6)
 
-local TopBadgeDot = Instance.new("Frame")
-TopBadgeDot.Size = UDim2.new(0, 10, 0, 10)
-TopBadgeDot.Position = UDim2.new(0, 12, 0.5, -5)
-TopBadgeDot.BackgroundColor3 = Theme.PanelSoft
-TopBadgeDot.BackgroundTransparency = 0.08
-TopBadgeDot.BorderSizePixel = 0
-TopBadgeDot.Parent = TopBadge
-makeCorner(TopBadgeDot, 99)
+    local TopBadgeDot = Instance.new("Frame")
+    TopBadgeDot.Size = UDim2.new(0, 10, 0, 10)
+    TopBadgeDot.Position = UDim2.new(0, 12, 0.5, -5)
+    TopBadgeDot.BackgroundColor3 = Theme.PanelSoft
+    TopBadgeDot.BackgroundTransparency = 0.08
+    TopBadgeDot.BorderSizePixel = 0
+    TopBadgeDot.Parent = TopBadge
+    makeCorner(TopBadgeDot, 99)
 
-local TopBadgeText = Instance.new("TextLabel")
-TopBadgeText.Size = UDim2.new(1, -34, 1, 0)
-TopBadgeText.Position = UDim2.new(0, 28, 0, 0)
-TopBadgeText.BackgroundTransparency = 1
-TopBadgeText.Text = "عندك مشكلة؟ تواصل دس"
-TopBadgeText.TextColor3 = Theme.Text
-TopBadgeText.TextXAlignment = Enum.TextXAlignment.Left
-TopBadgeText.Font = Enum.Font.GothamMedium
-TopBadgeText.TextSize = 16
-TopBadgeText.Parent = TopBadge
+    local TopBadgeText = Instance.new("TextLabel")
+    TopBadgeText.Size = UDim2.new(1, -34, 1, 0)
+    TopBadgeText.Position = UDim2.new(0, 28, 0, 0)
+    TopBadgeText.BackgroundTransparency = 1
+    TopBadgeText.Text = "عندك مشكلة؟ تواصل دس"
+    TopBadgeText.TextColor3 = Theme.Text
+    TopBadgeText.TextXAlignment = Enum.TextXAlignment.Left
+    TopBadgeText.Font = Enum.Font.GothamMedium
+    TopBadgeText.TextSize = 16
+    TopBadgeText.Parent = TopBadge
 
-local ProfileCard = Instance.new("Frame")
-ProfileCard.Size = UDim2.new(1, -32, 0, 80)
-ProfileCard.Position = UDim2.new(0, 16, 0, 82)
-ProfileCard.BackgroundColor3 = Theme.Card
-ProfileCard.BackgroundTransparency = 0.16
-ProfileCard.BorderSizePixel = 0
-ProfileCard.Parent = Frame
-makeCorner(ProfileCard, 18)
-makeStroke(ProfileCard, Theme.Border, 1, 0.28)
-UiFx.makeStarField(ProfileCard, 12)
+    local ProfileCard = Instance.new("Frame")
+    ProfileCard.Size = UDim2.new(1, -32, 0, 80)
+    ProfileCard.Position = UDim2.new(0, 16, 0, 82)
+    ProfileCard.BackgroundColor3 = Theme.Card
+    ProfileCard.BackgroundTransparency = 0.16
+    ProfileCard.BorderSizePixel = 0
+    ProfileCard.Parent = Frame
+    makeCorner(ProfileCard, 18)
+    makeStroke(ProfileCard, Theme.Border, 1, 0.28)
+    UiFx.makeStarField(ProfileCard, 12)
 
-local ProfileGlow = Instance.new("Frame")
-ProfileGlow.Size = UDim2.new(0, 72, 0, 72)
-ProfileGlow.Position = UDim2.new(0, 10, 0.5, -36)
-ProfileGlow.BackgroundColor3 = Theme.AccentSoft
-ProfileGlow.BackgroundTransparency = 0.22
-ProfileGlow.BorderSizePixel = 0
-ProfileGlow.Parent = ProfileCard
-makeCorner(ProfileGlow, 18)
+    local ProfileGlow = Instance.new("Frame")
+    ProfileGlow.Size = UDim2.new(0, 72, 0, 72)
+    ProfileGlow.Position = UDim2.new(0, 10, 0.5, -36)
+    ProfileGlow.BackgroundColor3 = Theme.AccentSoft
+    ProfileGlow.BackgroundTransparency = 0.22
+    ProfileGlow.BorderSizePixel = 0
+    ProfileGlow.Parent = ProfileCard
+    makeCorner(ProfileGlow, 18)
 
-local AvatarLetter = Instance.new("TextLabel")
-AvatarLetter.Size = UDim2.new(1, 0, 1, 0)
-AvatarLetter.BackgroundTransparency = 1
-AvatarLetter.Text = string.upper(string.sub(LocalPlayer.DisplayName, 1, 1))
-AvatarLetter.TextColor3 = Theme.Text
-AvatarLetter.Font = Enum.Font.GothamBlack
-AvatarLetter.TextSize = 30
-AvatarLetter.Parent = ProfileGlow
+    local AvatarLetter = Instance.new("TextLabel")
+    AvatarLetter.Size = UDim2.new(1, 0, 1, 0)
+    AvatarLetter.BackgroundTransparency = 1
+    AvatarLetter.Text = string.upper(string.sub(LocalPlayer.DisplayName, 1, 1))
+    AvatarLetter.TextColor3 = Theme.Text
+    AvatarLetter.Font = Enum.Font.GothamBlack
+    AvatarLetter.TextSize = 30
+    AvatarLetter.Parent = ProfileGlow
 
-local WelcomeLabel = Instance.new("TextLabel")
-WelcomeLabel.Size = UDim2.new(1, -110, 0, 28)
-WelcomeLabel.Position = UDim2.new(0, 98, 0, 14)
-WelcomeLabel.BackgroundTransparency = 1
-WelcomeLabel.Text = "أهلًا " .. LocalPlayer.DisplayName
-WelcomeLabel.TextColor3 = Theme.Text
-WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Right
-WelcomeLabel.Font = Enum.Font.GothamBold
-WelcomeLabel.TextSize = 24
-WelcomeLabel.Parent = ProfileCard
+    local WelcomeLabel = Instance.new("TextLabel")
+    WelcomeLabel.Size = UDim2.new(1, -110, 0, 28)
+    WelcomeLabel.Position = UDim2.new(0, 98, 0, 14)
+    WelcomeLabel.BackgroundTransparency = 1
+    WelcomeLabel.Text = "أهلًا " .. LocalPlayer.DisplayName
+    WelcomeLabel.TextColor3 = Theme.Text
+    WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Right
+    WelcomeLabel.Font = Enum.Font.GothamBold
+    WelcomeLabel.TextSize = 24
+    WelcomeLabel.Parent = ProfileCard
 
-local PlanLabel = Instance.new("TextLabel")
-PlanLabel.Size = UDim2.new(1, -110, 0, 18)
-PlanLabel.Position = UDim2.new(0, 98, 0, 46)
-PlanLabel.BackgroundTransparency = 1
-PlanLabel.Text = "شاركونا اقتراحاتكم على الدسكورد | اضغط الزر الصغير لإخفاء النافذة"
-PlanLabel.TextColor3 = Theme.Muted
-PlanLabel.TextXAlignment = Enum.TextXAlignment.Right
-PlanLabel.Font = Enum.Font.Gotham
-PlanLabel.TextSize = 15
-PlanLabel.Parent = ProfileCard
+    local PlanLabel = Instance.new("TextLabel")
+    PlanLabel.Size = UDim2.new(1, -110, 0, 18)
+    PlanLabel.Position = UDim2.new(0, 98, 0, 46)
+    PlanLabel.BackgroundTransparency = 1
+    PlanLabel.Text = "شاركونا اقتراحاتكم على الدسكورد | اضغط الزر الصغير لإخفاء النافذة"
+    PlanLabel.TextColor3 = Theme.Muted
+    PlanLabel.TextXAlignment = Enum.TextXAlignment.Right
+    PlanLabel.Font = Enum.Font.Gotham
+    PlanLabel.TextSize = 15
+    PlanLabel.Parent = ProfileCard
+end
 
 local ContentPanel = Instance.new("Frame")
 ContentPanel.Size = UDim2.new(1, -32, 0, 298)
@@ -1045,6 +1049,8 @@ local OwnerKickBtn = nil
 local OwnerFreezeBtn = nil
 local OwnerRespawnLoopBtn = nil
 local OwnerSummonBtn = nil
+local OthersPage = makePage("OthersPage")
+makePageTitle(OthersPage, "اخرى", "ميزات إضافية")
 
 makePageTitle(MainPage, "القائمة الرئيسية", "ملاحظة مهمة : يا اخوان حماية البانق ما تشتغل الا على سكربت V.R.7")
 makePageTitle(PlayerPage, "اللاعب", "أوامر الحركة والسرعة")
@@ -1442,13 +1448,27 @@ end)
 
 addChatMessage("النظام", "مرحبًا! هذي شاشة شات خاصة بمشغّلي السكربت فقط — تمر عبر سيرفر خارجي ولا تظهر لأي لاعب ما يستخدم السكربت.")
 
+UsersPage = nil
+UsersList = nil
+UsersCountLabel = nil
 if isOwnerUser then
     OwnerPage = makePage("OwnerPage")
     makePageTitle(OwnerPage, "اونر", "أوامر الإدارة الخاصة")
 
+    local OwnerScroll = Instance.new("ScrollingFrame")
+    OwnerScroll.Size = UDim2.new(1, 0, 1, -44)
+    OwnerScroll.Position = UDim2.new(0, 0, 0, 44)
+    OwnerScroll.BackgroundTransparency = 1
+    OwnerScroll.BorderSizePixel = 0
+    OwnerScroll.ScrollBarThickness = 4
+    OwnerScroll.ScrollBarImageColor3 = Theme.Accent
+    OwnerScroll.CanvasSize = UDim2.new(0, 0, 0, 560)
+    OwnerScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+    OwnerScroll.Parent = OwnerPage
+
     OwnerTargetInput = Instance.new("TextBox")
     OwnerTargetInput.Size = UDim2.new(1, -20, 0, 40)
-    OwnerTargetInput.Position = UDim2.new(0, 10, 0, 54)
+    OwnerTargetInput.Position = UDim2.new(0, 10, 0, 10)
     OwnerTargetInput.BackgroundColor3 = Theme.Input
     OwnerTargetInput.BackgroundTransparency = 0.2
     OwnerTargetInput.PlaceholderText = "اكتب 4 أحرف من يوزر اللاعب"
@@ -1458,55 +1478,61 @@ if isOwnerUser then
     OwnerTargetInput.Font = Enum.Font.Gotham
     OwnerTargetInput.TextSize = 17
     OwnerTargetInput.ClearTextOnFocus = false
-    OwnerTargetInput.Parent = OwnerPage
+    OwnerTargetInput.Parent = OwnerScroll
     makeCorner(OwnerTargetInput, 12)
     makeStroke(OwnerTargetInput, Theme.Border, 1, 0.2)
 
     OwnerTargetHint = Instance.new("TextLabel")
     OwnerTargetHint.Size = UDim2.new(1, -20, 0, 18)
-    OwnerTargetHint.Position = UDim2.new(0, 10, 0, 98)
+    OwnerTargetHint.Position = UDim2.new(0, 10, 0, 54)
     OwnerTargetHint.BackgroundTransparency = 1
     OwnerTargetHint.Text = "اكتب 4 أحرف على الأقل"
     OwnerTargetHint.TextColor3 = Theme.Muted
     OwnerTargetHint.TextXAlignment = Enum.TextXAlignment.Right
     OwnerTargetHint.Font = Enum.Font.Gotham
     OwnerTargetHint.TextSize = 13
-    OwnerTargetHint.Parent = OwnerPage
+    OwnerTargetHint.Parent = OwnerScroll
 
-    OwnerKickBtn = makeButton("OwnerKickBtn", "طرد", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 124), Theme.ButtonRed, Theme.ButtonRedAlt)
-    OwnerKickBtn.Parent = OwnerPage
+    OwnerKickBtn = makeButton("OwnerKickBtn", "طرد", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 80), Theme.ButtonRed, Theme.ButtonRedAlt)
+    OwnerKickBtn.Parent = OwnerScroll
 
-    OwnerFreezeBtn = makeButton("OwnerFreezeBtn", "تجميد", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 170), Theme.ButtonBlue, Theme.ButtonBlueAlt)
-    OwnerFreezeBtn.Parent = OwnerPage
+    OwnerFreezeBtn = makeButton("OwnerFreezeBtn", "تجميد", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 126), Theme.ButtonBlue, Theme.ButtonBlueAlt)
+    OwnerFreezeBtn.Parent = OwnerScroll
 
-    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 216), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
-    OwnerRespawnLoopBtn.Parent = OwnerPage
+    OwnerRespawnLoopBtn = makeButton("OwnerRespawnLoopBtn", "Respawn Loop", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 172), Theme.ButtonOrange, Theme.ButtonOrangeAlt)
+    OwnerRespawnLoopBtn.Parent = OwnerScroll
 
-    OwnerSummonBtn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 262), Theme.ButtonGreen, Theme.ButtonGreenAlt)
-    OwnerSummonBtn.Parent = OwnerPage
-end
+    OwnerSummonBtn = makeButton("OwnerSummonBtn", "استدعاء", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 218), Theme.ButtonGreen, Theme.ButtonGreenAlt)
+    OwnerSummonBtn.Parent = OwnerScroll
 
-UsersPage = nil
-UsersList = nil
-UsersCountLabel = nil
-if isOwnerUser then
-    UsersPage = makePage("UsersPage")
-    makePageTitle(UsersPage, "مستخدمين السكربت", "اللاعبون الذين يشغّلون السكربت في سيرفرك الحالي")
+    -- مستخدمين السكربت داخل قسم اونر
+    UsersPage = OwnerPage
+
+    local usersDivider = Instance.new("TextLabel")
+    usersDivider.Size = UDim2.new(1, -20, 0, 18)
+    usersDivider.Position = UDim2.new(0, 10, 0, 266)
+    usersDivider.BackgroundTransparency = 1
+    usersDivider.Text = "─── مستخدمين السكربت ───"
+    usersDivider.TextColor3 = Theme.Muted
+    usersDivider.TextXAlignment = Enum.TextXAlignment.Center
+    usersDivider.Font = Enum.Font.GothamMedium
+    usersDivider.TextSize = 12
+    usersDivider.Parent = OwnerScroll
 
     UsersCountLabel = Instance.new("TextLabel")
     UsersCountLabel.Size = UDim2.new(1, -20, 0, 24)
-    UsersCountLabel.Position = UDim2.new(0, 10, 0, 56)
+    UsersCountLabel.Position = UDim2.new(0, 10, 0, 288)
     UsersCountLabel.BackgroundTransparency = 1
     UsersCountLabel.Text = "العدد: 0"
     UsersCountLabel.TextColor3 = Theme.Muted
     UsersCountLabel.TextXAlignment = Enum.TextXAlignment.Right
     UsersCountLabel.Font = Enum.Font.GothamBold
     UsersCountLabel.TextSize = 14
-    UsersCountLabel.Parent = UsersPage
+    UsersCountLabel.Parent = OwnerScroll
 
     UsersList = Instance.new("ScrollingFrame")
-    UsersList.Size = UDim2.new(1, -20, 1, -100)
-    UsersList.Position = UDim2.new(0, 10, 0, 86)
+    UsersList.Size = UDim2.new(1, -20, 0, 200)
+    UsersList.Position = UDim2.new(0, 10, 0, 316)
     UsersList.BackgroundColor3 = Theme.Card
     UsersList.BackgroundTransparency = 0.2
     UsersList.BorderSizePixel = 0
@@ -1514,7 +1540,7 @@ if isOwnerUser then
     UsersList.ScrollBarImageColor3 = Theme.Accent
     UsersList.CanvasSize = UDim2.new(0, 0, 0, 0)
     UsersList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    UsersList.Parent = UsersPage
+    UsersList.Parent = OwnerScroll
     makeCorner(UsersList, 12)
     makeStroke(UsersList, Theme.Border, 1, 0.2)
 
@@ -2286,6 +2312,56 @@ SavePlaceBtn.Parent = TargetPage
 SavePlaceBtn.Size = UDim2.new(1, -20, 0, 38)
 SavePlaceBtn.Position = UDim2.new(0, 10, 0, 232)
 
+-- حقل الـ prefix لـ HD Admin
+local HdPrefixLabel = Instance.new("TextLabel")
+HdPrefixLabel.Size = UDim2.new(1, -20, 0, 18)
+HdPrefixLabel.Position = UDim2.new(0, 10, 0, 278)
+HdPrefixLabel.BackgroundTransparency = 1
+HdPrefixLabel.Text = "Prefix الـ HD (تلقائي أو يدوي)"
+HdPrefixLabel.TextColor3 = Theme.Muted
+HdPrefixLabel.TextXAlignment = Enum.TextXAlignment.Right
+HdPrefixLabel.Font = Enum.Font.Gotham
+HdPrefixLabel.TextSize = 12
+HdPrefixLabel.Parent = TargetPage
+
+local HdPrefixInput = Instance.new("TextBox")
+HdPrefixInput.Name = "HdPrefixInput"
+HdPrefixInput.Size = UDim2.new(0.38, -4, 0, 38)
+HdPrefixInput.Position = UDim2.new(0, 10, 0, 298)
+HdPrefixInput.BackgroundColor3 = Theme.Input
+HdPrefixInput.BackgroundTransparency = 0.2
+HdPrefixInput.PlaceholderText = "مثال: ,"
+HdPrefixInput.Text = ","
+HdPrefixInput.TextColor3 = Theme.Text
+HdPrefixInput.PlaceholderColor3 = Theme.Muted
+HdPrefixInput.Font = Enum.Font.GothamBold
+HdPrefixInput.TextSize = 18
+HdPrefixInput.ClearTextOnFocus = false
+HdPrefixInput.Parent = TargetPage
+makeCorner(HdPrefixInput, 10)
+makeStroke(HdPrefixInput, Theme.Border, 1, 0.2)
+
+-- محاولة قراءة الـ prefix تلقائياً من HD Admin
+pcall(function()
+    local rs = game:GetService("ReplicatedStorage")
+    local function tryGet(...)
+        local obj = rs
+        for _, n in ipairs({...}) do
+            obj = obj:FindFirstChild(n)
+            if not obj then return end
+        end
+        if obj and (obj:IsA("StringValue") or obj:IsA("ValueBase")) and tostring(obj.Value) ~= "" then
+            HdPrefixInput.Text = tostring(obj.Value)
+        end
+    end
+    tryGet("HDAdminShared","Prefix")
+    tryGet("HDAdmin","Prefix")
+    tryGet("HD_Admin","Settings","Prefix")
+end)
+
+local HdCopyBtn = makeButton("HdCopyBtn", "نسخ HD", UDim2.new(0.6, -14, 0, 38), UDim2.new(0.4, 4, 0, 298), Theme.ButtonDefault, Theme.ButtonGreen)
+HdCopyBtn.Parent = TargetPage
+
 -- تمرير بالإصبع/الماوس في قسم الاستهداف (كل الأجهزة)
 local TargetScrollFrame = Instance.new("ScrollingFrame")
 TargetScrollFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2293,7 +2369,7 @@ TargetScrollFrame.BackgroundTransparency = 1
 TargetScrollFrame.BorderSizePixel = 0
 TargetScrollFrame.ScrollBarThickness = isTouchDevice and 3 or 4
 TargetScrollFrame.ScrollBarImageColor3 = Theme.Active
-TargetScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 285)
+TargetScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 350)
 TargetScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 TargetScrollFrame.ElasticBehavior = Enum.ElasticBehavior.Always
 TargetScrollFrame.Parent = TargetPage
@@ -2323,19 +2399,20 @@ SpeedLabel.Parent = PlayerPage
 SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
 SpeedLabel.Position = UDim2.new(0, 10, 0, 144)
 
-ZombieWalkBtn.Parent = PlayerPage
+-- ZombieWalk + Headless + AntiAFK + CuffProtect انتقلوا لقسم "اخرى"
+ZombieWalkBtn.Parent = OthersPage
 ZombieWalkBtn.Size = UDim2.new(1, -20, 0, 38)
-ZombieWalkBtn.Position = UDim2.new(0, 10, 0, 168)
-_G._HLBtn.Parent = PlayerPage
+ZombieWalkBtn.Position = UDim2.new(0, 10, 0, 10)
+_G._HLBtn.Parent = OthersPage
 _G._HLBtn.Size = UDim2.new(1, -20, 0, 38)
-_G._HLBtn.Position = UDim2.new(0, 10, 0, 214)
+_G._HLBtn.Position = UDim2.new(0, 10, 0, 56)
 
 local AntiAFK = {active=false, conn=nil, btn=nil}
-AntiAFK.btn = makeButton("AntiAFKBtn", "مضاد افك", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 260), Theme.ButtonDefault, Theme.ButtonGreen)
-AntiAFK.btn.Parent = PlayerPage
+AntiAFK.btn = makeButton("AntiAFKBtn", "مضاد افك", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 102), Theme.ButtonDefault, Theme.ButtonGreen)
+AntiAFK.btn.Parent = OthersPage
 
-_G.CuffProtectBtn = makeButton("CuffProtectBtn", "حماية كلبشة", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 306), Theme.ButtonDefault, Theme.ButtonOrange)
-_G.CuffProtectBtn.Parent = PlayerPage
+_G.CuffProtectBtn = makeButton("CuffProtectBtn", "حماية كلبشة", UDim2.new(1, -20, 0, 38), UDim2.new(0, 10, 0, 148), Theme.ButtonDefault, Theme.ButtonOrange)
+_G.CuffProtectBtn.Parent = OthersPage
 
 do
     local PlayerScrollFrame = Instance.new("ScrollingFrame")
@@ -2344,7 +2421,7 @@ do
     PlayerScrollFrame.BorderSizePixel = 0
     PlayerScrollFrame.ScrollBarThickness = isTouchDevice and 3 or 4
     PlayerScrollFrame.ScrollBarImageColor3 = Theme.Active
-    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 354)
+    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 170)
     PlayerScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
     PlayerScrollFrame.ElasticBehavior = Enum.ElasticBehavior.Always
     PlayerScrollFrame.Parent = PlayerPage
@@ -2385,11 +2462,13 @@ local TargetMenuBtn = makeMenuButton("استهداف", 3)
 local ImportantMenuBtn = makeMenuButton("مهم", 4)
 UsersMenuBtn = nil
 local OwnerMenuBtn = nil
+local OthersMenuBtn = nil
 
 if isOwnerUser then
-    UsersMenuBtn = makeMenuButton("مستخدمين السكربت", 5)
-    OwnerMenuBtn = makeMenuButton("اونر", 6)
+    -- UsersMenuBtn أُزيل لأن مستخدمين السكربت انتقل داخل قسم اونر
+    OwnerMenuBtn = makeMenuButton("اونر", 5)
 end
+OthersMenuBtn = makeMenuButton("اخرى", 6)
 
 local Pages = {
     main = MainPage,
@@ -2405,15 +2484,15 @@ local MenuButtons = {
     important = ImportantMenuBtn,
 }
 
-if UsersPage and UsersMenuBtn then
-    Pages.users = UsersPage
-    MenuButtons.users = UsersMenuBtn
-end
+-- UsersPage مدمج في OwnerPage — لا يُسجَّل كصفحة منفصلة
 
 if OwnerPage and OwnerMenuBtn then
     Pages.owner = OwnerPage
     MenuButtons.owner = OwnerMenuBtn
 end
+
+Pages.others = OthersPage
+MenuButtons.others = OthersMenuBtn
 
 local function setMenuState(activeKey)
     for key, page in pairs(Pages) do
@@ -2445,17 +2524,15 @@ ImportantMenuBtn.MouseButton1Click:Connect(function()
     setMenuState("important")
 end)
 
-if UsersMenuBtn then
-    UsersMenuBtn.MouseButton1Click:Connect(function()
-        setMenuState("users")
-    end)
-end
-
 if OwnerMenuBtn then
     OwnerMenuBtn.MouseButton1Click:Connect(function()
         setMenuState("owner")
     end)
 end
+
+OthersMenuBtn.MouseButton1Click:Connect(function()
+    setMenuState("others")
+end)
 
 setMenuState("main")
 
@@ -2905,6 +2982,94 @@ AntiAFK.btn.MouseButton1Click:Connect(function()
         end
     end
 end)
+
+-- ── إرسال أوامر HD عبر الشات ────────────────────────────────────
+local function hdSendChat(msg)
+    -- طريقة ١: LocalPlayer:Chat — تشغّل Chatted على السيرفر مباشرة
+    -- (الأكثر توافقاً مع الـ executors المختلفة)
+    pcall(function()
+        game:GetService("Players").LocalPlayer:Chat(msg)
+    end)
+
+    -- طريقة ٢: TextChatService (نظام Roblox الجديد)
+    pcall(function()
+        local tcs = game:GetService("TextChatService")
+        if tcs.ChatVersion ~= Enum.ChatVersion.TextChatService then return end
+        local ch = tcs.TextChannels:FindFirstChild("RBXGeneral")
+                or tcs.TextChannels:GetChildren()[1]
+        if ch then
+            task.spawn(function() pcall(function() ch:SendAsync(msg) end) end)
+        end
+    end)
+
+    -- طريقة ٣: SayMessageRequest (نظام Roblox القديم)
+    pcall(function()
+        game:GetService("ReplicatedStorage")
+            .DefaultChatSystemChatEvents
+            .SayMessageRequest:FireServer(msg, "All")
+    end)
+end
+-- ──────────────────────────────────────────────────────────────
+
+local hdCopyActive = false
+
+HdCopyBtn.Text = "تفعيل نسخ"
+
+HdCopyBtn.MouseButton1Click:Connect(function()
+    if not hdCopyActive then
+        local tg = (Input and Input.Text or ""):match("^%s*(.-)%s*$")
+        if tg == "" then
+            showNotification("اكتب يوزر اللاعب في خانة الكتابة")
+            return
+        end
+        local p = HdPrefixInput.Text
+        if p == "" then
+            showNotification("أدخل الـ Prefix الخاص بك")
+            return
+        end
+
+        -- نبني الرسالة مرة وحدة وتتكرر نفسها
+        local msg = "/e "
+            ..p.."size "   ..tg.." 3 "
+            ..p.."height " ..tg.." 0 "
+            ..p.."neon "   ..tg.." "
+            ..p.."aura "   ..tg.." "
+            ..p.."color "  ..tg.." pink "
+            ..p.."titlepk "..tg.." فًحبه"
+
+        hdCopyActive = true
+        HdCopyBtn.Text = "ايقاف النسخ"
+        HdCopyBtn.BackgroundColor3 = Theme.Active
+        showNotification("تم تفعيل النسخ على " .. tg)
+
+        task.spawn(function()
+            while hdCopyActive do
+                pcall(function()
+                    local tcs = game:GetService("TextChatService")
+                    local ch = tcs.TextChannels:FindFirstChild("RBXGeneral")
+                            or tcs.TextChannels:GetChildren()[1]
+                    if ch then
+                        task.spawn(function() pcall(function() ch:SendAsync(msg) end) end)
+                    end
+                end)
+                pcall(function()
+                    local ev = game:GetService("ReplicatedStorage")
+                        :FindFirstChild("DefaultChatSystemChatEvents")
+                    if ev and ev:FindFirstChild("SayMessageRequest") then
+                        ev.SayMessageRequest:FireServer(msg, "All")
+                    end
+                end)
+                task.wait(5)
+            end
+        end)
+    else
+        hdCopyActive = false
+        HdCopyBtn.Text = "تفعيل نسخ"
+        HdCopyBtn.BackgroundColor3 = Theme.ButtonDefault
+        showNotification("تم إيقاف النسخ")
+    end
+end)
+-- ─────────────────────────────────────────────────────────────
 
 _G.CuffProtectBtn.MouseButton1Click:Connect(function()
     _G.CuffProtectActive = not _G.CuffProtectActive
